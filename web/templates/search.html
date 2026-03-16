@@ -63,11 +63,4 @@
 </section>
 {% endblock %}
 
-{% block scripts %}
-<script src="/static/thumb-preview.js"></script>
-<script>
-if (window.initThumbPreview) {
-    initThumbPreview({ containerId: 'results-list', cardSelector: '.result-card', thumbClass: 'result-thumbnail' });
-}
-</script>
-{% endblock %}
+{% block scripts %}{% endblock %}

@@ -22,6 +22,6 @@
     <p class="timesup-text">{% if child_name %}{{ t("{name} has used {used} out of {limit} minutes today.", name=child_name, used=time_info.used_min | int, limit=time_info.limit_min) }}{% else %}{{ t("You've used {used} out of {limit} minutes today.", used=time_info.used_min | int, limit=time_info.limit_min) }}{% endif %}</p>
     <p class="timesup-subtext">{% if next_start %}{{ t("Videos available again at {time}.", time=next_start) }}{% else %}{{ t("Time resets tomorrow at midnight.") }}{% endif %}</p>
     {% endif %}
-    <a href="/" class="back-link">{{ t("Back to Home") }}</a>
+    <a href="/" class="back-link back-link-home back-link-previous">{{ t("Back") }}</a>
 </div>
 {% endblock %}

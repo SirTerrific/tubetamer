@@ -5,7 +5,6 @@
 <div class="activity-container">
     <div class="activity-header">
         <h2 class="section-title">{{ t("Today's Activity") }}</h2>
-        <a href="/" class="back-link-small">&larr; {{ t("Back") }}</a>
     </div>
 
     {% if cat_info %}
@@ -128,5 +127,6 @@
         <p class="empty-hint">{{ t("Your watch history will appear here") }}</p>
     </div>
     {% endif %}
+    <a href="/" class="back-link back-link-home back-link-previous">{{ t("Back") }}</a>
 </div>
 {% endblock %}

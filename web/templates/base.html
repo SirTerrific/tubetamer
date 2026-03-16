@@ -1,3 +1,4 @@
+<!-- BrainRotGuard version: v{{ app_version }} -->
 <!DOCTYPE html>
 <html lang="{{ html_lang() }}">
 <head>
@@ -14,8 +15,7 @@
 <body>
     <header>
         <div class="logo">
-            <a href="/"><img src="/static/logo.png" alt="BrainRotGuard" class="logo-img"></a>
-            <a href="https://github.com/GHJJ123/brainrotguard/blob/main/CHANGELOG.md" target="_blank" rel="noopener" class="version-tag">v{{ app_version }}</a>
+            <a href="/"><img src="/static/brg-icon-512.png" alt="BrainRotGuard" class="logo-img"></a>
         </div>
         {% if child_name %}
         <div class="search-dropdown-wrap">
@@ -68,9 +68,46 @@
     {% block scripts %}{% endblock %}
     <script>
     (function(){
+        var backText = {{ t("Back") | tojson }};
+        var backToTemplate = {{ t("Back to {page}", page="__PAGE__") | tojson }};
+        var pageLabels = {
+            library: {{ t("Library") | tojson }},
+            activity: {{ t("Activity") | tojson }},
+            search: {{ t("Search") | tojson }},
+            video: {{ t("Video") | tojson }},
+            pending: {{ t("Pending") | tojson }}
+        };
+
+        function previousPageLabel(pathname) {
+            if (!pathname) return '';
+            if (pathname === '/') return pageLabels.library;
+            if (pathname.indexOf('/activity') === 0) return pageLabels.activity;
+            if (pathname.indexOf('/search') === 0) return pageLabels.search;
+            if (pathname.indexOf('/watch/') === 0) return pageLabels.video;
+            if (pathname.indexOf('/pending/') === 0) return pageLabels.pending;
+            return '';
+        }
+
         // Search dropdown: outside-click close
         var sw=document.querySelector('.search-dropdown-wrap');
         if(sw){var sd=sw.querySelector('.search-dropdown');document.addEventListener('click',function(e){if(!sw.contains(e.target))sd.classList.remove('open')})}
+        var sameOriginReferrer = null;
+        if (document.referrer && document.referrer.indexOf(window.location.origin) === 0) {
+            try {
+                sameOriginReferrer = new URL(document.referrer);
+            } catch (e) {}
+        }
+        document.querySelectorAll('.back-link-previous').forEach(function(link){
+            var label = sameOriginReferrer ? previousPageLabel(sameOriginReferrer.pathname) : '';
+            link.textContent = label ? backToTemplate.replace('__PAGE__', label) : backText;
+            link.addEventListener('click', function(e){
+                if (window.history.length < 2) return;
+                if (sameOriginReferrer) {
+                    e.preventDefault();
+                    window.history.back();
+                }
+            });
+        });
         var wrap=document.querySelector('.avatar-dropdown-wrap');
         if(!wrap) return;
         var dd=wrap.querySelector('.avatar-dropdown');

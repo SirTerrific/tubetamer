@@ -21,14 +21,20 @@
 {% endif %}
 
 {% if time_info %}
-<a href="/activity" class="time-budget {% if time_info.remaining_min < 15 %}time-budget-low{% endif %}">
-    {% if time_info.exceeded %}
-    <span class="time-low">{{ t("No time remaining today") }}</span>
-    {% else %}
-    <span>{{ t("{remaining} min remaining today", remaining=time_info.remaining_min | int) }}</span>
-    <span class="time-budget-detail">{{ t("{used} / {limit} min used", used=time_info.used_min | int, limit=time_info.limit_min) }}</span>
-    {% endif %}
-</a>
+<div class="home-status-row">
+    {% set time_budget_pct = ((time_info.used_min / time_info.limit_min) * 100) if time_info.limit_min > 0 else 0 %}
+    {% set time_budget_pct_clamped = [time_budget_pct, 100] | min %}
+    {% set time_budget_hue = 120 - (time_budget_pct_clamped * 1.2) %}
+    <a href="/activity" class="time-budget {% if time_info.remaining_min < 15 %}time-budget-low{% endif %}" style="--time-budget-pct: {{ time_budget_pct_clamped }}%; --time-budget-fill: hsl({{ time_budget_hue }}, 72%, 46%);">
+        <div class="time-budget-summary">
+            {% if time_info.exceeded %}
+            <span class="time-budget-primary time-low">{{ t("No time remaining today") }}</span>
+            {% else %}
+            <span class="time-budget-primary">{{ t("{remaining} min remaining today", remaining=time_info.remaining_min | int) }}</span>
+            {% endif %}
+        </div>
+    </a>
+</div>
 {% endif %}
 
 {% if hero_highlights %}
@@ -115,8 +121,9 @@
         </a>
         {% endfor %}
     </div>
-    <div class="show-more-wrap" id="requests-show-more-wrap"{% if not has_more_requests %} style="display:none"{% endif %}>
-        <button class="btn-primary show-more-btn" id="requests-show-more-btn">{{ t("Show More") }}</button>
+    <div class="show-more-wrap auto-load-wrap" id="requests-show-more-wrap"{% if not has_more_requests %} style="display:none"{% endif %}>
+        <div class="auto-load-sentinel" id="requests-show-more-sentinel" aria-hidden="true"></div>
+        <span class="auto-load-status" id="requests-show-more-status"></span>
     </div>
 </section>
 {% endif %}
@@ -143,8 +150,9 @@
         </a>
         {% endfor %}
     </div>
-    <div class="show-more-wrap" id="show-more-wrap"{% if not has_more %} style="display:none"{% endif %}>
-        <button class="btn-primary show-more-btn" id="show-more-btn">{{ t("Show More") }}</button>
+    <div class="show-more-wrap auto-load-wrap" id="show-more-wrap"{% if not has_more %} style="display:none"{% endif %}>
+        <div class="auto-load-sentinel" id="show-more-sentinel" aria-hidden="true"></div>
+        <span class="auto-load-status" id="show-more-status"></span>
     </div>
 </section>
 {% else %}
@@ -177,25 +185,55 @@
             </div>
         </a>
         {% endfor %}
-        {% if has_more_shorts %}
-        <button class="shorts-card shorts-show-more" id="shorts-show-more">
-            <span class="shorts-more-label">{{ t("Show<br>More") | safe }}</span>
-        </button>
-        {% endif %}
     </div>
+    {% if has_more_shorts %}
+    <div class="show-more-wrap auto-load-wrap" id="shorts-show-more-wrap">
+        <div class="auto-load-sentinel" id="shorts-show-more-sentinel" aria-hidden="true"></div>
+        <span class="auto-load-status" id="shorts-show-more-status"></span>
+    </div>
+    {% endif %}
 </section>
 {% endif %}
 
 <script>
 (function() {
-    var showMoreText = {{ t("Show More") | tojson }};
     var loadingText = {{ t("Loading...") | tojson }};
     var failedToLoadText = {{ t("Failed to load") | tojson }};
     var noVideosFoundText = {{ t("No videos yet") | tojson }};
-    var shortsShowMoreText = {{ t("Show<br>More") | replace("<br>", "\n") | tojson }};
+    var initialCatalogTotal = {{ total_catalog | int }};
+    var allowedChannelCount = {{ allowed_channel_count | int }};
+    var initialChannelCacheUpdatedAt = {{ channel_cache_updated_at | float }};
     var eduShortLabel = {{ cat_label("edu", short=True) | tojson }};
     var funShortLabel = {{ cat_label("fun", short=True) | tojson }};
     var viewsLabelTemplate = {{ t("{views} views", views="__VIEWS__") | tojson }};
+
+    if (allowedChannelCount > 0 && initialChannelCacheUpdatedAt === 0) {
+        var reloadPolls = 0;
+        var maxReloadPolls = 12;
+        var reloadTimer = window.setInterval(function() {
+            reloadPolls += 1;
+            fetch('/api/catalog/status', { credentials: 'same-origin' })
+                .then(function(r) { return r.ok ? r.json() : null; })
+                .then(function(data) {
+                    if (!data) return;
+                    var hasNewChannelData = data.updated_at > initialChannelCacheUpdatedAt;
+                    var hasVisibleContent = (data.ready_channel_count || 0) > 0 || initialCatalogTotal > 0;
+                    if (hasNewChannelData && hasVisibleContent) {
+                        window.clearInterval(reloadTimer);
+                        window.location.reload();
+                        return;
+                    }
+                    if (reloadPolls >= maxReloadPolls) {
+                        window.clearInterval(reloadTimer);
+                    }
+                })
+                .catch(function() {
+                    if (reloadPolls >= maxReloadPolls) {
+                        window.clearInterval(reloadTimer);
+                    }
+                });
+        }, 3000);
+    }
     // Hero carousel: auto-advance with crossfade + Ken Burns
     var heroCarousel = document.getElementById('hero-carousel');
     if (heroCarousel) {
@@ -299,6 +337,111 @@
         return m >= 10 ? Math.round(m) + 'M' : (Math.round(m * 10) / 10 + 'M').replace(/\.0M$/, 'M');
     }
 
+    function isElementVisible(el) {
+        return !!(el && (el.offsetWidth || el.offsetHeight || el.getClientRects().length));
+    }
+
+    function setupAutoPager(options) {
+        var wrap = options.wrap;
+        var sentinel = options.sentinel;
+        var statusNode = options.statusNode;
+        var loading = false;
+        var blockedOnError = false;
+        var visibleCheckQueued = false;
+
+        function setStatus(text) {
+            if (statusNode) statusNode.textContent = text || '';
+        }
+
+        function syncVisibility() {
+            if (wrap) wrap.style.display = options.hasMore() ? '' : 'none';
+            if (!options.hasMore()) blockedOnError = false;
+            if (loading) setStatus(loadingText);
+            else if (blockedOnError) setStatus(failedToLoadText);
+            else setStatus('');
+        }
+
+        function maybeLoad() {
+            var loadResult;
+            if (loading || blockedOnError || !options.hasMore()) {
+                syncVisibility();
+                return;
+            }
+            loading = true;
+            syncVisibility();
+            try {
+                loadResult = options.loadMore();
+            } catch (err) {
+                loadResult = Promise.reject(err);
+            }
+            Promise.resolve(loadResult)
+                .then(function() {
+                    blockedOnError = false;
+                }, function() {
+                    blockedOnError = true;
+                })
+                .then(function() {
+                    loading = false;
+                    syncVisibility();
+                    if (!blockedOnError) queueVisibleCheck();
+                });
+        }
+
+        function queueVisibleCheck() {
+            if (visibleCheckQueued) return;
+            visibleCheckQueued = true;
+            window.requestAnimationFrame(function() {
+                visibleCheckQueued = false;
+                if (!sentinel || loading || blockedOnError || !options.hasMore() || !isElementVisible(sentinel)) return;
+                var rect = sentinel.getBoundingClientRect();
+                if (rect.top <= window.innerHeight + 320) {
+                    maybeLoad();
+                }
+            });
+        }
+
+        if (!wrap || !sentinel) {
+            return { update: function() {} };
+        }
+
+        if ('IntersectionObserver' in window) {
+            var observer = new IntersectionObserver(function(entries) {
+                entries.forEach(function(entry) {
+                    if (entry.target !== sentinel) return;
+                    if (!entry.isIntersecting) {
+                        if (blockedOnError) {
+                            blockedOnError = false;
+                            syncVisibility();
+                        }
+                        return;
+                    }
+                    maybeLoad();
+                });
+            }, { rootMargin: '320px 0px' });
+            observer.observe(sentinel);
+        } else {
+            var fallbackHandler = function() {
+                if (blockedOnError) {
+                    blockedOnError = false;
+                    syncVisibility();
+                }
+                queueVisibleCheck();
+            };
+            window.addEventListener('scroll', fallbackHandler, { passive: true });
+            window.addEventListener('resize', fallbackHandler);
+        }
+
+        syncVisibility();
+        queueVisibleCheck();
+
+        return {
+            update: function() {
+                syncVisibility();
+                queueVisibleCheck();
+            }
+        };
+    }
+
     // Shared: build a video card element
     function buildCard(v) {
         var a = document.createElement('a');
@@ -325,8 +468,9 @@
     }
 
     var catalogGrid = document.getElementById('catalog-grid');
-    var showMoreBtn = document.getElementById('show-more-btn');
     var showMoreWrap = document.getElementById('show-more-wrap');
+    var showMoreSentinel = document.getElementById('show-more-sentinel');
+    var showMoreStatus = document.getElementById('show-more-status');
     var PAGE_SIZE = 24;
     var catalogOffset = {{ catalog | length }};
     var activeFilter = '';
@@ -388,15 +532,12 @@
                 .then(function(data) {
                     filterOffset = data.videos.length;
                     filterHasMore = data.has_more;
-                    showMoreWrap.style.display = filterHasMore ? '' : 'none';
-                    if (showMoreBtn) {
-                        showMoreBtn.disabled = false;
-                        showMoreBtn.textContent = showMoreText;
-                    }
+                    catalogAutoPager.update();
                 })
                 .catch(function() {
                     catalogGrid.innerHTML = '<p style="color:#888;text-align:center;padding:20px;">' + failedToLoadText + '</p>';
-                    showMoreWrap.style.display = 'none';
+                    filterHasMore = false;
+                    catalogAutoPager.update();
                 });
         });
     });
@@ -441,15 +582,12 @@
                 .then(function(data) {
                     filterOffset = data.videos.length;
                     filterHasMore = data.has_more;
-                    showMoreWrap.style.display = filterHasMore ? '' : 'none';
-                    if (showMoreBtn) {
-                        showMoreBtn.disabled = false;
-                        showMoreBtn.textContent = showMoreText;
-                    }
+                    catalogAutoPager.update();
                 })
                 .catch(function() {
                     catalogGrid.innerHTML = '<p style="color:#888;text-align:center;padding:20px;">' + failedToLoadText + '</p>';
-                    showMoreWrap.style.display = 'none';
+                    filterHasMore = false;
+                    catalogAutoPager.update();
                 });
         });
     });
@@ -467,6 +605,7 @@
             var visible = section.querySelectorAll('.shorts-card:not(.shorts-show-more):not([style*="display:none"])');
             section.style.display = visible.length ? '' : 'none';
         }
+        if (shortsAutoPager) shortsAutoPager.update();
     }
 
     function filterRequests(category) {
@@ -482,6 +621,7 @@
             var visible = section.querySelectorAll('.requests-card:not([style*="display:none"])');
             section.style.display = visible.length ? '' : 'none';
         }
+        if (requestsAutoPager) requestsAutoPager.update();
     }
 
     function restoreAll() {
@@ -491,135 +631,127 @@
         filterRequests('');
         catalogGrid.innerHTML = initialGridHTML;
         catalogOffset = initialOffset;
-        if (showMoreWrap) showMoreWrap.style.display = initialHasMore ? '' : 'none';
-        if (showMoreBtn) {
-            showMoreBtn.disabled = false;
-            showMoreBtn.textContent = showMoreText;
-        }
+        catalogAutoPager.update();
+        if (shortsAutoPager) shortsAutoPager.update();
+        if (requestsAutoPager) requestsAutoPager.update();
     }
 
-    // Show More: works for both All and filtered views
-    if (showMoreBtn) {
-        showMoreBtn.addEventListener('click', function() {
-            showMoreBtn.disabled = true;
-            showMoreBtn.textContent = loadingText;
-            var ch = activeFilter || '';
-            var off = (activeFilter || activeCatFilter) ? filterOffset : catalogOffset;
+    function loadMoreCatalog() {
+        var ch = activeFilter || '';
+        var off = (activeFilter || activeCatFilter) ? filterOffset : catalogOffset;
 
-            fetchCatalog(ch, off, PAGE_SIZE, false)
-                .then(function(data) {
-                    if (activeFilter || activeCatFilter) {
-                        filterOffset += data.videos.length;
-                        filterHasMore = data.has_more;
-                    } else {
-                        catalogOffset += data.videos.length;
-                        initialGridHTML = catalogGrid.innerHTML;
-                        initialOffset = catalogOffset;
-                        initialHasMore = data.has_more;
-                    }
-                    if (!data.has_more) {
-                        showMoreWrap.style.display = 'none';
-                    } else {
-                        showMoreBtn.disabled = false;
-                        showMoreBtn.textContent = showMoreText;
-                    }
-                })
-                .catch(function() {
-                    showMoreBtn.disabled = false;
-                    showMoreBtn.textContent = showMoreText;
+        return fetchCatalog(ch, off, PAGE_SIZE, false)
+            .then(function(data) {
+                if (activeFilter || activeCatFilter) {
+                    filterOffset += data.videos.length;
+                    filterHasMore = data.has_more;
+                } else {
+                    catalogOffset += data.videos.length;
+                    initialGridHTML = catalogGrid.innerHTML;
+                    initialOffset = catalogOffset;
+                    initialHasMore = data.has_more;
+                }
+            });
+    }
+
+    var catalogAutoPager = setupAutoPager({
+        wrap: showMoreWrap,
+        sentinel: showMoreSentinel,
+        statusNode: showMoreStatus,
+        hasMore: function() {
+            return (activeFilter || activeCatFilter) ? filterHasMore : initialHasMore;
+        },
+        loadMore: loadMoreCatalog
+    });
+
+    // Shorts auto load on scroll
+    var shortsShowMoreWrap = document.getElementById('shorts-show-more-wrap');
+    var shortsShowMoreSentinel = document.getElementById('shorts-show-more-sentinel');
+    var shortsShowMoreStatus = document.getElementById('shorts-show-more-status');
+    var shortsRow = document.querySelector('.shorts-row');
+    var shortsOffset = {{ shorts_catalog | length }};
+    var SHORTS_PAGE = 20;
+    var shortsHasMore = {{ 'true' if has_more_shorts else 'false' }};
+
+    function loadMoreShorts() {
+        return fetch('/api/catalog?shorts=true&offset=' + shortsOffset + '&limit=' + SHORTS_PAGE)
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                data.videos.forEach(function(v) {
+                    var a = document.createElement('a');
+                    a.href = '/watch/' + encodeURIComponent(v.video_id);
+                    a.className = 'shorts-card';
+                    a.dataset.channel = v.channel_id || v.channel_name || '';
+                    a.dataset.category = v.category || 'fun';
+                    var cat = v.category || 'fun';
+                    var catLabel = cat === 'edu' ? eduShortLabel : funShortLabel;
+                    var dur = v.duration ? '<span class="duration-badge">' + escapeHtml(formatDuration(v.duration)) + '</span>' : '';
+                    // eslint-disable-next-line no-unsanitized/property -- values are escaped via escapeHtml()
+                    a.innerHTML =
+                        '<div class="shorts-thumb-wrap">' +
+                            '<img src="' + escapeHtml(v.thumbnail_url || '') + '" alt="' + escapeHtml(v.title || '') + '" class="shorts-thumbnail" loading="lazy">' +
+                            dur +
+                            '<span class="category-badge category-' + escapeHtml(cat) + '">' + catLabel + '</span>' +
+                        '</div>' +
+                        '<div class="shorts-info">' +
+                            '<div class="shorts-title">' + escapeHtml(v.title || '') + '</div>' +
+                            '<div class="shorts-channel">' + escapeHtml(v.channel_name || '') + '</div>' +
+                        '</div>';
+                    shortsRow.appendChild(a);
                 });
-        });
+                shortsOffset += data.videos.length;
+                shortsHasMore = data.has_more;
+                filterShorts(activeCatFilter);
+            });
     }
 
-    // Shorts "Show More" button
-    var shortsBtn = document.getElementById('shorts-show-more');
-    if (shortsBtn) {
-        var shortsOffset = {{ shorts_catalog | length }};
-        var SHORTS_PAGE = 20;
-        shortsBtn.addEventListener('click', function() {
-            shortsBtn.querySelector('.shorts-more-label').textContent = '...';
-            fetch('/api/catalog?shorts=true&offset=' + shortsOffset + '&limit=' + SHORTS_PAGE)
-                .then(function(r) { return r.json(); })
-                .then(function(data) {
-                    var row = shortsBtn.parentNode;
-                    data.videos.forEach(function(v) {
-                        var a = document.createElement('a');
-                        a.href = '/watch/' + encodeURIComponent(v.video_id);
-                        a.className = 'shorts-card';
-                        var cat = v.category || 'fun';
-                        var catLabel = cat === 'edu' ? eduShortLabel : funShortLabel;
-                        var dur = v.duration ? '<span class="duration-badge">' + escapeHtml(formatDuration(v.duration)) + '</span>' : '';
-                        // eslint-disable-next-line no-unsanitized/property -- values are escaped via escapeHtml()
-                        a.innerHTML =
-                            '<div class="shorts-thumb-wrap">' +
-                                '<img src="' + escapeHtml(v.thumbnail_url || '') + '" alt="' + escapeHtml(v.title || '') + '" class="shorts-thumbnail" loading="lazy">' +
-                                dur +
-                                '<span class="category-badge category-' + escapeHtml(cat) + '">' + catLabel + '</span>' +
-                            '</div>' +
-                            '<div class="shorts-info">' +
-                                '<div class="shorts-title">' + escapeHtml(v.title || '') + '</div>' +
-                                '<div class="shorts-channel">' + escapeHtml(v.channel_name || '') + '</div>' +
-                            '</div>';
-                        row.insertBefore(a, shortsBtn);
-                    });
-                    shortsOffset += data.videos.length;
-                    if (!data.has_more) {
-                        shortsBtn.remove();
-                    } else {
-                        shortsBtn.querySelector('.shorts-more-label').textContent = shortsShowMoreText;
-                    }
-                })
-                .catch(function() {
-                    shortsBtn.querySelector('.shorts-more-label').textContent = shortsShowMoreText;
-                });
-        });
-    }
+    var shortsAutoPager = setupAutoPager({
+        wrap: shortsShowMoreWrap,
+        sentinel: shortsShowMoreSentinel,
+        statusNode: shortsShowMoreStatus,
+        hasMore: function() {
+            return shortsHasMore;
+        },
+        loadMore: loadMoreShorts
+    });
 
-    // Requests "Show More" button
     var requestsGrid = document.getElementById('requests-grid');
-    var requestsShowMoreBtn = document.getElementById('requests-show-more-btn');
     var requestsShowMoreWrap = document.getElementById('requests-show-more-wrap');
-    if (requestsShowMoreBtn) {
-        var requestsOffset = {{ requests_row | length }};
-        var REQUESTS_PAGE = 24;
-        requestsShowMoreBtn.addEventListener('click', function() {
-            requestsShowMoreBtn.disabled = true;
-            requestsShowMoreBtn.textContent = loadingText;
-            fetch('/api/catalog?requests=true&offset=' + requestsOffset + '&limit=' + REQUESTS_PAGE)
-                .then(function(r) { return r.json(); })
-                .then(function(data) {
-                    data.videos.forEach(function(v) {
-                        var card = buildCard(v);
-                        card.classList.add('requests-card');
-                        if (activeCatFilter && (v.category || 'fun') !== activeCatFilter) {
-                            card.style.display = 'none';
-                        }
-                        requestsGrid.appendChild(card);
-                    });
-                    requestsOffset += data.videos.length;
-                    if (!data.has_more) {
-                        requestsShowMoreWrap.style.display = 'none';
-                    } else {
-                        requestsShowMoreBtn.disabled = false;
-                        requestsShowMoreBtn.textContent = showMoreText;
+    var requestsShowMoreSentinel = document.getElementById('requests-show-more-sentinel');
+    var requestsShowMoreStatus = document.getElementById('requests-show-more-status');
+    var requestsOffset = {{ requests_row | length }};
+    var REQUESTS_PAGE = 24;
+    var requestsHasMore = {{ 'true' if has_more_requests else 'false' }};
+
+    function loadMoreRequests() {
+        return fetch('/api/catalog?requests=true&offset=' + requestsOffset + '&limit=' + REQUESTS_PAGE)
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                data.videos.forEach(function(v) {
+                    var card = buildCard(v);
+                    card.classList.add('requests-card');
+                    if (activeCatFilter && (v.category || 'fun') !== activeCatFilter) {
+                        card.style.display = 'none';
                     }
-                })
-                .catch(function() {
-                    requestsShowMoreBtn.disabled = false;
-                    requestsShowMoreBtn.textContent = showMoreText;
+                    requestsGrid.appendChild(card);
                 });
-        });
+                requestsOffset += data.videos.length;
+                requestsHasMore = data.has_more;
+                filterRequests(activeCatFilter);
+            });
     }
+
+    var requestsAutoPager = setupAutoPager({
+        wrap: requestsShowMoreWrap,
+        sentinel: requestsShowMoreSentinel,
+        statusNode: requestsShowMoreStatus,
+        hasMore: function() {
+            return requestsHasMore;
+        },
+        loadMore: loadMoreRequests
+    });
 })();
 </script>
 {% endblock %}
 
-{% block scripts %}
-<script src="/static/thumb-preview.js"></script>
-<script>
-if (window.initThumbPreview) {
-    initThumbPreview({ containerId: 'requests-grid', cardSelector: '.video-card', thumbClass: 'video-thumbnail' });
-    initThumbPreview({ containerId: 'catalog-grid', cardSelector: '.video-card', thumbClass: 'video-thumbnail' });
-}
-</script>
-{% endblock %}
+{% block scripts %}{% endblock %}

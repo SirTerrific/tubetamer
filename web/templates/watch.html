@@ -9,9 +9,19 @@
 {% endif %}
 
 {% if time_info %}
-<div class="time-budget {% if time_info.remaining_min < 15 %}time-budget-low{% endif %}">
-    <span>{{ t("{category}: {remaining} min remaining", category=cat_label, remaining=time_info.remaining_min | int) }}</span>
-    <span class="time-budget-detail">{{ t("{used} / {limit} min used detail", used=time_info.used_min | int, limit=time_info.limit_min) }}</span>
+{% set time_budget_pct = ((time_info.used_min / time_info.limit_min) * 100) if time_info.limit_min > 0 else 0 %}
+{% set time_budget_pct_clamped = [time_budget_pct, 100] | min %}
+{% set time_budget_hue = 120 - (time_budget_pct_clamped * 1.2) %}
+<div class="home-status-row">
+    <a id="watch-time-budget" href="/activity" class="time-budget {% if time_info.remaining_min < 15 %}time-budget-low{% endif %}" style="--time-budget-pct: {{ time_budget_pct_clamped }}%; --time-budget-fill: hsl({{ time_budget_hue }}, 72%, 46%);">
+        <div class="time-budget-summary">
+            {% if time_info.exceeded %}
+            <span id="watch-time-budget-primary" class="time-budget-primary time-low">{{ t("No time remaining today") }}</span>
+            {% else %}
+            <span id="watch-time-budget-primary" class="time-budget-primary">{{ t("{remaining} min remaining today", remaining=time_info.remaining_min | int) }}</span>
+            {% endif %}
+        </div>
+    </a>
 </div>
 {% endif %}
 
@@ -31,7 +41,7 @@
             {{ t("{category} time left:", category=cat_label) }} <span id="time-counter">{{ time_info.remaining_min | int }} min</span>
         </p>
         {% endif %}
-        <a href="/" class="back-link">{{ t("Back to Library") }}</a>
+        <a href="/" class="back-link back-link-home back-link-previous">{{ t("Back") }}</a>
     </div>
 </div>
 
@@ -69,6 +79,9 @@ var videoId = {{ video.video_id | tojson }};
 var countdownInterval = null;
 var videoFinishedText = {{ t("Video finished") | tojson }};
 var backToLibraryText = {{ t("Back to Library") | tojson }};
+var remainingTodayText = {{ t("{remaining} min remaining today", remaining="__REMAINING__") | tojson }};
+var noTimeRemainingText = {{ t("No time remaining today") | tojson }};
+var limitMinutes = {{ time_info.limit_min if time_info else 0 }};
 
 function toggleFullscreen() {
     var wrapper = document.querySelector('.video-wrapper');
@@ -252,6 +265,8 @@ function updateTimeDisplay() {
     var warningEl = document.getElementById('time-warning');
     var criticalEl = document.getElementById('time-critical');
     var remainingEl = document.getElementById('time-remaining');
+    var budgetEl = document.getElementById('watch-time-budget');
+    var budgetPrimaryEl = document.getElementById('watch-time-budget-primary');
     if (!counterEl || !remainingEl) return;
 
     if (remainingSeconds > 60) {
@@ -260,6 +275,24 @@ function updateTimeDisplay() {
     } else {
         counterEl.textContent = Math.max(0, remainingSeconds) + ' sec';
         counterEl.className = 'time-low';
+    }
+
+    if (budgetEl && budgetPrimaryEl && limitMinutes > 0) {
+        var usedSeconds = Math.max(0, (limitMinutes * 60) - Math.max(0, remainingSeconds));
+        var pct = Math.min(100, (usedSeconds / (limitMinutes * 60)) * 100);
+        var hue = Math.max(0, 120 - (pct * 1.2));
+        budgetEl.style.setProperty('--time-budget-pct', pct + '%');
+        budgetEl.style.setProperty('--time-budget-fill', 'hsl(' + hue + ', 72%, 46%)');
+        if (remainingSeconds <= 0) {
+            budgetEl.classList.add('time-budget-low');
+            budgetPrimaryEl.textContent = noTimeRemainingText;
+            budgetPrimaryEl.classList.add('time-low');
+        } else {
+            var remainingMin = Math.max(0, Math.ceil(remainingSeconds / 60));
+            budgetPrimaryEl.textContent = remainingTodayText.replace('__REMAINING__', remainingMin);
+            budgetPrimaryEl.classList.toggle('time-low', remainingSeconds <= 900);
+            budgetEl.classList.toggle('time-budget-low', remainingSeconds <= 900);
+        }
     }
 
     if (warningEl && remainingSeconds <= 300 && remainingSeconds > 60) {

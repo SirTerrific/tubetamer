@@ -7,6 +7,6 @@
     <h2>{{ t("Videos Aren't Available Right Now") }}</h2>
     <p class="outsidehours-text">{{ t("Videos are available from {start} to {end}", start=schedule_info.start, end=schedule_info.end) }}</p>
     <p class="outsidehours-subtext">{{ t("Available again {unlock_time}", unlock_time=schedule_info.unlock_time) }}</p>
-    <a href="/" class="back-link">{{ t("Back to Home") }}</a>
+    <a href="/" class="back-link back-link-home back-link-previous">{{ t("Back") }}</a>
 </div>
 {% endblock %}
