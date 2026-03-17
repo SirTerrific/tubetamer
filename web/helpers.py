@@ -138,6 +138,16 @@ def shorts_enabled(request: Request, child_store=None) -> bool:
     return False
 
 
+def autoload_enabled(request: Request, child_store=None) -> bool:
+    """Check if autoload (infinite scroll) is enabled. Default: OFF (Show More mode)."""
+    store = child_store or getattr(request.app.state, "video_store", None)
+    if store:
+        db_val = store.get_setting("autoload_enabled", "")
+        if db_val:
+            return db_val.lower() == "true"
+    return False
+
+
 # ---------------------------------------------------------------------------
 # Time / schedule / category helpers
 # ---------------------------------------------------------------------------

@@ -217,7 +217,8 @@ class CommandsMixin:
                 "`/time add <min>` - Bonus for today\n"
                 "`/time <day> [start|stop|edu|fun|limit|off]`\n"
                 "`/time <day> copy <days|weekdays|weekend|all>`\n"
-                "`/shorts [on|off]` - Toggle Shorts row\n\n"
+                "`/shorts [on|off]` - Toggle Shorts row\n"
+                "`/autoload [on|off]` - Toggle scroll loading\n\n"
                 "**Profiles:**\n"
                 "`/child` - List child profiles\n"
                 "`/child add <name> [pin]`\n"
@@ -291,6 +292,61 @@ class CommandsMixin:
                             "Shorts are hidden from the homepage, catalog, and search results. "
                             "No Shorts are fetched from channels.\n\n"
                             "`/shorts on` — show Shorts in a dedicated row"
+                        )
+                    ), parse_mode=MD2)
+
+        await self._with_child_context(update, context, _inner)
+
+    async def _cmd_autoload(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """Toggle autoload (infinite scroll) on/off or show status."""
+        if not await self._require_admin(update):
+            return
+
+        async def _inner(update, context, cs, profile):
+            args = context.args
+            ctx = self._ctx_label(profile)
+            if args and args[0].lower() in ("on", "off"):
+                enabled = args[0].lower() == "on"
+                cs.set_setting("autoload_enabled", str(enabled).lower())
+                if enabled:
+                    await update.effective_message.reply_text(_md(
+                        f"**{self.tr('Autoload enabled{ctx}', ctx=ctx)}**\n\n"
+                        "- "
+                        + self.tr(
+                            "Homepage loads videos in batches as you scroll down\n"
+                            "- Videos are fetched from the server on demand\n"
+                            "- Use `/autoload off` to switch back to Show More mode"
+                        )
+                    ), parse_mode=MD2)
+                else:
+                    await update.effective_message.reply_text(_md(
+                        f"**{self.tr('Autoload disabled{ctx}', ctx=ctx)}**\n\n"
+                        "- "
+                        + self.tr(
+                            "Homepage loads all videos at once (faster browsing)\n"
+                            "- Channel and category filters work instantly\n"
+                            "- Use `/autoload on` to re-enable scroll loading"
+                        )
+                    ), parse_mode=MD2)
+            else:
+                db_val = cs.get_setting("autoload_enabled", "")
+                current = db_val.lower() == "true" if db_val else False
+                if current:
+                    await update.effective_message.reply_text(_md(
+                        f"**{self.tr('Autoload: enabled{ctx}', ctx=ctx)}**\n\n"
+                        + self.tr(
+                            "Videos load in batches as the child scrolls. "
+                            "Channel and category filters fetch from the server.\n\n"
+                            "`/autoload off` — switch to Show More mode"
+                        )
+                    ), parse_mode=MD2)
+                else:
+                    await update.effective_message.reply_text(_md(
+                        f"**{self.tr('Autoload: disabled{ctx}', ctx=ctx)}**\n\n"
+                        + self.tr(
+                            "All videos load at once. Channel and category filters "
+                            "work instantly without server requests.\n\n"
+                            "`/autoload on` — enable scroll loading"
                         )
                     ), parse_mode=MD2)
 

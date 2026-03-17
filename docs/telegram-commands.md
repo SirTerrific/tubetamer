@@ -121,6 +121,18 @@ YouTube Shorts are short vertical videos (under 60s). When enabled, they appear 
 
 Shorts are disabled by default. Approved Shorts stay in the database when disabled — nothing is deleted.
 
+## Homepage Display
+
+Choose how the homepage loads videos: either a "Show More" button for batch loading, or infinite scroll that auto-fetches as you scroll.
+
+| Command | What It Does |
+|---------|-------------|
+| `/autoload` | Show current homepage display mode |
+| `/autoload on` | Enable infinite scroll — auto-fetch videos as you scroll down |
+| `/autoload off` | Disable infinite scroll — use "Show More" button instead (default) |
+
+Infinite scroll is disabled by default. Switching modes doesn't affect already-approved videos — it only changes how they're displayed.
+
 ## Profiles
 
 Manage child profiles. Each profile has its own PIN, watch history, and time budgets.
