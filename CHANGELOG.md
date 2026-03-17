@@ -1,4 +1,26 @@
 # Changelog
+## v1.29.0 - 2026-03-17
+
+**Added**
+- i18n/localization system with English and Norwegian translations (PR #26 -- thanks @NoLooseEnds)
+- PWA support: installable as tablet app with manifest, service worker, standalone mode, safe-area insets (PR #29 -- thanks @NoLooseEnds)
+- Watch autoplay/resume: remembers playback position via localStorage, more reliable auto-start (PR #30 -- thanks @NoLooseEnds)
+- Localized app name: "BrainRotGuard" renders as "HjerneVakt" in Norwegian (PR #31 -- thanks @NoLooseEnds)
+- New `/api/catalog/status` endpoint for lightweight cache polling (PR #27 -- thanks @NoLooseEnds)
+- Re-request flow: re-requesting a pending video resends the Telegram notification to parent (PR #27)
+- IntersectionObserver-based infinite scroll replaces "Show More" button on search results (PR #27)
+- Circular profile avatars with username in header (PR #28)
+- CSS fullscreen fallback for mobile/PWA standalone mode where native Fullscreen API is unavailable (PR #29)
+- Back navigation tracking via sessionStorage for smarter back links (PR #30)
+
+**Changed**
+- Simplified web header, navigation, and time budget UI (PR #28 -- thanks @NoLooseEnds)
+- Channel filter fix: `build_requests_row` now correctly filters allowlisted channels even when video has a channel_id but channel was added by name only (PR #27)
+
+**Fixed**
+- Norwegian revoke confirmation toast: "Fjernet!" (past tense) instead of "Fjern!" (imperative) or "Avslått!" (which duplicated "Denied")
+- Playback position cleared on time expiry instead of saved (prevents resuming from expired position)
+
 ## v1.28.0 - 2026-03-01
 
 **Changed**
