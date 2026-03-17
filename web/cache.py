@@ -333,9 +333,10 @@ def build_requests_row(state, limit: int = 50, profile_id: str = "default") -> l
     filtered = []
     for v in requests:
         vid_cid = v.get("channel_id")
+        vid_name = v.get("channel_name", "").lower()
         if vid_cid and vid_cid in allowed_channel_ids:
             continue
-        if not vid_cid and v.get("channel_name", "").lower() in allowed_names:
+        if vid_name in allowed_names:
             continue
         filtered.append(v)
     annotate_categories(filtered, child_store)

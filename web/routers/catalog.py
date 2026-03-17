@@ -4,7 +4,7 @@ from fastapi import APIRouter, Request, Query
 from fastapi.responses import JSONResponse
 
 from web.shared import limiter
-from web.cache import build_catalog, build_shorts_catalog, build_requests_row
+from web.cache import build_catalog, build_shorts_catalog, build_requests_row, get_profile_cache
 
 router = APIRouter()
 
@@ -36,4 +36,19 @@ async def api_catalog(
         "videos": page,
         "has_more": offset + limit < len(full),
         "total": len(full),
+    })
+
+
+@router.get("/api/catalog/status")
+@limiter.limit("60/minute")
+async def api_catalog_status(request: Request):
+    """Lightweight status for homepage cache refresh polling."""
+    state = request.app.state
+    profile_id = request.session.get("child_id", "default")
+    cache = get_profile_cache(state, profile_id)
+    channels = cache.get("channels", {})
+    return JSONResponse({
+        "updated_at": cache.get("updated_at", 0.0),
+        "channel_count": len(channels),
+        "ready_channel_count": sum(1 for vids in channels.values() if vids),
     })

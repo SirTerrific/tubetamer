@@ -34,23 +34,73 @@
         {% endfor %}
     </div>
     {% if results|length > 5 %}
-    <div class="show-more-wrap" id="show-more-wrap">
-        <button class="btn-primary show-more-btn" id="show-more-btn" type="button">{{ t("Show More") }}</button>
+    <div class="show-more-wrap auto-load-wrap" id="show-more-wrap">
+        <div class="auto-load-sentinel" id="show-more-sentinel" aria-hidden="true"></div>
+        <span class="auto-load-status" id="show-more-status"></span>
     </div>
     {% endif %}
     <script>
     (function() {
-        var btn = document.getElementById('show-more-btn');
-        if (!btn) return;
-        btn.addEventListener('click', function() {
+        var wrap = document.getElementById('show-more-wrap');
+        var sentinel = document.getElementById('show-more-sentinel');
+        var status = document.getElementById('show-more-status');
+        var loadingText = {{ "Loading..." | tojson }};
+        var revealing = false;
+        if (!wrap || !sentinel || !status) return;
+
+        function hiddenCards() {
+            return document.querySelectorAll('#results-list .result-card[style*="display:none"]');
+        }
+
+        function syncVisibility() {
+            wrap.style.display = hiddenCards().length ? '' : 'none';
+            status.textContent = '';
+        }
+
+        function revealMore() {
             var hidden = document.querySelectorAll('#results-list .result-card[style*="display:none"]');
-            for (var i = 0; i < Math.min(5, hidden.length); i++) {
-                hidden[i].style.display = '';
+            if (revealing || !hidden.length) {
+                syncVisibility();
+                return;
             }
-            if (hidden.length <= 5) {
-                document.getElementById('show-more-wrap').style.display = 'none';
-            }
-        });
+            revealing = true;
+            status.textContent = loadingText;
+            window.requestAnimationFrame(function() {
+                for (var i = 0; i < Math.min(5, hidden.length); i++) {
+                    hidden[i].style.display = '';
+                }
+                revealing = false;
+                syncVisibility();
+                queueVisibleCheck();
+            });
+        }
+
+        function queueVisibleCheck() {
+            window.requestAnimationFrame(function() {
+                if (wrap.style.display === 'none') return;
+                var rect = sentinel.getBoundingClientRect();
+                if (rect.top <= window.innerHeight + 240) {
+                    revealMore();
+                }
+            });
+        }
+
+        if ('IntersectionObserver' in window) {
+            var observer = new IntersectionObserver(function(entries) {
+                entries.forEach(function(entry) {
+                    if (entry.isIntersecting) {
+                        revealMore();
+                    }
+                });
+            }, { rootMargin: '240px 0px' });
+            observer.observe(sentinel);
+        } else {
+            window.addEventListener('scroll', queueVisibleCheck, { passive: true });
+            window.addEventListener('resize', queueVisibleCheck);
+        }
+
+        syncVisibility();
+        queueVisibleCheck();
     })();
     </script>
     {% else %}

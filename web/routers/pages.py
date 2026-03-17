@@ -28,6 +28,7 @@ async def index(request: Request, error: str = Query("", max_length=50)):
     wl_cfg = state.wl_config
     cs = get_child_store(request)
     profile_id = cs.profile_id
+    allowed_channel_count = len(cs.get_channels_with_ids("allowed"))
     page_size = 12
     full_catalog = build_catalog(state, profile_id=profile_id)
     catalog = full_catalog[:page_size]
@@ -70,6 +71,8 @@ async def index(request: Request, error: str = Query("", max_length=50)):
         "schedule_info": schedule_info,
         "cat_info": cat_info,
         "channel_pills": channel_pills,
+        "allowed_channel_count": allowed_channel_count,
+        "channel_cache_updated_at": cache.get("updated_at", 0.0),
         "hero_highlights": hero_highlights,
         "error_message": error_message,
     })
