@@ -535,6 +535,44 @@ class VideoStore:
             cursor = self.conn.execute(sql, params)
             return [dict(row) for row in cursor.fetchall()]
 
+    def get_active_videos(self, limit: int = 50, profile_id: str = "default") -> list[dict]:
+        """Get approved non-Short videos that are still active for a profile."""
+        with self._lock:
+            cursor = self.conn.execute(
+                """
+                SELECT v.*,
+                       COALESCE(SUM(w.duration), 0) AS watched_seconds
+                FROM videos v
+                LEFT JOIN watch_log w
+                  ON w.video_id = v.video_id
+                 AND w.profile_id = v.profile_id
+                WHERE v.status = 'approved'
+                  AND v.is_short = 0
+                  AND v.profile_id = ?
+                GROUP BY v.id
+                HAVING watched_seconds = 0
+                    OR (v.duration IS NOT NULL AND watched_seconds < (v.duration * 0.95))
+                ORDER BY
+                    CASE WHEN watched_seconds > 0 THEN 0 ELSE 1 END,
+                    COALESCE(v.last_viewed_at, v.decided_at, v.requested_at) DESC
+                LIMIT ?
+                """,
+                (profile_id, limit),
+            )
+            active = []
+            for row in cursor.fetchall():
+                item = dict(row)
+                resume_seconds = int(item.get("resume_seconds") or 0)
+                watched_seconds = int(item.get("watched_seconds") or 0)
+                progress_seconds = max(watched_seconds, resume_seconds)
+                duration = item.get("duration")
+                item["progress_seconds"] = progress_seconds
+                if progress_seconds == 0:
+                    active.append(item)
+                    continue
+                if duration and progress_seconds < (duration * 0.95):
+                    active.append(item)
+            return active
     def update_status(self, video_id: str, status: str, profile_id: str = "default") -> bool:
         """Update video status for a profile. Returns True if updated."""
         with self._lock:

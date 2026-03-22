@@ -197,6 +197,87 @@ main {
     margin-bottom: 20px;
 }
 
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.section-header .section-title {
+    margin-bottom: 0;
+}
+
+.section-collapse-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-muted);
+    border: 1px solid var(--border-subtle);
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.9px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, border-color 0.2s, transform 0.15s;
+}
+
+.section-collapse-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-primary);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.section-collapse-btn:active {
+    transform: scale(0.97);
+}
+
+.section-collapse-btn:focus-visible {
+    outline: 2px solid rgba(233, 69, 96, 0.55);
+    outline-offset: 2px;
+}
+
+.section-collapse-btn-label {
+    line-height: 1;
+}
+
+.section-collapse-btn-icon {
+    width: 12px;
+    height: 12px;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    fill: none;
+    transition: transform 0.2s ease;
+}
+
+.section-collapsed .section-collapse-btn-icon {
+    transform: rotate(-90deg);
+}
+
+.requests-section-collapsed .section-collapse-btn-icon {
+    transform: rotate(-90deg);
+}
+
+.collapsible-section-body {
+    opacity: 1;
+    transform: translateY(0);
+    transition: max-height 0.24s ease, opacity 0.18s ease, transform 0.18s ease;
+    will-change: max-height, opacity, transform;
+}
+
+.requests-section-updating .collapsible-section-body {
+    opacity: 0.7;
+    transition-duration: 0.16s;
+}
+
+.collapsible-section-body[hidden] {
+    display: none !important;
+}
+
 /* === Video Grid (Library) === */
 .video-grid {
     display: grid;
@@ -250,6 +331,26 @@ main {
     padding: 3px 6px;
     border-radius: 4px;
     letter-spacing: 0.5px;
+}
+
+.thumbnail-wrap .watch-progress,
+.shorts-thumb-wrap .watch-progress {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 4px;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.thumbnail-wrap .watch-progress .watch-progress-fill,
+.shorts-thumb-wrap .watch-progress .watch-progress-fill {
+    display: block;
+    height: 100%;
+    background: var(--accent);
+    border-radius: 0;
 }
 
 /* === Video Info === */
@@ -2195,6 +2296,67 @@ main {
     color: var(--accent);
 }
 
+.avatar-menu-link + .avatar-switch-link {
+    border-top: none;
+    padding-top: 10px;
+}
+
+.active-card {
+    position: relative;
+}
+
+.active-dismiss-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 2;
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(15, 15, 35, 0.78);
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1;
+    text-align: center;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.28);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.16s ease, transform 0.16s ease, background 0.16s ease;
+    transform: scale(0.92);
+}
+
+.active-dismiss-icon {
+    display: block;
+    width: 12px;
+    height: 12px;
+    pointer-events: none;
+}
+
+.active-dismiss-icon path {
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-width: 1.8;
+}
+
+.active-card:hover .active-dismiss-btn,
+.active-card:focus-within .active-dismiss-btn,
+.active-dismiss-btn:focus-visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: scale(1);
+}
+
+.active-dismiss-btn:hover,
+.active-dismiss-btn:focus-visible {
+    background: rgba(15, 15, 35, 0.92);
+    outline: none;
+}
 /* Login page: avatar on profile picker buttons */
 .profile-btn-avatar {
     display: inline-flex;

@@ -13,7 +13,7 @@ from web.helpers import (
     annotate_categories,
 )
 from web.cache import (
-    get_profile_cache, build_catalog, build_shorts_catalog, build_requests_row,
+    get_profile_cache, build_active_row, build_catalog, build_shorts_catalog,
 )
 from utils import get_today_str, get_day_utc_bounds
 from i18n import t
@@ -33,10 +33,9 @@ async def index(request: Request, error: str = Query("", max_length=50)):
     page_size = 12
     full_catalog = build_catalog(state, profile_id=profile_id)
     catalog = full_catalog[:page_size]
-    requests_page = 6
-    full_requests = build_requests_row(state, limit=50, profile_id=profile_id)
-    requests_row = full_requests[:requests_page]
-    has_more_requests = len(full_requests) > requests_page
+    active_page = 6
+    active_row = build_active_row(state, limit=active_page, profile_id=profile_id)
+    has_more_active = False
     shorts_page = 9
     full_shorts = build_shorts_catalog(state, profile_id=profile_id)
     shorts_catalog = full_shorts[:shorts_page]
@@ -53,8 +52,11 @@ async def index(request: Request, error: str = Query("", max_length=50)):
             hero_highlights.append(random.choice(ch_vids))
     random.shuffle(hero_highlights)
     channel_pills = {}
+    channel_pill_items = []
     for cache_key in channel_videos:
         display = id_to_name.get(cache_key, cache_key)
+        channel_pill_items.append((display.casefold(), display, cache_key))
+    for _sort_key, display, cache_key in sorted(channel_pill_items):
         channel_pills[cache_key] = display
     locale = getattr(request.app.state, "locale", "en")
     error_message = t(locale, _ERROR_MESSAGES.get(error, "")) if error else ""
@@ -63,8 +65,9 @@ async def index(request: Request, error: str = Query("", max_length=50)):
         "catalog": catalog,
         "has_more": len(full_catalog) > page_size,
         "total_catalog": len(full_catalog),
-        "requests_row": requests_row,
-        "has_more_requests": has_more_requests,
+        "active_row": active_row,
+        "active_total": len(active_row),
+        "has_more_active": has_more_active,
         "shorts_catalog": shorts_catalog,
         "has_more_shorts": has_more_shorts,
         "shorts_enabled": shorts_enabled(request, cs),

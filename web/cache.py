@@ -316,42 +316,77 @@ def build_shorts_catalog(state, profile_id: str = "default") -> list[dict]:
     return shorts
 
 
-def build_requests_row(state, limit: int = 50, profile_id: str = "default") -> list[dict]:
-    """Build 'Your Requests' row from DB-approved non-Short videos for a profile.
-
-    Fetches all approved videos first, then filters out allowed-channel videos,
-    then applies the limit. This avoids the SQL LIMIT discarding results that
-    would survive filtering.
-    """
+def build_active_row(state, limit: int = 50, profile_id: str = "default",
+                     channel_filter: str = "", category_filter: str = "") -> list[dict]:
+    """Build the homepage Active row from approved videos for a profile."""
     vs = getattr(state, "video_store", None)
     if not vs:
         return []
     child_store = ChildStore(vs, profile_id)
-    requests = child_store.get_recent_requests()
-    allowed_channel_ids = set()
-    allowed_names = set()
-    for ch_name, cid, _h, _cat in child_store.get_channels_with_ids("allowed"):
-        if cid:
-            allowed_channel_ids.add(cid)
-        else:
-            allowed_names.add(ch_name.lower())
-    filtered = []
-    for v in requests:
-        vid_cid = v.get("channel_id")
-        vid_name = v.get("channel_name", "").lower()
-        if vid_cid and vid_cid in allowed_channel_ids:
-            continue
-        if vid_name in allowed_names:
-            continue
-        filtered.append(v)
-    annotate_categories(filtered, child_store)
+    active = child_store.get_active_videos(limit=limit)
+    annotate_categories(active, child_store)
+    channel_filter_name = ""
+    if channel_filter:
+        id_to_name = get_profile_cache(state, profile_id).get("id_to_name", {})
+        channel_filter_name = (id_to_name.get(channel_filter) or "").strip().lower()
+    if channel_filter:
+        active = [
+            v for v in active
+            if (
+                (v.get("channel_id") or "") == channel_filter
+                or (v.get("channel_name") or "") == channel_filter
+                or (channel_filter_name and (v.get("channel_name") or "").strip().lower() == channel_filter_name)
+            )
+        ]
+    if category_filter:
+        active = [v for v in active if v.get("category", "fun") == category_filter]
 
     # Filter out titles matching word filters
     wf = get_word_filter_patterns(state)
     if wf:
-        filtered = [v for v in filtered if not title_matches_filter(v.get("title", ""), wf)]
+        active = [v for v in active if not title_matches_filter(v.get("title", ""), wf)]
 
-    return filtered[:limit] if limit else filtered
+    return active
+
+
+def build_requests_row(state, limit: int = 50, profile_id: str = "default") -> list[dict]:
+    """Backward-compatible alias for the old homepage row builder."""
+    return build_active_row(state, limit=limit, profile_id=profile_id)
+
+
+def _annotate_progress(videos: list[dict], child_store: ChildStore | None) -> list[dict]:
+    """Attach playback progress to catalog videos without mutating the cached source list."""
+    if not videos:
+        return []
+    copied = [dict(video) for video in videos]
+    if not child_store:
+        return copied
+
+    video_ids = [video.get("video_id", "") for video in copied if video.get("video_id")]
+    if not video_ids:
+        return copied
+
+    watch_minutes = child_store.get_batch_watch_minutes(video_ids)
+    approved_by_id = {
+        video.get("video_id", ""): video
+        for video in child_store.get_by_status("approved")
+        if video.get("video_id")
+    }
+    for video in copied:
+        video_id = video.get("video_id", "")
+        if not video_id:
+            continue
+        db_video = approved_by_id.get(video_id, {})
+        duration = int(video.get("duration") or db_video.get("duration") or 0)
+        progress_seconds = max(
+            int(round(watch_minutes.get(video_id, 0.0) * 60)),
+            int(video.get("resume_seconds") or db_video.get("resume_seconds") or 0),
+        )
+        if duration > 0 and progress_seconds > 0:
+            video["progress_seconds"] = max(0, min(progress_seconds, duration))
+        else:
+            video.pop("progress_seconds", None)
+    return copied
 
 
 def build_catalog(state, channel_filter: str = "", profile_id: str = "default") -> list[dict]:
@@ -388,14 +423,14 @@ def build_catalog(state, channel_filter: str = "", profile_id: str = "default") 
         wf = get_word_filter_patterns(state)
         if wf:
             filtered = [v for v in filtered if not title_matches_filter(v.get("title", ""), wf)]
-        return filtered
+        return _annotate_progress(filtered, child_store)
 
     # Check catalog cache (per-profile)
     cache_age = cache.get("updated_at", 0.0)
     cached = state.catalog_caches.get(profile_id)
     cache_time = state.catalog_cache_times.get(profile_id, 0.0)
     if cached and cache_time >= cache_age and cache_time > 0:
-        return cached
+        return _annotate_progress(cached, child_store)
 
     seen_ids = set(denied_ids)
     catalog = []
@@ -435,4 +470,4 @@ def build_catalog(state, channel_filter: str = "", profile_id: str = "default") 
 
     state.catalog_caches[profile_id] = catalog
     state.catalog_cache_times[profile_id] = time.monotonic()
-    return catalog
+    return _annotate_progress(catalog, child_store)

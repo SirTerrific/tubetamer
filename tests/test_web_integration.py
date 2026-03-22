@@ -8,6 +8,7 @@ after application has started" issue with the shared singleton.
 """
 
 import asyncio
+import html
 import re
 
 import pytest
@@ -23,7 +24,7 @@ from config import WebConfig, YouTubeConfig, WatchLimitsConfig
 from data.video_store import VideoStore
 from data.child_store import ChildStore
 from web.shared import templates, limiter, static_dir, register_filters, _rate_limit_key
-from web.cache import init_app_state
+from web.cache import init_app_state, get_profile_cache
 from web.middleware import PinAuthMiddleware
 from web.routers.auth import router as auth_router
 from web.routers.pages import router as pages_router
@@ -219,6 +220,127 @@ class TestPageLoads:
         assert 'rel="manifest" href="/manifest.webmanifest"' in resp.text
         assert 'navigator.serviceWorker.register("/service-worker.js")' in resp.text
 
+    def test_home_includes_history_link_and_active_row(self, auth_client):
+        resp = auth_client.get("/")
+        assert resp.status_code == 200
+        assert 'href="/history"' in resp.text
+        assert "active-dismiss-btn" in resp.text
+        assert "active-dismiss-icon" in resp.text
+        assert "active-empty-state" in resp.text
+        assert 'id="active-empty-title"' in resp.text
+        assert 'id="active-empty-hint"' in resp.text
+        assert "brg-dismissed-active:" in resp.text
+        assert "countLoadedActiveQueryCards()" in resp.text
+        assert "function cardMatchesActiveChannel" in resp.text
+        assert "!cardMatchesActiveChannel(card, activeFilter)" in resp.text
+        assert "card.style.display !== 'none'" in resp.text
+        assert "window.addEventListener('pageshow'" in resp.text
+        assert "var noVideosToShowText" in resp.text
+        assert "var tryAnotherFilterText" in resp.text
+        assert 'id="active-show-more-wrap"' not in resp.text
+        assert 'id="active-collapse-btn"' in resp.text
+        assert 'id="catalog-collapse-btn"' in resp.text
+        assert "brg-section-collapsed:" in resp.text
+
+    def test_home_active_row_shows_watch_progress_bar_for_started_video(self, auth_client, store):
+        cs = ChildStore(store, "default")
+        cs.add_video("actprog1234", "In Progress", "Test Channel", duration=180)
+        cs.update_status("actprog1234", "approved")
+        cs.record_view("actprog1234")
+        cs.record_watch_seconds("actprog1234", 60)
+
+        resp = auth_client.get("/")
+
+        assert resp.status_code == 200
+        assert "watch-progress-fill" in resp.text
+        assert "width:33%" in resp.text
+
+    def test_home_active_row_uses_saved_playback_position_for_progress(self, auth_client, store):
+        cs = ChildStore(store, "default")
+        cs.add_video("actpos12345", "Resume Position", "Test Channel", duration=180)
+        cs.update_status("actpos12345", "approved")
+        cs.update_playback_position("actpos12345", 150)
+
+        resp = auth_client.get("/")
+
+        assert resp.status_code == 200
+        assert "width:83%" in resp.text
+
+    def test_home_catalog_shows_watch_progress_bar_for_completed_video(self, auth_client, store):
+        cs = ChildStore(store, "default")
+        cs.add_video("catprog12345", "Finished Catalog Video", "Test Channel", duration=180)
+        cs.update_status("catprog12345", "approved")
+        cs.record_view("catprog12345")
+        cs.record_watch_seconds("catprog12345", 180)
+
+        resp = auth_client.get("/")
+
+        assert resp.status_code == 200
+        assert "Finished Catalog Video" in resp.text
+        assert "width:100%" in resp.text
+
+    def test_active_catalog_excludes_dismissed_ids(self, auth_client, store):
+        cs = ChildStore(store, "default")
+        cs.add_video("activekeep01", "Keep Active", "Test Channel", duration=180)
+        cs.update_status("activekeep01", "approved")
+        cs.add_video("activedrop01", "Drop Active", "Test Channel", duration=180)
+        cs.update_status("activedrop01", "approved")
+
+        resp = auth_client.get("/api/catalog?active=true&dismissed=activedrop01")
+
+        assert resp.status_code == 200
+        payload = resp.json()
+        video_ids = {video["video_id"] for video in payload["videos"]}
+        assert "activekeep01" in video_ids
+        assert "activedrop01" not in video_ids
+
+    def test_active_row_styles_hide_dismiss_until_hover(self, client):
+        resp = client.get("/static/style.css")
+        assert resp.status_code == 200
+        assert ".active-card:hover .active-dismiss-btn" in resp.text
+        assert ".active-dismiss-icon" in resp.text
+        assert "opacity: 0;" in resp.text
+        assert "pointer-events: none;" in resp.text
+
+    def test_home_channel_pills_are_alphabetized(self, auth_client, store):
+        store.add_channel("Zeta", "allowed", channel_id="UCzeta")
+        store.add_channel("Alpha", "allowed", channel_id="UCalpha")
+        store.add_channel("LEGO", "allowed", channel_id="UClego")
+        app_state = auth_client.app.state
+        profile_cache = get_profile_cache(app_state, "default")
+        profile_cache["channels"] = {
+            "UCzeta": [{"video_id": "zetavid0001", "channel_name": "Zeta", "channel_id": "UCzeta"}],
+            "UCalpha": [{"video_id": "alphavid001", "channel_name": "Alpha", "channel_id": "UCalpha"}],
+            "UClego": [{"video_id": "legovid0001", "channel_name": "LEGO", "channel_id": "UClego"}],
+        }
+        profile_cache["id_to_name"] = {
+            "UCzeta": "Zeta",
+            "UCalpha": "Alpha",
+            "UClego": "LEGO",
+        }
+
+        resp = auth_client.get("/")
+
+        assert resp.status_code == 200
+        alpha_pos = resp.text.index('data-channel="UCalpha">' + html.escape("Alpha"))
+        lego_pos = resp.text.index('data-channel="UClego">' + html.escape("LEGO"))
+        zeta_pos = resp.text.index('data-channel="UCzeta">' + html.escape("Zeta"))
+        assert alpha_pos < lego_pos < zeta_pos
+
+    def test_home_activity_is_limited_to_six_items(self, auth_client, store):
+        cs = ChildStore(store, "default")
+        for idx in range(7):
+            video_id = f"actlim{idx:05d}"
+            cs.add_video(video_id, f"Activity {idx}", "Test Channel", duration=180)
+            cs.update_status(video_id, "approved")
+            cs.record_view(video_id)
+            cs.update_playback_position(video_id, 30)
+
+        resp = auth_client.get("/")
+
+        assert resp.status_code == 200
+        assert resp.text.count('class="video-card active-card"') == 6
+        assert 'id="active-show-more-wrap"' not in resp.text
 
 
 class TestLimiterKey:
@@ -322,7 +444,7 @@ class TestSearchFlow:
             }
             for i in range(1, 7)
         ]
-        client = TestClient(app, raise_server_exceptions=False)
+        client = AppClient(app, raise_server_exceptions=False)
         _login(client, "1234")
 
         resp = client.get("/search?q=test+video")
@@ -522,3 +644,53 @@ class TestNoPinMode:
         resp = c.get("/", follow_redirects=True)
         assert resp.status_code == 200
         s.close()
+
+
+class TestCatalogAndHistory:
+    def test_active_catalog_returns_only_unfinished_videos(self, auth_client, store):
+        cs = ChildStore(store, "default")
+        cs.add_video("act12345a1b", "Ready To Start", "Test Channel", duration=180)
+        cs.update_status("act12345a1b", "approved")
+
+        cs.add_video("act12345b2c", "Resume Me", "Test Channel", duration=180)
+        cs.update_status("act12345b2c", "approved")
+        cs.record_view("act12345b2c")
+        cs.record_watch_seconds("act12345b2c", 60)
+
+        cs.add_video("act12345c3d", "Finished", "Test Channel", duration=100)
+        cs.update_status("act12345c3d", "approved")
+        cs.record_view("act12345c3d")
+        cs.record_watch_seconds("act12345c3d", 95)
+
+        resp = auth_client.get("/api/catalog?active=true")
+
+        assert resp.status_code == 200
+        ids = {video["video_id"] for video in resp.json()["videos"]}
+        assert "act12345a1b" in ids
+        assert "act12345b2c" in ids
+        assert "act12345c3d" not in ids
+
+    def test_active_catalog_honors_channel_filter(self, auth_client, store):
+        cs = ChildStore(store, "default")
+        cs.add_video("actchan001a", "SciShow One", "SciShow", duration=180, channel_id="UCsci")
+        cs.update_status("actchan001a", "approved")
+        cs.record_view("actchan001a")
+        cs.record_watch_seconds("actchan001a", 30)
+
+        cs.add_video("actchan002b", "SciShow Two", "SciShow", duration=180, channel_id="UCsci")
+        cs.update_status("actchan002b", "approved")
+        cs.record_view("actchan002b")
+        cs.record_watch_seconds("actchan002b", 45)
+
+        cs.add_video("actchan003c", "Other Channel", "Kurzgesagt", duration=180, channel_id="UCother")
+        cs.update_status("actchan003c", "approved")
+        cs.record_view("actchan003c")
+        cs.record_watch_seconds("actchan003c", 50)
+
+        resp = auth_client.get("/api/catalog?active=true&channel=UCsci")
+
+        assert resp.status_code == 200
+        videos = resp.json()["videos"]
+        ids = {video["video_id"] for video in videos}
+        assert ids == {"actchan001a", "actchan002b"}
+        assert all(video["channel_id"] == "UCsci" for video in videos)

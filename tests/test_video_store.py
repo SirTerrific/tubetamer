@@ -321,6 +321,24 @@ class TestVideoStoreWatchTracking:
         assert batch["bat_1234567"] == 2.0
         assert batch["bat_2345678"] == 4.0
 
+    def test_get_active_videos_excludes_completed(self, video_store):
+        video_store.add_video("new_1234567", "Fresh", "Ch", duration=120)
+        video_store.update_status("new_1234567", "approved")
+
+        video_store.add_video("part1234567", "Partial", "Ch", duration=200)
+        video_store.update_status("part1234567", "approved")
+        video_store.record_view("part1234567")
+        video_store.record_watch_seconds("part1234567", 60)
+
+        video_store.add_video("done1234567", "Done", "Ch", duration=100)
+        video_store.update_status("done1234567", "approved")
+        video_store.record_view("done1234567")
+        video_store.record_watch_seconds("done1234567", 95)
+
+        active = {video["video_id"] for video in video_store.get_active_videos()}
+        assert "new_1234567" in active
+        assert "part1234567" in active
+        assert "done1234567" not in active
 
 class TestVideoStoreSearch:
     def test_update_playback_position(self, video_store):

@@ -99,12 +99,25 @@
 </div>
 {% endif %}
 
-{% if requests_row %}
-<section class="requests-section">
-    <h2 class="section-title">{{ t("Your Requests") }}</h2>
-    <div class="video-grid" id="requests-grid">
-        {% for video in requests_row %}
-        <a href="/watch/{{ video.video_id }}" class="video-card requests-card" data-channel="{{ video.channel_id or video.channel_name }}" data-category="{{ video.category or 'fun' }}" data-video-id="{{ video.video_id }}">
+<section class="requests-section active-section section-collapsible" id="active-section">
+    <div class="section-header">
+        <h2 class="section-title">{{ t("Active") }}</h2>
+        <button type="button" class="section-collapse-btn" id="active-collapse-btn" aria-controls="active-section-body" aria-expanded="true" aria-label="{{ t('Hide') }}" title="{{ t('Hide') }}">
+            <span class="section-collapse-btn-label">{{ t("Hide") }}</span>
+            <svg class="section-collapse-btn-icon" viewBox="0 0 12 12" aria-hidden="true" focusable="false">
+                <path d="M2 4.5 6 8 10 4.5"></path>
+            </svg>
+        </button>
+    </div>
+    <div class="collapsible-section-body active-section-body" id="active-section-body">
+    <div class="video-grid" id="active-grid"{% if not active_row %} style="display:none"{% endif %}>
+        {% for video in active_row %}
+        <a href="/watch/{{ video.video_id }}" class="video-card active-card" data-channel="{{ video.channel_id or video.channel_name }}" data-channel-id="{{ video.channel_id or '' }}" data-channel-name="{{ video.channel_name or '' }}" data-category="{{ video.category or 'fun' }}" data-video-id="{{ video.video_id }}">
+            <span class="active-dismiss-btn" role="button" tabindex="0" aria-label="{{ t('Dismiss') }}" title="{{ t('Dismiss') }}">
+                <svg class="active-dismiss-icon" viewBox="0 0 12 12" aria-hidden="true" focusable="false">
+                    <path d="M2 2l8 8M10 2L2 10"></path>
+                </svg>
+            </span>
             <div class="thumbnail-wrap">
                 <img src="{{ video.thumbnail_url }}" alt="{{ video.title }}" class="video-thumbnail" loading="lazy">
                 {% if video.duration %}
@@ -112,6 +125,9 @@
                 {% endif %}
                 {% if video.category %}
                 <span class="category-badge category-{{ video.category }}">{{ cat_label(video.category, short=True) }}</span>
+                {% endif %}
+                {% if video.progress_seconds and video.duration %}
+                <span class="watch-progress"><span class="watch-progress-fill" style="width:{{ ((video.progress_seconds / video.duration) * 100) | round(0, 'common') | int }}%"></span></span>
                 {% endif %}
             </div>
             <div class="video-info">
@@ -121,25 +137,28 @@
         </a>
         {% endfor %}
     </div>
-    {% if not autoload %}
-    <div class="show-more-wrap" id="requests-show-more-wrap"{% if not has_more_requests %} style="display:none"{% endif %}>
-        <button class="btn-primary show-more-btn" id="requests-show-more-btn">{{ t("Show More") }}</button>
+    <div class="empty-state active-empty-state" id="active-empty-state"{% if active_row %} style="display:none"{% endif %}>
+        <p id="active-empty-title">{{ t("No videos yet") }}</p>
+        <p class="empty-hint" id="active-empty-hint">{{ t("Videos you start will appear here") }}</p>
     </div>
-    {% else %}
-    <div class="show-more-wrap auto-load-wrap" id="requests-show-more-wrap"{% if not has_more_requests %} style="display:none"{% endif %}>
-        <div class="auto-load-sentinel" id="requests-show-more-sentinel" aria-hidden="true"></div>
-        <span class="auto-load-status" id="requests-show-more-status"></span>
     </div>
-    {% endif %}
 </section>
-{% endif %}
 
 {% if catalog %}
-<section class="videos-section">
-    <h2 class="section-title">{{ t("Channel Videos") }}</h2>
+<section class="videos-section section-collapsible" id="catalog-section">
+    <div class="section-header">
+        <h2 class="section-title">{{ t("Channel Videos") }}</h2>
+        <button type="button" class="section-collapse-btn" id="catalog-collapse-btn" aria-controls="catalog-section-body" aria-expanded="true" aria-label="{{ t('Hide') }}" title="{{ t('Hide') }}">
+            <span class="section-collapse-btn-label">{{ t("Hide") }}</span>
+            <svg class="section-collapse-btn-icon" viewBox="0 0 12 12" aria-hidden="true" focusable="false">
+                <path d="M2 4.5 6 8 10 4.5"></path>
+            </svg>
+        </button>
+    </div>
+    <div class="collapsible-section-body" id="catalog-section-body">
     <div class="video-grid" id="catalog-grid">
         {% for video in catalog %}
-        <a href="/watch/{{ video.video_id }}" class="video-card" data-channel="{{ video.channel_id or video.channel_name }}" data-category="{{ video.category or 'fun' }}" data-video-id="{{ video.video_id }}">
+        <a href="/watch/{{ video.video_id }}" class="video-card" data-channel="{{ video.channel_id or video.channel_name }}" data-channel-id="{{ video.channel_id or '' }}" data-channel-name="{{ video.channel_name or '' }}" data-category="{{ video.category or 'fun' }}" data-video-id="{{ video.video_id }}">
             <div class="thumbnail-wrap">
                 <img src="{{ video.thumbnail_url }}" alt="{{ video.title }}" class="video-thumbnail" loading="lazy">
                 {% if video.duration %}
@@ -147,6 +166,9 @@
                 {% endif %}
                 {% if video.category %}
                 <span class="category-badge category-{{ video.category }}">{{ cat_label(video.category, short=True) }}</span>
+                {% endif %}
+                {% if video.progress_seconds and video.duration %}
+                <span class="watch-progress"><span class="watch-progress-fill" style="width:{{ ((video.progress_seconds / video.duration) * 100) | round(0, 'common') | int }}%"></span></span>
                 {% endif %}
             </div>
             <div class="video-info">
@@ -166,21 +188,41 @@
         <span class="auto-load-status" id="show-more-status"></span>
     </div>
     {% endif %}
+    </div>
 </section>
 {% else %}
-<section class="videos-section">
-    <h2 class="section-title">{{ t("Channel Videos") }}</h2>
+<section class="videos-section section-collapsible" id="catalog-section">
+    <div class="section-header">
+        <h2 class="section-title">{{ t("Channel Videos") }}</h2>
+        <button type="button" class="section-collapse-btn" id="catalog-collapse-btn" aria-controls="catalog-section-body" aria-expanded="true" aria-label="{{ t('Hide') }}" title="{{ t('Hide') }}">
+            <span class="section-collapse-btn-label">{{ t("Hide") }}</span>
+            <svg class="section-collapse-btn-icon" viewBox="0 0 12 12" aria-hidden="true" focusable="false">
+                <path d="M2 4.5 6 8 10 4.5"></path>
+            </svg>
+        </button>
+    </div>
+    <div class="collapsible-section-body" id="catalog-section-body">
     <div class="empty-state">
         <div class="empty-icon">&#x1f50d;</div>
         <p>{{ t("No videos yet") }}</p>
         <p class="empty-hint">{{ t("Search for something to watch!") }}</p>
     </div>
+    </div>
 </section>
 {% endif %}
 
 {% if shorts_catalog %}
-<section class="shorts-section">
-    <h2 class="section-title">{{ t("Shorts") }}</h2>
+<section class="shorts-section section-collapsible" id="shorts-section">
+    <div class="section-header">
+        <h2 class="section-title">{{ t("Shorts") }}</h2>
+        <button type="button" class="section-collapse-btn" id="shorts-collapse-btn" aria-controls="shorts-section-body" aria-expanded="true" aria-label="{{ t('Hide') }}" title="{{ t('Hide') }}">
+            <span class="section-collapse-btn-label">{{ t("Hide") }}</span>
+            <svg class="section-collapse-btn-icon" viewBox="0 0 12 12" aria-hidden="true" focusable="false">
+                <path d="M2 4.5 6 8 10 4.5"></path>
+            </svg>
+        </button>
+    </div>
+    <div class="collapsible-section-body" id="shorts-section-body">
     <div class="shorts-row">
         {% for video in shorts_catalog %}
         <a href="/watch/{{ video.video_id }}" class="shorts-card" data-channel="{{ video.channel_id or video.channel_name }}" data-category="{{ video.category or 'fun' }}">
@@ -209,14 +251,32 @@
         <span class="auto-load-status" id="shorts-show-more-status"></span>
     </div>
     {% endif %}
+    </div>
 </section>
 {% endif %}
 
 <script>
 (function() {
+    function shouldRefreshFromBackNav(event) {
+        if (event && event.persisted) return true;
+        if (!window.performance || !window.performance.getEntriesByType) return false;
+        var entries = window.performance.getEntriesByType('navigation');
+        return !!(entries && entries[0] && entries[0].type === 'back_forward');
+    }
+
+    window.addEventListener('pageshow', function(event) {
+        if (shouldRefreshFromBackNav(event)) {
+            window.location.reload();
+        }
+    });
+
+    var activeDismissIconMarkup = '<svg class="active-dismiss-icon" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2 2l8 8M10 2L2 10"></path></svg>';
     var loadingText = {{ t("Loading...") | tojson }};
     var failedToLoadText = {{ t("Failed to load") | tojson }};
     var noVideosFoundText = {{ t("No videos yet") | tojson }};
+    var noVideosToShowText = {{ t("No videos to show") | tojson }};
+    var activityHintText = {{ t("Videos you start will appear here") | tojson }};
+    var tryAnotherFilterText = {{ t("Try another filter") | tojson }};
     var initialCatalogTotal = {{ total_catalog | int }};
     var allowedChannelCount = {{ allowed_channel_count | int }};
     var initialChannelCacheUpdatedAt = {{ channel_cache_updated_at | float }};
@@ -224,6 +284,295 @@
     var funShortLabel = {{ cat_label("fun", short=True) | tojson }};
     var viewsLabelTemplate = {{ t("{views} views", views="__VIEWS__") | tojson }};
     var autoloadEnabled = {{ autoload | tojson }};
+    var dismissText = {{ t("Dismiss") | tojson }};
+    var hideText = {{ t("Hide") | tojson }};
+    var showText = {{ t("Show") | tojson }};
+    var sectionCollapseKeyPrefix = 'brg-section-collapsed:' + {{ request.session.get("child_id", "default") | tojson }} + ':';
+    var activeDismissKey = 'brg-dismissed-active:' + {{ request.session.get("child_id", "default") | tojson }};
+    var activeCollapsedKey = sectionCollapseKeyPrefix + 'active';
+    var catalogCollapsedKey = sectionCollapseKeyPrefix + 'catalog';
+    var shortsCollapsedKey = sectionCollapseKeyPrefix + 'shorts';
+    var dismissedActiveIds = readDismissedActive();
+    var activeSectionCollapsed = readActiveSectionCollapsed();
+
+    function readDismissedActive() {
+        try {
+            var raw = window.sessionStorage.getItem(activeDismissKey);
+            var parsed = raw ? JSON.parse(raw) : [];
+            return Array.isArray(parsed) ? parsed : [];
+        } catch (e) {
+            return [];
+        }
+    }
+
+    function writeDismissedActive(ids) {
+        dismissedActiveIds = ids.slice();
+        try {
+            window.sessionStorage.setItem(activeDismissKey, JSON.stringify(dismissedActiveIds));
+        } catch (e) {}
+    }
+
+    function isDismissedActive(videoId) {
+        return !!videoId && dismissedActiveIds.indexOf(videoId) >= 0;
+    }
+
+    function readActiveSectionCollapsed() {
+        try {
+            return window.localStorage.getItem(activeCollapsedKey) === '1';
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function writeActiveSectionCollapsed(collapsed) {
+        activeSectionCollapsed = !!collapsed;
+        try {
+            window.localStorage.setItem(activeCollapsedKey, activeSectionCollapsed ? '1' : '0');
+        } catch (e) {}
+    }
+
+    function readStoredSectionCollapsed(storageKey) {
+        try {
+            return window.localStorage.getItem(storageKey) === '1';
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function writeStoredSectionCollapsed(storageKey, collapsed) {
+        try {
+            window.localStorage.setItem(storageKey, collapsed ? '1' : '0');
+        } catch (e) {}
+    }
+
+    function countVisibleActiveCards() {
+        if (!activeGrid) return 0;
+        return Array.prototype.filter.call(activeGrid.querySelectorAll('.active-card'), function(card) {
+            return card.style.display !== 'none';
+        }).length;
+    }
+
+    function hasActiveFilters() {
+        return !!(activeFilter || activeCatFilter);
+    }
+
+    function cardMatchesActiveChannel(card, channel) {
+        if (!channel) return true;
+        if (!card) return false;
+        var expected = String(channel || '');
+        return String(card.dataset.channel || '') === expected
+            || String(card.dataset.channelId || '') === expected
+            || String(card.dataset.channelName || '') === expected;
+    }
+
+    function cardMatchesActiveQuery(card) {
+        if (!card) return false;
+        if (activeCatFilter && card.dataset.category !== activeCatFilter) return false;
+        if (!cardMatchesActiveChannel(card, activeFilter)) return false;
+        return true;
+    }
+
+    function countLoadedActiveQueryCards() {
+        if (!activeGrid) return 0;
+        return Array.prototype.filter.call(activeGrid.querySelectorAll('.active-card'), cardMatchesActiveQuery).length;
+    }
+
+    function countLoadedAvailableActiveQueryCards() {
+        if (!activeGrid) return 0;
+        return Array.prototype.filter.call(activeGrid.querySelectorAll('.active-card'), cardMatchesActiveFilters).length;
+    }
+
+    function cardMatchesActiveFilters(card) {
+        return cardMatchesActiveQuery(card) && !isDismissedActive(card.dataset.videoId);
+    }
+
+    function countDismissedActiveQueryCards() {
+        if (!activeGrid) return 0;
+        return Array.prototype.filter.call(activeGrid.querySelectorAll('.active-card'), function(card) {
+            return cardMatchesActiveQuery(card) && isDismissedActive(card.dataset.videoId);
+        }).length;
+    }
+
+    function getActiveAvailableCount() {
+        return countLoadedAvailableActiveQueryCards();
+    }
+
+    function hasActiveShowMore() {
+        return false;
+    }
+
+    function updateActiveShowMoreVisibility(visibleCount) {
+        return;
+    }
+
+    function getActiveSection() {
+        return document.querySelector('.requests-section');
+    }
+
+    function updateSectionCollapseButton(button, collapsed) {
+        var buttonLabel = button ? button.querySelector('.section-collapse-btn-label') : null;
+        var buttonText = collapsed ? showText : hideText;
+        if (button) {
+            button.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+            button.setAttribute('aria-label', buttonText);
+            button.setAttribute('title', buttonText);
+        }
+        if (buttonLabel) {
+            buttonLabel.textContent = buttonText;
+        }
+    }
+
+    function animateSectionBody(section, body, collapsed, animate) {
+        if (!section || !body) return;
+        var collapsedClass = section.classList.contains('requests-section') ? 'requests-section-collapsed' : 'section-collapsed';
+        body.style.overflow = 'hidden';
+        if (!animate) {
+            section.classList.toggle(collapsedClass, collapsed);
+            body.hidden = collapsed;
+            body.style.maxHeight = '';
+            body.style.opacity = '';
+            body.style.transform = '';
+            body.style.overflow = '';
+            return;
+        }
+        body.hidden = false;
+        var startHeight = collapsed ? body.scrollHeight : 0;
+        var endHeight = collapsed ? 0 : body.scrollHeight;
+        section.classList.toggle(collapsedClass, collapsed);
+        body.style.maxHeight = startHeight + 'px';
+        body.style.opacity = collapsed ? '1' : '0';
+        body.style.transform = collapsed ? 'translateY(0)' : 'translateY(-6px)';
+        void body.offsetHeight;
+        body.style.maxHeight = endHeight + 'px';
+        body.style.opacity = collapsed ? '0' : '1';
+        body.style.transform = 'translateY(0)';
+        window.setTimeout(function() {
+            body.hidden = collapsed;
+            body.style.maxHeight = '';
+            body.style.opacity = '';
+            body.style.transform = '';
+            body.style.overflow = '';
+        }, 260);
+    }
+
+    function syncActiveCollapsedState(animate) {
+        var section = getActiveSection();
+        var body = document.getElementById('active-section-body');
+        var button = document.getElementById('active-collapse-btn');
+        var collapsed = !!activeSectionCollapsed;
+        animateSectionBody(section, body, collapsed, !!animate);
+        updateSectionCollapseButton(button, collapsed);
+    }
+
+    function syncGenericSectionCollapsedState(sectionName, storageKey, animate) {
+        var section = document.getElementById(sectionName + '-section');
+        var body = document.getElementById(sectionName + '-section-body');
+        var button = document.getElementById(sectionName + '-collapse-btn');
+        var collapsed = readStoredSectionCollapsed(storageKey);
+        animateSectionBody(section, body, collapsed, !!animate);
+        updateSectionCollapseButton(button, collapsed);
+    }
+
+    function bindGenericSectionCollapse(sectionName, storageKey) {
+        var button = document.getElementById(sectionName + '-collapse-btn');
+        if (!button) return;
+        button.addEventListener('click', function() {
+            var collapsed = !readStoredSectionCollapsed(storageKey);
+            writeStoredSectionCollapsed(storageKey, collapsed);
+            syncGenericSectionCollapsedState(sectionName, storageKey, true);
+        });
+        syncGenericSectionCollapsedState(sectionName, storageKey, false);
+    }
+
+    function lockActiveSectionHeight() {
+        var section = getActiveSection();
+        if (!section) return;
+        var rect = section.getBoundingClientRect();
+        if (rect.height > 0) {
+            section.style.minHeight = Math.ceil(rect.height) + 'px';
+        }
+        section.classList.add('requests-section-updating');
+    }
+
+    function releaseActiveSectionHeight() {
+        var section = getActiveSection();
+        if (!section) return;
+        window.requestAnimationFrame(function() {
+            section.classList.remove('requests-section-updating');
+            section.style.minHeight = '';
+        });
+    }
+
+    function syncActiveSectionVisibility() {
+        var section = getActiveSection();
+        var emptyState = document.getElementById('active-empty-state');
+        var emptyTitle = document.getElementById('active-empty-title');
+        var emptyHint = document.getElementById('active-empty-hint');
+        var visibleCount = countVisibleActiveCards();
+        var matchingCount = countLoadedActiveQueryCards();
+        var shouldShowEmpty = !visibleCount;
+        if (section) {
+            section.style.display = '';
+        }
+        if (activeGrid) {
+            activeGrid.style.display = visibleCount ? '' : 'none';
+        }
+        if (emptyState) {
+            emptyState.style.display = shouldShowEmpty ? '' : 'none';
+        }
+        if (emptyTitle) {
+            emptyTitle.textContent = (hasActiveFilters() || matchingCount > 0) ? noVideosToShowText : noVideosFoundText;
+        }
+        if (emptyHint) {
+            emptyHint.textContent = hasActiveFilters() ? tryAnotherFilterText : activityHintText;
+        }
+        updateActiveShowMoreVisibility(visibleCount);
+    }
+
+    function dismissActiveCard(card) {
+        if (!card || !card.dataset.videoId) return;
+        if (!isDismissedActive(card.dataset.videoId)) {
+            dismissedActiveIds.push(card.dataset.videoId);
+            writeDismissedActive(dismissedActiveIds);
+        }
+        card.style.display = 'none';
+        filterRequests();
+    }
+
+    function ensureActiveDismissControl(card) {
+        if (!card || card.querySelector('.active-dismiss-btn')) return;
+        var dismiss = document.createElement('span');
+        dismiss.className = 'active-dismiss-btn';
+        dismiss.setAttribute('role', 'button');
+        dismiss.setAttribute('tabindex', '0');
+        dismiss.setAttribute('aria-label', dismissText);
+        dismiss.setAttribute('title', dismissText);
+        dismiss.innerHTML = activeDismissIconMarkup;
+        card.insertBefore(dismiss, card.firstChild);
+    }
+
+    function bindActiveDismiss(card) {
+        if (!card) return;
+        ensureActiveDismissControl(card);
+        var dismiss = card.querySelector('.active-dismiss-btn');
+        if (!dismiss || dismiss.dataset.boundDismiss === '1') return;
+        dismiss.dataset.boundDismiss = '1';
+        dismiss.addEventListener('click', function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            dismissActiveCard(card);
+        });
+        dismiss.addEventListener('keydown', function(event) {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            event.preventDefault();
+            event.stopPropagation();
+            dismissActiveCard(card);
+        });
+    }
+
+    function bindActiveDismissAll() {
+        document.querySelectorAll('.active-card').forEach(bindActiveDismiss);
+    }
 
     if (allowedChannelCount > 0 && initialChannelCacheUpdatedAt === 0) {
         var reloadPolls = 0;
@@ -365,15 +714,36 @@
         var statusNode = options.statusNode;
         var loading = false;
         var blockedOnError = false;
+        var retryTimer = 0;
         var visibleCheckQueued = false;
 
         function setStatus(text) {
             if (statusNode) statusNode.textContent = text || '';
         }
 
+        function clearRetry() {
+            if (retryTimer) {
+                window.clearTimeout(retryTimer);
+                retryTimer = 0;
+            }
+        }
+
+        function scheduleRetry(delayMs) {
+            clearRetry();
+            retryTimer = window.setTimeout(function() {
+                retryTimer = 0;
+                blockedOnError = false;
+                syncVisibility();
+                queueVisibleCheck();
+            }, Math.max(delayMs || 0, 500));
+        }
+
         function syncVisibility() {
             if (wrap) wrap.style.display = options.hasMore() ? '' : 'none';
-            if (!options.hasMore()) blockedOnError = false;
+            if (!options.hasMore()) {
+                blockedOnError = false;
+                clearRetry();
+            }
             if (loading) setStatus(loadingText);
             else if (blockedOnError) setStatus(failedToLoadText);
             else setStatus('');
@@ -394,9 +764,13 @@
             }
             Promise.resolve(loadResult)
                 .then(function() {
+                    clearRetry();
                     blockedOnError = false;
-                }, function() {
+                }, function(err) {
                     blockedOnError = true;
+                    if (err && err.retryAfterMs) {
+                        scheduleRetry(err.retryAfterMs);
+                    }
                 })
                 .then(function() {
                     loading = false;
@@ -466,10 +840,15 @@
         a.href = '/watch/' + encodeURIComponent(v.video_id);
         a.className = 'video-card';
         a.dataset.channel = v.channel_id || v.channel_name || '';
+        a.dataset.channelId = v.channel_id || '';
+        a.dataset.channelName = v.channel_name || '';
         a.dataset.category = v.category || 'fun';
         a.dataset.videoId = v.video_id || '';
         var dur = v.duration ? '<span class="duration-badge">' + escapeHtml(formatDuration(v.duration)) + '</span>' : '';
         var catBadge = v.category ? '<span class="category-badge category-' + escapeHtml(v.category) + '">' + (v.category === 'edu' ? eduShortLabel : funShortLabel) + '</span>' : '';
+        var progressBar = (v.progress_seconds && v.duration)
+            ? '<span class="watch-progress"><span class="watch-progress-fill" style="width:' + escapeHtml(String(Math.max(0, Math.min(100, Math.round((v.progress_seconds / v.duration) * 100))))) + '%"></span></span>'
+            : '';
         var viewsLabel = viewsLabelTemplate.replace('__VIEWS__', escapeHtml(formatViews(v.view_count || v.yt_view_count)));
         // eslint-disable-next-line no-unsanitized/property -- values are escaped via escapeHtml()
         a.innerHTML =
@@ -477,6 +856,7 @@
                 '<img src="' + escapeHtml(v.thumbnail_url || '') + '" alt="' + escapeHtml(v.title || '') + '" class="video-thumbnail" loading="lazy">' +
                 dur +
                 catBadge +
+                progressBar +
             '</div>' +
             '<div class="video-info">' +
                 '<h3 class="video-title">' + escapeHtml(v.title || '') + '</h3>' +
@@ -496,17 +876,33 @@
     var activeCatFilter = '';
     var filterOffset = 0;
     var filterHasMore = false;
+    var catalogFilterLoading = false;
     // Stash initial HTML so we can restore on "All"
     var initialGridHTML = catalogGrid ? catalogGrid.innerHTML : '';
     var initialOffset = catalogOffset;
     var initialHasMore = {{ 'true' if has_more else 'false' }};
     var showMoreText = {{ t("Show More") | tojson }};
+    var catalogRetryAfterUntil = 0;
 
     function fetchCatalog(channel, offset, limit, replace) {
+        if (Date.now() < catalogRetryAfterUntil) {
+            return Promise.reject(new Error('catalog'));
+        }
         var url = '/api/catalog?offset=' + offset + '&limit=' + limit;
         if (channel) url += '&channel=' + encodeURIComponent(channel);
         if (activeCatFilter) url += '&category=' + encodeURIComponent(activeCatFilter);
-        return fetch(url).then(function(r) { return r.json(); }).then(function(data) {
+        return fetch(url).then(function(r) {
+            if (!r.ok) {
+                var error = new Error('catalog');
+                if (r.status === 429) {
+                    error.retryAfterMs = parseFloat(r.headers.get('Retry-After') || '3') * 1000;
+                    catalogRetryAfterUntil = Date.now() + error.retryAfterMs;
+                }
+                throw error;
+            }
+            catalogRetryAfterUntil = 0;
+            return r.json();
+        }).then(function(data) {
             if (replace) catalogGrid.textContent = '';
             if (data.videos.length === 0 && replace) {
                 showGridPlaceholder(catalogGrid, noVideosFoundText);
@@ -518,6 +914,7 @@
     }
 
     function updateShowMoreAfterFilter(data) {
+        catalogFilterLoading = false;
         filterOffset = data.videos.length;
         filterHasMore = data.has_more;
         if (autoloadEnabled) {
@@ -537,6 +934,7 @@
     }
 
     function showFilterError() {
+        catalogFilterLoading = false;
         showGridPlaceholder(catalogGrid, failedToLoadText, '#888');
         filterHasMore = false;
         if (autoloadEnabled) catalogAutoPager.update();
@@ -569,9 +967,11 @@
 
             activeFilter = channel;
             activeCatFilter = '';
+            catalogFilterLoading = true;
             document.querySelectorAll('.cat-card, .cat-card-all').forEach(function(p) { p.classList.remove('active'); });
             var allCatPill = document.querySelector('.cat-card-all[data-category="__all__"]');
             if (allCatPill) allCatPill.classList.add('active');
+            filterRequests();
             showGridPlaceholder(catalogGrid, loadingText);
 
             fetchCatalog(channel, 0, PAGE_SIZE, true)
@@ -607,9 +1007,10 @@
             }
 
             activeCatFilter = category;
-            filterShorts(category);
-            filterRequests(category);
             activeFilter = '';  // clear channel filter
+            catalogFilterLoading = true;
+            filterShorts(category);
+            filterRequests();
             // Also reset channel pills
             document.querySelectorAll('.channel-pill').forEach(function(p) { p.classList.remove('active'); });
             var allChPill = document.querySelector('.channel-pill[data-channel="__all__"]');
@@ -638,27 +1039,19 @@
         if (shortsAutoPager) shortsAutoPager.update();
     }
 
-    function filterRequests(category) {
-        document.querySelectorAll('.requests-card').forEach(function(card) {
-            if (!category || card.dataset.category === category) {
-                card.style.display = '';
-            } else {
-                card.style.display = 'none';
-            }
+    function filterRequests() {
+        document.querySelectorAll('.active-card').forEach(function(card) {
+            card.style.display = cardMatchesActiveFilters(card) ? '' : 'none';
         });
-        var section = document.querySelector('.requests-section');
-        if (section) {
-            var visible = section.querySelectorAll('.requests-card:not([style*="display:none"])');
-            section.style.display = visible.length ? '' : 'none';
-        }
-        if (requestsAutoPager) requestsAutoPager.update();
+        syncActiveSectionVisibility();
     }
 
     function restoreAll() {
         activeFilter = '';
         activeCatFilter = '';
         filterShorts('');
-        filterRequests('');
+        bindActiveDismissAll();
+        filterRequests();
         catalogGrid.textContent = '';
         var tmp = document.createElement('div');
         tmp.innerHTML = initialGridHTML;
@@ -667,7 +1060,6 @@
         if (autoloadEnabled) {
             catalogAutoPager.update();
             if (shortsAutoPager) shortsAutoPager.update();
-            if (requestsAutoPager) requestsAutoPager.update();
         } else {
             if (showMoreWrap) showMoreWrap.style.display = initialHasMore ? '' : 'none';
             if (showMoreBtn) { showMoreBtn.disabled = false; showMoreBtn.textContent = showMoreText; }
@@ -696,7 +1088,7 @@
     // -- Autoload ON: IntersectionObserver pagers --
     var catalogAutoPager = { update: function() {} };
     var shortsAutoPager = null;
-    var requestsAutoPager = null;
+    var activeAutoPager = null;
 
     if (autoloadEnabled) {
         catalogAutoPager = setupAutoPager({
@@ -704,6 +1096,7 @@
             sentinel: showMoreSentinel,
             statusNode: showMoreStatus,
             hasMore: function() {
+                if (catalogFilterLoading) return false;
                 return (activeFilter || activeCatFilter) ? filterHasMore : initialHasMore;
             },
             loadMore: loadMoreCatalog
@@ -762,7 +1155,16 @@
 
     function loadMoreShorts() {
         return fetch('/api/catalog?shorts=true&offset=' + shortsOffset + '&limit=' + SHORTS_PAGE)
-            .then(function(r) { return r.json(); })
+            .then(function(r) {
+                if (!r.ok) {
+                    var error = new Error('shorts');
+                    if (r.status === 429) {
+                        error.retryAfterMs = parseFloat(r.headers.get('Retry-After') || '3') * 1000;
+                    }
+                    throw error;
+                }
+                return r.json();
+            })
             .then(function(data) {
                 data.videos.forEach(function(v) { shortsRow.appendChild(buildShortsCard(v)); });
                 shortsOffset += data.videos.length;
@@ -803,48 +1205,24 @@
         });
     }
 
-    // Requests
-    var requestsGrid = document.getElementById('requests-grid');
-    var requestsShowMoreWrap = document.getElementById('requests-show-more-wrap');
-    var requestsShowMoreSentinel = document.getElementById('requests-show-more-sentinel');
-    var requestsShowMoreStatus = document.getElementById('requests-show-more-status');
-    var requestsShowMoreBtn = document.getElementById('requests-show-more-btn');
-    var requestsOffset = {{ requests_row | length }};
-    var REQUESTS_PAGE = 24;
-    var requestsHasMore = {{ 'true' if has_more_requests else 'false' }};
-
-    function loadMoreRequests() {
-        return fetch('/api/catalog?requests=true&offset=' + requestsOffset + '&limit=' + REQUESTS_PAGE)
-            .then(function(r) { return r.json(); })
-            .then(function(data) {
-                data.videos.forEach(function(v) {
-                    var card = buildCard(v);
-                    card.classList.add('requests-card');
-                    if (activeCatFilter && (v.category || 'fun') !== activeCatFilter) {
-                        card.style.display = 'none';
-                    }
-                    requestsGrid.appendChild(card);
-                });
-                requestsOffset += data.videos.length;
-                requestsHasMore = data.has_more;
-                filterRequests(activeCatFilter);
-                return data;
-            });
-    }
-
-    if (autoloadEnabled) {
-        requestsAutoPager = setupAutoPager({
-            wrap: requestsShowMoreWrap,
-            sentinel: requestsShowMoreSentinel,
-            statusNode: requestsShowMoreStatus,
-            hasMore: function() { return requestsHasMore; },
-            loadMore: loadMoreRequests
+    // Active
+    var activeGrid = document.getElementById('active-grid');
+    var activeCollapseBtn = document.getElementById('active-collapse-btn');
+    var activeFillPromise = null;
+    var activeFilterPriming = false;
+    if (activeCollapseBtn) {
+        activeCollapseBtn.addEventListener('click', function() {
+            writeActiveSectionCollapsed(!activeSectionCollapsed);
+            syncActiveCollapsedState();
         });
     }
 
-    if (!autoloadEnabled) {
-        attachShowMoreBtn(requestsShowMoreBtn, requestsShowMoreWrap, loadMoreRequests);
-    }
+    syncActiveCollapsedState();
+    bindGenericSectionCollapse('catalog', catalogCollapsedKey);
+    bindGenericSectionCollapse('shorts', shortsCollapsedKey);
+    bindActiveDismissAll();
+    filterRequests();
+    syncActiveSectionVisibility();
 })();
 </script>
 {% endblock %}
