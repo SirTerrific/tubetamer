@@ -88,6 +88,7 @@ var playbackStorageKey = 'brg-watch-position:' + profileId + ':' + videoId;
 var positionSaveInterval = null;
 var restoredPlayback = false;
 var autoplayPending = true;
+var exitFlushSent = false;
 
 function loadPlaybackPosition() {
     try {
@@ -153,6 +154,7 @@ function isPageActive() {
 function attemptAutoplayIfActive() {
     if (!autoplayPending || !player || !player.playVideo) return;
     if (!isPageActive()) return;
+    exitFlushSent = false;
     autoplayPending = false;
     player.playVideo();
 }
@@ -279,6 +281,7 @@ var endCheckInterval = null;
 function onPlayerStateChange(event) {
     if (event.data === YT.PlayerState.PLAYING) {
         isPlaying = true;
+        exitFlushSent = false;
         autoplayPending = false;
         hidePauseOverlay();
         restorePlaybackPosition();
@@ -493,6 +496,8 @@ function sendHeartbeat() {
 function flushWatchProgressOnExit() {
     var positionSeconds = Math.floor(getCurrentPlaybackSeconds());
     if (playSeconds <= 0 && positionSeconds <= 0) return;
+    if (exitFlushSent) return;
+    exitFlushSent = true;
     var secs = Math.min(Math.max(playSeconds, 0), 60);
     playSeconds = 0;
     var payload = JSON.stringify({video_id: videoId, seconds: secs, position_seconds: positionSeconds});
@@ -537,13 +542,17 @@ window.addEventListener('pagehide', function() {
     savePlaybackPosition();
     flushWatchProgressOnExit();
 });
-window.addEventListener('focus', attemptAutoplayIfActive);
+window.addEventListener('focus', function() {
+    exitFlushSent = false;
+    attemptAutoplayIfActive();
+});
 document.addEventListener('visibilitychange', function() {
     if (document.visibilityState === 'hidden') {
         savePlaybackPosition();
         flushWatchProgressOnExit();
         return;
     }
+    exitFlushSent = false;
     attemptAutoplayIfActive();
 });
 </script>
