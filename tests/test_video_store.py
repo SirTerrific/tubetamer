@@ -332,6 +332,62 @@ class TestVideoStoreWatchTracking:
         assert batch["bat_1234567"] == 2.0
         assert batch["bat_2345678"] == 4.0
 
+    def test_get_active_videos_excludes_completed(self, video_store):
+        video_store.add_video("new_1234567", "Fresh", "Ch", duration=120)
+        video_store.update_status("new_1234567", "approved")
+
+        video_store.add_video("part1234567", "Partial", "Ch", duration=200)
+        video_store.update_status("part1234567", "approved")
+        video_store.record_view("part1234567")
+        video_store.record_watch_seconds("part1234567", 60)
+
+        video_store.add_video("done1234567", "Done", "Ch", duration=100)
+        video_store.update_status("done1234567", "approved")
+        video_store.record_view("done1234567")
+        video_store.record_watch_seconds("done1234567", 95)
+
+        active = {video["video_id"] for video in video_store.get_active_videos()}
+        assert "new_1234567" in active
+        assert "part1234567" in active
+        assert "done1234567" not in active
+
+    def test_get_watch_history_orders_by_last_viewed(self, video_store):
+        video_store.add_video("hist1234567", "Older", "Ch")
+        video_store.update_status("hist1234567", "approved")
+        video_store.record_view("hist1234567")
+
+        video_store.add_video("hist2345678", "Newer", "Ch")
+        video_store.update_status("hist2345678", "approved")
+        video_store.record_view("hist2345678")
+
+        video_store.conn.execute(
+            "UPDATE videos SET last_viewed_at = ? WHERE video_id = ?",
+            ("2026-03-10 12:00:00", "hist1234567"),
+        )
+        video_store.conn.execute(
+            "UPDATE videos SET last_viewed_at = ? WHERE video_id = ?",
+            ("2026-03-11 12:00:00", "hist2345678"),
+        )
+        video_store.conn.commit()
+
+        history = video_store.get_watch_history()
+        assert [video["video_id"] for video in history[:2]] == ["hist2345678", "hist1234567"]
+
+    def test_get_watch_history_page(self, video_store):
+        for idx in range(3):
+            video_id = f"pagedhist{idx}"
+            video_store.add_video(video_id, f"Video {idx}", "Ch")
+            video_store.update_status(video_id, "approved")
+            video_store.record_view(video_id)
+        video_store.conn.execute("UPDATE videos SET last_viewed_at = '2026-03-10 12:00:00' WHERE video_id = 'pagedhist0'")
+        video_store.conn.execute("UPDATE videos SET last_viewed_at = '2026-03-11 12:00:00' WHERE video_id = 'pagedhist1'")
+        video_store.conn.execute("UPDATE videos SET last_viewed_at = '2026-03-12 12:00:00' WHERE video_id = 'pagedhist2'")
+        video_store.conn.commit()
+
+        page, total = video_store.get_watch_history_page(offset=1, limit=1)
+        assert total == 3
+        assert [video["video_id"] for video in page] == ["pagedhist1"]
+
 
 class TestVideoStoreSearch:
     def test_update_playback_position(self, video_store):
