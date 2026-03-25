@@ -70,6 +70,13 @@ class ChildStore:
 
     def get_active_videos(self, limit=50):
         return self._store.get_active_videos(limit, profile_id=self.profile_id)
+
+    def get_watch_history(self, limit=200):
+        return self._store.get_watch_history(limit, profile_id=self.profile_id)
+
+    def get_watch_history_page(self, offset=0, limit=50):
+        return self._store.get_watch_history_page(offset, limit, profile_id=self.profile_id)
+
     def update_status(self, video_id, status):
         return self._store.update_status(video_id, status, profile_id=self.profile_id)
 

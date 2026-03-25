@@ -9,9 +9,9 @@ TRANSLATIONS: dict[str, str] = {
     "Dismiss": "Dismiss",
     "Hide": "Hide",
     "Revoked!": "Revoked!",
-    "Today": "Today",
-    "Videos you start will appear here": "Videos you start will appear here",
-    "Try another filter": "Try another filter",
-    "Yesterday": "Yesterday",
     "Show": "Show",
+    "Today": "Today",
+    "Try another filter": "Try another filter",
+    "Videos you start will appear here": "Videos you start will appear here",
+    "Yesterday": "Yesterday",
 }
