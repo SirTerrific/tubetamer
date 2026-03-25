@@ -302,18 +302,18 @@ class TestPageLoads:
 
     def test_active_catalog_excludes_dismissed_ids(self, auth_client, store):
         cs = ChildStore(store, "default")
-        cs.add_video("activekeep01", "Keep Active", "Test Channel", duration=180)
-        cs.update_status("activekeep01", "approved")
-        cs.add_video("activedrop01", "Drop Active", "Test Channel", duration=180)
-        cs.update_status("activedrop01", "approved")
+        cs.add_video("activekeep1", "Keep Active", "Test Channel", duration=180)
+        cs.update_status("activekeep1", "approved")
+        cs.add_video("activedrop1", "Drop Active", "Test Channel", duration=180)
+        cs.update_status("activedrop1", "approved")
 
-        resp = auth_client.get("/api/catalog?active=true&dismissed=activedrop01")
+        resp = auth_client.get("/api/catalog?active=true&dismissed=activedrop1")
 
         assert resp.status_code == 200
         payload = resp.json()
         video_ids = {video["video_id"] for video in payload["videos"]}
-        assert "activekeep01" in video_ids
-        assert "activedrop01" not in video_ids
+        assert "activekeep1" in video_ids
+        assert "activedrop1" not in video_ids
 
     def test_active_row_styles_hide_dismiss_until_hover(self, client):
         resp = client.get("/static/style.css")

@@ -4,6 +4,7 @@ from fastapi import APIRouter, Request, Query
 from fastapi.responses import JSONResponse
 
 from web.shared import limiter
+from web.helpers import VIDEO_ID_RE
 from web.cache import build_active_row, build_catalog, build_shorts_catalog, get_profile_cache
 
 router = APIRouter()
@@ -33,7 +34,7 @@ async def api_catalog(
                 if v.get("channel_id") == channel or v.get("channel_name") == channel
             ]
         if dismissed:
-            dismissed_ids = {item for item in dismissed.split(",") if item}
+            dismissed_ids = {item for item in dismissed.split(",") if item and VIDEO_ID_RE.match(item)}
             if dismissed_ids:
                 full = [v for v in full if v.get("video_id") not in dismissed_ids]
     elif shorts:

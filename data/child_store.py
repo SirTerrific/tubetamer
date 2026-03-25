@@ -104,6 +104,9 @@ class ChildStore:
     def get_batch_watch_minutes(self, video_ids):
         return self._store.get_batch_watch_minutes(video_ids, profile_id=self.profile_id)
 
+    def get_batch_progress_info(self, video_ids):
+        return self._store.get_batch_progress_info(video_ids, profile_id=self.profile_id)
+
     def get_daily_watch_minutes(self, date_str, utc_bounds=None):
         return self._store.get_daily_watch_minutes(date_str, utc_bounds, profile_id=self.profile_id)
 

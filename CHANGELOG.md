@@ -1,4 +1,23 @@
 # Changelog
+## v1.31.0 - 2026-03-25
+
+**Added**
+- Watch history page: `/history` accessible from avatar dropdown, grouped by day with progress bars and infinite scroll (PR #33 — thanks @NoLooseEnds)
+- Activity row: homepage "Your Requests" reworked to "Activity" showing 6 most recent unfinished videos with progress bars, dismiss controls, and collapse/expand toggles (PR #34 — thanks @NoLooseEnds)
+- Progress bars on channel video catalog cards showing playback progress (PR #34)
+- Section collapse/expand toggles for all homepage sections with localStorage persistence (PR #34)
+- Requests page: `/requests` for one-off video approvals (pending + approved outside allowed channels) (PR #35 — thanks @NoLooseEnds)
+- Channel pills alphabetized on homepage (PR #34)
+- Rate limit handler returns JSON for `/api/` routes instead of HTML (PR #33)
+
+**Fixed**
+- `position_seconds` heartbeat field bounded to [0, 86400] — prevents arbitrary integers in database
+- `dismissed` catalog param validated against video ID regex for consistency with security model
+- `_annotate_progress` replaced full approved-videos table scan with targeted batch query — single JOIN instead of two separate queries
+- `get_active_videos` SQL includes `resume_seconds` in completion check — prevents phantom gap where SQL LIMIT applied before Python filter could return fewer results than available
+- `HAVING` clause includes `OR v.duration IS NULL` — partially-watched videos without stored duration no longer silently dropped
+- History infinite scroll retries on all fetch errors (not just HTTP 429)
+
 ## v1.30.0 - 2026-03-17
 
 **Added**

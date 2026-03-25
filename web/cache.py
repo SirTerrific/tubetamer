@@ -366,21 +366,16 @@ def _annotate_progress(videos: list[dict], child_store: ChildStore | None) -> li
     if not video_ids:
         return copied
 
-    watch_minutes = child_store.get_batch_watch_minutes(video_ids)
-    approved_by_id = {
-        video.get("video_id", ""): video
-        for video in child_store.get_by_status("approved")
-        if video.get("video_id")
-    }
+    progress_info = child_store.get_batch_progress_info(video_ids)
     for video in copied:
         video_id = video.get("video_id", "")
         if not video_id:
             continue
-        db_video = approved_by_id.get(video_id, {})
-        duration = int(video.get("duration") or db_video.get("duration") or 0)
+        db_info = progress_info.get(video_id, {})
+        duration = int(video.get("duration") or db_info.get("duration") or 0)
         progress_seconds = max(
-            int(round(watch_minutes.get(video_id, 0.0) * 60)),
-            int(video.get("resume_seconds") or db_video.get("resume_seconds") or 0),
+            int(round(db_info.get("watch_minutes", 0.0) * 60)),
+            int(video.get("resume_seconds") or db_info.get("resume_seconds") or 0),
         )
         if duration > 0 and progress_seconds > 0:
             video["progress_seconds"] = max(0, min(progress_seconds, duration))

@@ -572,7 +572,8 @@ class VideoStore:
             cursor = self.conn.execute(
                 """
                 SELECT v.*,
-                       COALESCE(SUM(w.duration), 0) AS watched_seconds
+                       COALESCE(SUM(w.duration), 0) AS watched_seconds,
+                       MAX(COALESCE(v.resume_seconds, 0), COALESCE(SUM(w.duration), 0)) AS progress_seconds
                 FROM videos v
                 LEFT JOIN watch_log w
                   ON w.video_id = v.video_id
@@ -581,29 +582,17 @@ class VideoStore:
                   AND v.is_short = 0
                   AND v.profile_id = ?
                 GROUP BY v.id
-                HAVING watched_seconds = 0
-                    OR (v.duration IS NOT NULL AND watched_seconds < (v.duration * 0.95))
+                HAVING progress_seconds = 0
+                    OR v.duration IS NULL
+                    OR progress_seconds < (v.duration * 0.95)
                 ORDER BY
-                    CASE WHEN watched_seconds > 0 THEN 0 ELSE 1 END,
+                    CASE WHEN progress_seconds > 0 THEN 0 ELSE 1 END,
                     COALESCE(v.last_viewed_at, v.decided_at, v.requested_at) DESC
                 LIMIT ?
                 """,
                 (profile_id, limit),
             )
-            active = []
-            for row in cursor.fetchall():
-                item = dict(row)
-                resume_seconds = int(item.get("resume_seconds") or 0)
-                watched_seconds = int(item.get("watched_seconds") or 0)
-                progress_seconds = max(watched_seconds, resume_seconds)
-                duration = item.get("duration")
-                item["progress_seconds"] = progress_seconds
-                if progress_seconds == 0:
-                    active.append(item)
-                    continue
-                if duration and progress_seconds < (duration * 0.95):
-                    active.append(item)
-            return active
+            return [dict(row) for row in cursor.fetchall()]
 
     def get_watch_history(self, limit: int = 200, profile_id: str = "default") -> list[dict]:
         """Get watched videos ordered by most recent watch date for a profile."""
@@ -866,6 +855,31 @@ class VideoStore:
                 if vid not in result:
                     result[vid] = 0.0
             return result
+
+    def get_batch_progress_info(self, video_ids: list[str],
+                               profile_id: str = "default") -> dict[str, dict]:
+        """Get watch minutes, resume_seconds, and duration for multiple videos."""
+        if not video_ids:
+            return {}
+        with self._lock:
+            placeholders = ",".join("?" for _ in video_ids)
+            cursor = self.conn.execute(
+                f"SELECT v.video_id, COALESCE(SUM(w.duration), 0), "
+                f"       v.resume_seconds, v.duration "
+                f"FROM videos v "
+                f"LEFT JOIN watch_log w ON w.video_id = v.video_id AND w.profile_id = v.profile_id "
+                f"WHERE v.video_id IN ({placeholders}) AND v.profile_id = ? AND v.status = 'approved' "
+                f"GROUP BY v.video_id",
+                video_ids + [profile_id],
+            )
+            return {
+                row[0]: {
+                    "watch_minutes": (row[1] or 0) / 60.0,
+                    "resume_seconds": row[2] or 0,
+                    "duration": row[3] or 0,
+                }
+                for row in cursor.fetchall()
+            }
 
     def get_daily_watch_minutes(self, date_str: str, utc_bounds: tuple[str, str] | None = None,
                                 profile_id: str = "default") -> float:

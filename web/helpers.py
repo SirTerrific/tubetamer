@@ -5,7 +5,7 @@ import re
 import secrets
 
 from fastapi import Request
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from data.child_store import ChildStore
 from i18n import format_time, normalize_locale, normalize_time_format, t
@@ -46,7 +46,7 @@ _HEARTBEAT_EVICT_AGE = 120     # evict entries older than this (seconds)
 class HeartbeatRequest(BaseModel):
     video_id: str
     seconds: int
-    position_seconds: Optional[int] = None
+    position_seconds: Optional[int] = Field(None, ge=0, le=86400)
 
 
 # ---------------------------------------------------------------------------

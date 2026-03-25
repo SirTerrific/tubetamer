@@ -197,9 +197,7 @@
             })
             .catch(function(err) {
                 blockedOnError = true;
-                if (err && err.retryAfterMs) {
-                    scheduleRetry(err.retryAfterMs);
-                }
+                scheduleRetry((err && err.retryAfterMs) || 5000);
             })
             .finally(function() {
                 loading = false;
