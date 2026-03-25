@@ -2387,6 +2387,7 @@ main {
     color: var(--accent);
 }
 
+.avatar-menu-link + .avatar-menu-link,
 .avatar-menu-link + .avatar-switch-link {
     border-top: none;
     padding-top: 10px;
