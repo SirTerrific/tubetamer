@@ -1,4 +1,4 @@
-"""67guard Telegram Bot - parent approval for YouTube videos."""
+"""TubeTamer Telegram Bot - parent approval for YouTube videos."""
 
 import asyncio
 import logging
@@ -40,7 +40,7 @@ from i18n import (
 logger = logging.getLogger(__name__)
 
 
-class BrainRotGuardBot(SetupMixin, ApprovalMixin, ChannelMixin, TimeLimitMixin, CommandsMixin, ActivityMixin):
+class TubeTamerBot(SetupMixin, ApprovalMixin, ChannelMixin, TimeLimitMixin, CommandsMixin, ActivityMixin):
     """Telegram bot for parent video approval."""
 
     def __init__(self, bot_token: str, admin_chat_id: str, video_store, config=None,
@@ -231,7 +231,7 @@ class BrainRotGuardBot(SetupMixin, ApprovalMixin, ChannelMixin, TimeLimitMixin, 
 
     async def start(self) -> None:
         """Start the bot."""
-        logger.info("Starting 67guard bot...")
+        logger.info("Starting TubeTamer bot...")
         from telegram.request import HTTPXRequest
         request = HTTPXRequest(
             connect_timeout=10.0, read_timeout=15.0, write_timeout=15.0,
@@ -266,7 +266,7 @@ class BrainRotGuardBot(SetupMixin, ApprovalMixin, ChannelMixin, TimeLimitMixin, 
         await self._app.initialize()
         await self._app.start()
         await self._app.updater.start_polling(drop_pending_updates=True)
-        logger.info("67guard bot started")
+        logger.info("TubeTamer bot started")
 
         # First-run: send setup hub if channel list is empty
         if not self.video_store.get_channel_handles_set():
@@ -294,11 +294,11 @@ class BrainRotGuardBot(SetupMixin, ApprovalMixin, ChannelMixin, TimeLimitMixin, 
         if self._update_check_task:
             self._update_check_task.cancel()
         if self._app:
-            logger.info("Stopping 67guard bot...")
+            logger.info("Stopping TubeTamer bot...")
             await self._app.updater.stop()
             await self._app.stop()
             await self._app.shutdown()
-            logger.info("67guard bot stopped")
+            logger.info("TubeTamer bot stopped")
 
     async def _version_check_loop(self) -> None:
         """Periodically check GitHub for new releases. Stops after notifying."""

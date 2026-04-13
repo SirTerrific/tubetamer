@@ -1,10 +1,10 @@
 # Telegram Commands
 
-Once 67guard is running, these commands are available in your Telegram chat with the bot.
+Once TubeTamer is running, these commands are available in your Telegram chat with the bot.
 
 ## Getting Started
 
-**New to 67guard? Start here.** Run `/setup` in Telegram and the bot walks you through everything — adding children, setting time limits, importing channels, and configuring Shorts. No need to memorize commands; the wizard uses inline buttons for each step.
+**New to TubeTamer? Start here.** Run `/setup` in Telegram and the bot walks you through everything — adding children, setting time limits, importing channels, and configuring Shorts. No need to memorize commands; the wizard uses inline buttons for each step.
 
 | Command | What It Does |
 |---------|-------------|

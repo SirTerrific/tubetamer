@@ -2,7 +2,7 @@
 
 import asyncio
 
-from bot.telegram_bot import BrainRotGuardBot
+from bot.telegram_bot import TubeTamerBot
 from config import AppConfig, Config
 from data.video_store import VideoStore
 
@@ -59,10 +59,10 @@ class _FailingMarkdownBot:
             raise RuntimeError("markdown failed")
 
 
-def _make_bot(tmp_path, locale: str = "nb") -> tuple[BrainRotGuardBot, VideoStore]:
+def _make_bot(tmp_path, locale: str = "nb") -> tuple[TubeTamerBot, VideoStore]:
     store = VideoStore(str(tmp_path / "videos.db"))
     store.create_profile("default", "Default")
-    bot = BrainRotGuardBot(
+    bot = TubeTamerBot(
         bot_token="token",
         admin_chat_id="-100123456",
         video_store=store,

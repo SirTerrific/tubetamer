@@ -1,4 +1,4 @@
-"""Configuration management for 67guard."""
+"""Configuration management for TubeTamer."""
 
 import logging
 import os

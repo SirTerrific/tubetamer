@@ -1,4 +1,4 @@
-"""Shared utilities for 67guard."""
+"""Shared utilities for TubeTamer."""
 
 import logging
 import re

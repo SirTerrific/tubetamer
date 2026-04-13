@@ -1,4 +1,4 @@
-"""Minimal localization helpers for 67guard."""
+"""Minimal localization helpers for TubeTamer."""
 
 from __future__ import annotations
 

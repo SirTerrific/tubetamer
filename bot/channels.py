@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 class ChannelMixin:
-    """Channel management methods extracted from BrainRotGuardBot."""
+    """Channel management methods extracted from TubeTamerBot."""
 
     _CHANNEL_PAGE_SIZE = 10
     _STARTER_PAGE_SIZE = 10

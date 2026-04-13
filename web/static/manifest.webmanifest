@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "67guard",
-  "short_name": "67guard",
+  "name": "TubeTamer",
+  "short_name": "TubeTamer",
   "description": "Kid-friendly YouTube approval system with parent review and tablet playback.",
   "start_url": "/",
   "scope": "/",

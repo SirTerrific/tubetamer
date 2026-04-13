@@ -1,5 +1,5 @@
 """
-SQLite-backed video storage for 67guard.
+SQLite-backed video storage for TubeTamer.
 Tracks video requests, approval status, view history, watch time, and channel lists.
 Supports per-child profiles with isolated data.
 """

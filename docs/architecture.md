@@ -1,6 +1,6 @@
 # Architecture
 
-<img src="architecture.png" alt="67guard architecture diagram showing FastAPI web routes, API endpoints, Telegram bot commands, SQLite database, and external services" width="900">
+<img src="architecture.png" alt="TubeTamer architecture diagram showing FastAPI web routes, API endpoints, Telegram bot commands, SQLite database, and external services" width="900">
 
 ## Request Flow
 

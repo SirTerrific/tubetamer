@@ -209,7 +209,7 @@ class TestBuildArgs:
         assert _build_args(route, ["test", "not_a_number"]) is None
 
 
-# -- Route table used by BrainRotGuardBot ------------------------------------
+# -- Route table used by TubeTamerBot ------------------------------------
 
 class TestBotRouteTable:
     """Verify the actual route table from the bot class has no duplicate prefixes
@@ -217,8 +217,8 @@ class TestBotRouteTable:
 
     @pytest.fixture
     def bot_routes(self):
-        from bot.telegram_bot import BrainRotGuardBot
-        return BrainRotGuardBot._CALLBACK_ROUTES
+        from bot.telegram_bot import TubeTamerBot
+        return TubeTamerBot._CALLBACK_ROUTES
 
     def test_all_routes_have_handler(self, bot_routes):
         for route in bot_routes:
@@ -235,10 +235,10 @@ class TestBotRouteTable:
             seen.add(p)
 
     def test_all_handlers_exist_on_bot(self, bot_routes):
-        from bot.telegram_bot import BrainRotGuardBot
+        from bot.telegram_bot import TubeTamerBot
         for route in bot_routes:
-            assert hasattr(BrainRotGuardBot, route.handler), \
-                f"Handler {route.handler} not found on BrainRotGuardBot"
+            assert hasattr(TubeTamerBot, route.handler), \
+                f"Handler {route.handler} not found on TubeTamerBot"
 
     def test_route_count(self, bot_routes):
         # Sanity check: we should have a reasonable number of routes

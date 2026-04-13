@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 class CommandsMixin:
-    """General command methods extracted from BrainRotGuardBot."""
+    """General command methods extracted from TubeTamerBot."""
 
     async def _cmd_child(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Manage child profiles. /child [add|remove|rename|pin]."""
@@ -186,7 +186,7 @@ class CommandsMixin:
             return
         from version import __version__
         help_link = self.tr("📖 [Full command reference]({url})\n",
-                            url="https://github.com/SirTerrific/67guard/blob/main/docs/telegram-commands.md")
+                            url="https://github.com/SirTerrific/tubetamer/blob/main/docs/telegram-commands.md")
         await update.effective_message.reply_text(_md(
             self.tr(
                 "**{app_name} v{version}**\n\n"

@@ -9,7 +9,7 @@ from telegram import InlineKeyboardButton
 
 MD2 = "MarkdownV2"
 
-_GITHUB_REPO = "SirTerrific/67guard"
+_GITHUB_REPO = "SirTerrific/tubetamer"
 _UPDATE_CHECK_INTERVAL = 43200  # 12 hours
 
 

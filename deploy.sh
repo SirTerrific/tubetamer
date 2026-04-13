@@ -1,5 +1,5 @@
 #!/bin/bash
-# Deploy 67guard via Docker
+# Deploy TubeTamer via Docker
 # Usage: ./deploy.sh [TARGET] [REMOTE_PATH]
 
 set -e
@@ -10,21 +10,21 @@ GREEN='\033[0;32m'
 NC='\033[0m'
 
 TARGET="${1:?Usage: $0 <user@host> [remote_path]}"
-REMOTE_PATH="${2:-/opt/67guard}"
+REMOTE_PATH="${2:-/opt/tubetamer}"
 
 if [[ "$1" == "--help" ]] || [[ "$1" == "-h" ]]; then
     echo "Usage: $0 [TARGET] [REMOTE_PATH]"
     echo ""
     echo "Arguments:"
     echo "  TARGET       SSH target (e.g. user@myserver)"
-    echo "  REMOTE_PATH  Deployment path (default: /opt/67guard)"
+    echo "  REMOTE_PATH  Deployment path (default: /opt/tubetamer)"
     exit 0
 fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-TEMP_TAR="/tmp/67guard.tar"
+TEMP_TAR="/tmp/tubetamer.tar"
 
-echo -e "${CYAN}=== Deploying 67guard to $TARGET ===${NC}"
+echo -e "${CYAN}=== Deploying TubeTamer to $TARGET ===${NC}"
 
 echo -e "${YELLOW}Creating archive...${NC}"
 cd "$SCRIPT_DIR"
@@ -38,14 +38,14 @@ tar -cf "$TEMP_TAR" \
     .
 
 echo -e "${YELLOW}Uploading and deploying...${NC}"
-scp "$TEMP_TAR" "${TARGET}:/tmp/67guard.tar"
+scp "$TEMP_TAR" "${TARGET}:/tmp/tubetamer.tar"
 
 ssh "$TARGET" <<EOF
 set -e
 mkdir -p $REMOTE_PATH
 cd $REMOTE_PATH
-tar -xf /tmp/67guard.tar
-rm /tmp/67guard.tar
+tar -xf /tmp/tubetamer.tar
+rm /tmp/tubetamer.tar
 [ ! -f config.yaml ] && cp config.example.yaml config.yaml && echo 'Created config.yaml - edit with your tokens!'
 # Auto-detect host LAN IP for base_url (container can't see it)
 HOST_IP=\$(hostname -I | awk '{print \$1}')
@@ -66,4 +66,4 @@ echo ""
 echo -e "${GREEN}=== Deployment complete! ===${NC}"
 echo ""
 echo "Next: ssh $TARGET 'nano $REMOTE_PATH/config.yaml'"
-echo "Logs: ssh $TARGET 'docker logs -f 67guard'"
+echo "Logs: ssh $TARGET 'docker logs -f tubetamer'"

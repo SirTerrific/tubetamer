@@ -22,7 +22,7 @@ def _progress_bar(fraction: float, width: int = 20) -> str:
 
 
 class TimeLimitMixin:
-    """Time limit methods extracted from BrainRotGuardBot."""
+    """Time limit methods extracted from TubeTamerBot."""
 
     _OVERRIDE_KEYS = ("schedule_start", "schedule_end", "edu_limit_minutes",
                       "fun_limit_minutes", "daily_limit_minutes")

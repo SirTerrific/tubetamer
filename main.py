@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""67guard - YouTube approval system for kids."""
+"""TubeTamer - YouTube approval system for kids."""
 
 import argparse
 import asyncio
@@ -14,7 +14,7 @@ import uvicorn
 from config import load_config, Config, VALID_LOG_LEVELS
 from data.child_store import ChildStore
 from data.video_store import VideoStore
-from bot.telegram_bot import BrainRotGuardBot
+from bot.telegram_bot import TubeTamerBot
 from web.app import app as fastapi_app
 from web.cache import init_app_state, invalidate_channel_cache, invalidate_catalog_cache
 from web.middleware import SecurityHeadersMiddleware, PinAuthMiddleware
@@ -24,10 +24,10 @@ from i18n import get_locale, get_time_format
 
 LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
-logger = logging.getLogger("67guard")
+logger = logging.getLogger("TubeTamer")
 
 
-class BrainRotGuard:
+class TubeTamer:
     """Main orchestrator - runs FastAPI + Telegram bot."""
 
     def __init__(self, config: Config):
@@ -62,7 +62,7 @@ class BrainRotGuard:
         self._bootstrap_profiles()
 
         if self.config.telegram.bot_token and self.config.telegram.admin_chat_id:
-            self.bot = BrainRotGuardBot(
+            self.bot = TubeTamerBot(
                 bot_token=self.config.telegram.bot_token,
                 admin_chat_id=self.config.telegram.admin_chat_id,
                 video_store=self.video_store,
@@ -204,7 +204,7 @@ class BrainRotGuard:
 
         stats = self.video_store.get_stats()
         logger.info(
-            f"67guard started - {stats['approved']} approved videos, "
+            f"TubeTamer started - {stats['approved']} approved videos, "
             f"{stats['pending']} pending"
         )
 
@@ -294,11 +294,11 @@ class BrainRotGuard:
             await self.bot.stop()
         if self.video_store:
             self.video_store.close()
-        logger.info("67guard stopped")
+        logger.info("TubeTamer stopped")
 
 
 async def main() -> None:
-    parser = argparse.ArgumentParser(description="67guard")
+    parser = argparse.ArgumentParser(description="TubeTamer")
     parser.add_argument("-c", "--config", help="Path to config file", default=None)
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose logging (overrides log_level to debug)")
     parser.add_argument("--log-level", choices=sorted(VALID_LOG_LEVELS),
@@ -317,7 +317,7 @@ async def main() -> None:
     if not args.verbose and not args.log_level:
         logging.getLogger().setLevel(getattr(logging, config.app.log_level.upper()))
 
-    app = BrainRotGuard(config)
+    app = TubeTamer(config)
 
     loop = asyncio.get_event_loop()
 

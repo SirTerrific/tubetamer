@@ -1,4 +1,4 @@
-"""Shared pytest fixtures for 67guard tests."""
+"""Shared pytest fixtures for TubeTamer tests."""
 
 import os
 import pytest

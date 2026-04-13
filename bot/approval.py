@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 class ApprovalMixin:
-    """Approval-related methods extracted from BrainRotGuardBot."""
+    """Approval-related methods extracted from TubeTamerBot."""
 
     async def notify_new_request(self, video: dict, profile_id: str = "default") -> None:
         """Send parent a notification about a new video request with Approve/Deny buttons."""

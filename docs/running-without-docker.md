@@ -1,12 +1,12 @@
 # Running Without Docker
 
-If you'd rather run 67guard directly with Python instead of Docker Compose:
+If you'd rather run TubeTamer directly with Python instead of Docker Compose:
 
 **Requires:** Python 3.11 or newer
 
 ```bash
-git clone https://github.com/SirTerrific/67guard.git
-cd 67guard
+git clone https://github.com/SirTerrific/tubetamer.git
+cd TubeTamer
 
 # Install dependencies
 pip install -r requirements.txt

@@ -1,5 +1,5 @@
-const STATIC_CACHE = "67guard-static-v2";
-const RUNTIME_CACHE = "67guard-runtime-v2";
+const STATIC_CACHE = "tubetamer-static-v2";
+const RUNTIME_CACHE = "tubetamer-runtime-v2";
 const STATIC_ASSETS = [
   "/manifest.webmanifest",
   "/static/style.css",

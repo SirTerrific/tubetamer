@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 class ActivityMixin:
-    """Activity/reporting methods extracted from BrainRotGuardBot."""
+    """Activity/reporting methods extracted from TubeTamerBot."""
 
     # --- /watch command ---
 

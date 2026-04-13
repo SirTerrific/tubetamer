@@ -1,7 +1,7 @@
 services:
-  67guard:
-    image: ghcr.io/sirterrific/67guard:latest
-    container_name: 67guard
+  tubetamer:
+    image: ghcr.io/sirterrific/tubetamer:latest
+    container_name: tubetamer
     restart: unless-stopped
     ports:
       - "8080:8080"
