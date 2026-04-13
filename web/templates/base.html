@@ -1,0 +1,229 @@
+<!-- {{ app_name() }} version: v{{ app_version }} -->
+<!DOCTYPE html>
+<html lang="{{ html_lang() }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="application-name" content="{{ app_name() }}">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="{{ app_name() }}">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#0f0f23">
+    <title>{% block title %}{{ app_name() }}{% endblock %}</title>
+    <link rel="icon" href="/static/favicon-32.png" type="image/png" sizes="32x32">
+    <link rel="apple-touch-icon" href="/static/favicon.png">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <a href="/" class="logo-link">
+                <img src="/static/brg-icon-512.png" alt="{{ app_name() }}" class="logo-img">
+                <span class="logo-name">{{ app_name() }}</span>
+            </a>
+        </div>
+        {% if child_name %}
+        <div class="search-dropdown-wrap">
+            <button type="button" class="search-toggle" onclick="var d=this.nextElementSibling;d.classList.toggle('open');if(d.classList.contains('open'))d.querySelector('input').focus();">&#x1F50D;</button>
+            <div class="search-dropdown">
+                <div class="avatar-dd-label">{{ t("Search YouTube") }}</div>
+                <form action="/search" method="GET" class="search-dd-form">
+                    <input type="text" name="q" placeholder="{{ t('Search or paste a link...') }}" class="search-dd-input">
+                    <button type="submit" class="btn-primary search-dd-go">{{ t("Go") }}</button>
+                </form>
+            </div>
+        </div>
+        <form action="/search" method="GET" class="header-search">
+            <input type="text" name="q" placeholder="{{ t('Search or paste a link...') }}" class="header-search-input" {% block search_attrs %}{% endblock %}>
+            <button type="submit" class="btn-primary header-search-btn">{{ t("Search") }}</button>
+        </form>
+        {% endif %}
+        {% if child_name %}
+        <div class="avatar-dropdown-wrap">
+            <button type="button" class="profile-badge avatar-toggle" onclick="document.querySelector('.avatar-dropdown').classList.toggle('open')">
+                <span class="profile-name">{{ child_name }}</span>
+                <span class="profile-avatar" id="hdr-avatar" style="{% if avatar_color %}background:{{ avatar_color }}{% endif %}">{{ avatar_icon if avatar_icon else child_name[0] }}</span>
+            </button>
+            <div class="avatar-dropdown">
+                <div class="avatar-dd-greeting">{{ t("Hi {name}!", name=child_name) }}</div>
+                <div class="avatar-dd-label">{{ t("Pick your icon") }}</div>
+                <div class="avatar-grid">
+                    {% for ic in avatar_icons %}
+                    <button type="button" class="avatar-option{% if ic == avatar_icon %} selected{% endif %}" data-icon="{{ ic }}">{{ ic }}</button>
+                    {% endfor %}
+                </div>
+                <div class="avatar-dd-label">{{ t("Pick your color") }}</div>
+                <div class="color-grid">
+                    {% for c in avatar_colors %}
+                    <button type="button" class="color-option{% if c == avatar_color %} selected{% endif %}" data-color="{{ c }}" style="background:{{ c }}"></button>
+                    {% endfor %}
+                </div>
+                <a href="/requests" class="avatar-menu-link"><svg class="avatar-menu-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1v6m0 0l-2.5-2.5M8 7l2.5-2.5"/><rect x="2" y="9" width="12" height="5" rx="1.5"/></svg>{{ t("Requests") }}</a>
+                <a href="/history" class="avatar-menu-link"><svg class="avatar-menu-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M8 5v3.5l2.5 1.5"/></svg>{{ t("History") }}</a>
+                {% if multi_profile %}
+                <a href="/switch-profile" class="avatar-switch-link"><svg class="avatar-menu-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><path d="M11 14c0-2.2-2.2-4-5-4s-5 1.8-5 4"/><path d="M11 5l2 2 2-2"/></svg>{{ t("Switch Profile") }}</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </header>
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+    <footer>
+        {{ app_name() }} v. {{ app_version }} &middot; <a href="https://ko-fi.com/coffee4jj" target="_blank" rel="noopener">☕ {{ t("Buy me a coffee") }}</a>
+    </footer>
+    {% block scripts %}{% endblock %}
+    <script>
+    (function () {
+        var standalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
+        document.documentElement.classList.toggle("display-standalone", !!standalone);
+        document.documentElement.dataset.displayMode = standalone ? "standalone" : "browser";
+
+        var canRegisterWorker = "serviceWorker" in navigator
+            && (window.isSecureContext || window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+        if (canRegisterWorker) {
+            window.addEventListener("load", function () {
+                navigator.serviceWorker.register("/service-worker.js").catch(function () {});
+            });
+        }
+    })();
+    </script>
+    <script>
+    (function(){
+        var backText = {{ t("Back") | tojson }};
+        var backToTemplate = {{ t("Back to {page}", page="__PAGE__") | tojson }};
+        var navHistoryKey = 'brg-nav-history';
+        var pageLabels = {
+            library: {{ t("Library") | tojson }},
+            activity: {{ t("Activity") | tojson }},
+            requests: {{ t("Requests") | tojson }},
+            history: {{ t("History") | tojson }},
+            search: {{ t("Search") | tojson }},
+            video: {{ t("Video") | tojson }},
+            pending: {{ t("Pending") | tojson }}
+        };
+
+        function previousPageLabel(pathname) {
+            if (!pathname) return '';
+            if (pathname === '/') return pageLabels.library;
+            if (pathname.indexOf('/activity') === 0) return pageLabels.activity;
+            if (pathname.indexOf('/requests') === 0) return pageLabels.requests;
+            if (pathname.indexOf('/history') === 0) return pageLabels.history;
+            if (pathname.indexOf('/search') === 0) return pageLabels.search;
+            if (pathname.indexOf('/watch/') === 0) return pageLabels.video;
+            if (pathname.indexOf('/pending/') === 0) return pageLabels.pending;
+            return '';
+        }
+
+        function currentPath() {
+            return window.location.pathname + window.location.search;
+        }
+
+        function readHistory() {
+            try {
+                var raw = window.sessionStorage.getItem(navHistoryKey);
+                if (!raw) return [];
+                var parsed = JSON.parse(raw);
+                return Array.isArray(parsed) ? parsed : [];
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function writeHistory(history) {
+            try {
+                window.sessionStorage.setItem(navHistoryKey, JSON.stringify(history.slice(-20)));
+            } catch (e) {}
+        }
+
+        function updateHistory() {
+            var history = readHistory();
+            var path = currentPath();
+            if (history[history.length - 1] !== path) {
+                history.push(path);
+                writeHistory(history);
+            }
+            return history;
+        }
+
+        function previousTarget(history) {
+            if (!history.length) return '';
+            var current = window.location.pathname;
+            var previous = history.length > 1 ? history[history.length - 2] : '';
+            if (current.indexOf('/watch/') === 0 && previous.indexOf('/pending/') === 0 && history.length > 2) {
+                return history[history.length - 3];
+            }
+            return previous;
+        }
+
+        // Search dropdown: outside-click close
+        var sw=document.querySelector('.search-dropdown-wrap');
+        if(sw){var sd=sw.querySelector('.search-dropdown');document.addEventListener('click',function(e){if(!sw.contains(e.target))sd.classList.remove('open')})}
+        var history = updateHistory();
+        var sameOriginReferrer = null;
+        if (document.referrer && document.referrer.indexOf(window.location.origin) === 0) {
+            try {
+                sameOriginReferrer = new URL(document.referrer);
+            } catch (e) {}
+        }
+        document.querySelectorAll('.back-link-previous').forEach(function(link){
+            var target = previousTarget(history);
+            var targetUrl = null;
+            if (target) {
+                try {
+                    targetUrl = new URL(target, window.location.origin);
+                } catch (e) {}
+            }
+            var label = targetUrl ? previousPageLabel(targetUrl.pathname) : (sameOriginReferrer ? previousPageLabel(sameOriginReferrer.pathname) : '');
+            link.textContent = label ? backToTemplate.replace('__PAGE__', label) : backText;
+            link.addEventListener('click', function(e){
+                if (targetUrl) {
+                    e.preventDefault();
+                    history.pop();
+                    if (history[history.length - 1] === target) {
+                        writeHistory(history);
+                    }
+                    window.location.href = targetUrl.pathname + targetUrl.search;
+                    return;
+                }
+                if (window.history.length < 2) return;
+                if (sameOriginReferrer) {
+                    e.preventDefault();
+                    window.history.back();
+                }
+            });
+        });
+        var wrap=document.querySelector('.avatar-dropdown-wrap');
+        if(!wrap) return;
+        var dd=wrap.querySelector('.avatar-dropdown');
+        var av=document.getElementById('hdr-avatar');
+        // Close on outside click
+        document.addEventListener('click',function(e){if(!wrap.contains(e.target))dd.classList.remove('open')});
+        // Icon selection
+        dd.querySelectorAll('.avatar-option').forEach(function(btn){
+            btn.addEventListener('click',function(){
+                dd.querySelectorAll('.avatar-option').forEach(function(b){b.classList.remove('selected')});
+                btn.classList.add('selected');
+                var icon=btn.dataset.icon;
+                av.textContent=icon;
+                fetch('/api/avatar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({icon:icon})});
+            });
+        });
+        // Color selection
+        dd.querySelectorAll('.color-option').forEach(function(btn){
+            btn.addEventListener('click',function(){
+                dd.querySelectorAll('.color-option').forEach(function(b){b.classList.remove('selected')});
+                btn.classList.add('selected');
+                var color=btn.dataset.color;
+                av.style.background=color;
+                fetch('/api/avatar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({color:color})});
+            });
+        });
+    })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,501 @@
+{% extends "base.html" %}
+{% block title %}{{ video.title }}{% endblock %}
+
+{% block content %}
+{% if local_playback %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/plyr/3.7.8/plyr.css">
+<style>
+:root {
+    --plyr-color-main: #e74c6f;
+    --plyr-video-background: #000;
+    --plyr-menu-background: #1a1a2e;
+    --plyr-menu-color: #ccc;
+    --plyr-control-icon-size: 20px;
+    --plyr-captions-background: rgba(0,0,0,0.7);
+    --plyr-captions-text-color: #fff;
+    --plyr-font-size-base: 15px;
+    --plyr-font-size-small: 13px;
+    --plyr-font-size-large: 18px;
+}
+.plyr { border-radius: 8px; }
+.plyr:-webkit-full-screen { border-radius: 0; }
+.plyr:fullscreen { border-radius: 0; }
+</style>
+{% endif %}
+
+{% if schedule_info and schedule_info.allowed %}
+<div class="schedule-banner schedule-open">
+    <span>{{ t("Available until {time}", time=schedule_info.end) }}</span>
+</div>
+{% endif %}
+
+{% if time_info %}
+{% set time_budget_pct = ((time_info.used_min / time_info.limit_min) * 100) if time_info.limit_min > 0 else 0 %}
+{% set time_budget_pct_clamped = [time_budget_pct, 100] | min %}
+{% set time_budget_hue = 120 - (time_budget_pct_clamped * 1.2) %}
+<div class="home-status-row">
+    <a id="watch-time-budget" href="/activity" class="time-budget {% if time_info.remaining_min < 15 %}time-budget-low{% endif %}" style="--time-budget-pct: {{ time_budget_pct_clamped }}%; --time-budget-fill: hsl({{ time_budget_hue }}, 72%, 46%);">
+        <div class="time-budget-summary">
+            {% if time_info.exceeded %}
+            <span id="watch-time-budget-primary" class="time-budget-primary time-low">{{ t("No time remaining today") }}</span>
+            {% else %}
+            <span id="watch-time-budget-primary" class="time-budget-primary">{{ t("{remaining} min remaining today", remaining=time_info.remaining_min | int) }}</span>
+            {% endif %}
+        </div>
+    </a>
+</div>
+{% endif %}
+
+<div class="watch-container{% if is_short %} watch-container-short{% endif %}">
+    <div class="video-player">
+        <div class="video-wrapper"{% if local_playback %} style="padding-bottom:0 !important;"{% endif %}>
+            {% if local_playback %}
+            <video id="localplayer" playsinline controls autoplay muted crossorigin="anonymous" style="width:100%;display:block;border-radius:8px;">
+                <source src="{{ local_stream_url }}" type="video/mp4">
+                {% for track in subtitle_tracks %}
+                <track kind="captions" src="{{ track.url }}" srclang="{{ track.lang }}" label="{{ track.label }}">
+                {% endfor %}
+            </video>
+            {% else %}
+            <div id="ytplayer"></div>
+            <button id="fs-toggle" class="fs-toggle" onclick="toggleFullscreen()" aria-label="{{ t('Fullscreen') }}"></button>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="watch-info">
+        <h2 class="watch-title">{{ video.title }}</h2>
+        <p class="watch-channel">{{ video.channel_name }}</p>
+        {% if time_info %}
+        <p class="time-remaining" id="time-remaining">
+            {{ t("{category} time left:", category=cat_label) }} <span id="time-counter">{{ time_info.remaining_min | int }} min</span>
+        </p>
+        {% endif %}
+        <a href="/" class="back-link back-link-home back-link-previous">{{ t("Back") }}</a>
+    </div>
+</div>
+
+{% if time_info %}
+<div class="time-warning" id="time-warning" style="display:none;">
+    {{ t("Less than 5 minutes remaining") }}
+</div>
+<div class="time-critical" id="time-critical" style="display:none;">
+    {{ t("Less than 1 minute remaining!") }}
+</div>
+<div class="time-overlay" id="time-overlay" style="display:none;">
+    <div class="time-overlay-content">
+        <div class="timesup-icon">&#x23F0;</div>
+        <h2>{{ t("Time's Up") }}!</h2>
+        <p>{{ t("Redirecting to home...") }}</p>
+    </div>
+</div>
+{% endif %}
+
+<script>
+var useLocalPlayer = {{ 'true' if local_playback else 'false' }};
+var isPlaying = false;
+var playSeconds = 0;
+var heartbeatInterval = null;
+var remainingSeconds = {{ time_info.remaining_sec if time_info else -1 }};
+var hasTimeLimit = {{ 'true' if time_info else 'false' }};
+var videoId = {{ video.video_id | tojson }};
+var countdownInterval = null;
+var videoFinishedText = {{ t("Video finished") | tojson }};
+var backToLibraryText = {{ t("Back to Library") | tojson }};
+var remainingTodayText = {{ t("{remaining} min remaining today", remaining="__REMAINING__") | tojson }};
+var noTimeRemainingText = {{ t("No time remaining today") | tojson }};
+var limitMinutes = {{ time_info.limit_min if time_info else 0 }};
+var profileId = {{ profile_id | tojson }};
+var playbackStorageKey = 'brg-watch-position:' + profileId + ':' + videoId;
+var positionSaveInterval = null;
+var restoredPlayback = false;
+var autoplayPending = true;
+var exitFlushSent = false;
+var endCheckInterval = null;
+var player; // YT.Player or Plyr instance
+var plyrInstance = null;
+var fallbackFullscreenActive = false;
+
+// ── Position save/restore ──────────────────────────────────────────
+function loadPlaybackPosition() {
+    try {
+        var raw = window.localStorage.getItem(playbackStorageKey);
+        if (!raw) return 0;
+        var s = parseFloat(raw);
+        return Number.isFinite(s) && s > 0 ? s : 0;
+    } catch (e) { return 0; }
+}
+function clearPlaybackPosition() {
+    try { window.localStorage.removeItem(playbackStorageKey); } catch (e) {}
+}
+function savePlaybackPosition() {
+    var c = getCurrentPlaybackSeconds();
+    if (c <= 0) return;
+    try { window.localStorage.setItem(playbackStorageKey, String(Math.floor(c))); } catch (e) {}
+}
+function restorePlaybackPosition() {
+    if (restoredPlayback) return;
+    var saved = loadPlaybackPosition();
+    restoredPlayback = true;
+    if (saved <= 0) return;
+    if (plyrInstance) {
+        try {
+            var dur = plyrInstance.duration || 0;
+            if (dur > 0 && saved >= Math.max(5, dur - 5)) { clearPlaybackPosition(); return; }
+            plyrInstance.currentTime = saved;
+        } catch (e) { restoredPlayback = false; setTimeout(restorePlaybackPosition, 500); }
+        return;
+    }
+    if (!player || !player.seekTo) { restoredPlayback = false; return; }
+    try {
+        var duration = player.getDuration ? player.getDuration() : 0;
+        if (duration > 0 && saved >= Math.max(5, duration - 5)) { clearPlaybackPosition(); return; }
+        player.seekTo(saved, true);
+    } catch (e) { restoredPlayback = false; setTimeout(restorePlaybackPosition, 500); }
+}
+function startPositionSaving() {
+    if (positionSaveInterval) return;
+    positionSaveInterval = setInterval(savePlaybackPosition, 5000);
+}
+function stopPositionSaving() {
+    if (!positionSaveInterval) return;
+    clearInterval(positionSaveInterval);
+    positionSaveInterval = null;
+}
+
+// ── Playback seconds helper ────────────────────────────────────────
+function getCurrentPlaybackSeconds() {
+    if (plyrInstance) {
+        var t = plyrInstance.currentTime;
+        return Number.isFinite(t) && t > 0 ? t : 0;
+    }
+    if (!player || !player.getCurrentTime) return 0;
+    try { var c = player.getCurrentTime(); return Number.isFinite(c) && c > 0 ? c : 0; }
+    catch (e) { return 0; }
+}
+
+// ── Heartbeat / time tracking ──────────────────────────────────────
+function sendHeartbeat() {
+    if (playSeconds <= 0) return;
+    var secs = playSeconds; playSeconds = 0;
+    doHeartbeat(secs, Math.floor(getCurrentPlaybackSeconds()));
+}
+function doHeartbeat(secs, pos) {
+    fetch('/api/watch-heartbeat', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({video_id: videoId, seconds: secs, position_seconds: Math.max(pos||0,0)})
+    }).then(function(r) {
+        if (r.status === 403) { timesUp(); return null; }
+        return r.json();
+    }).then(function(d) {
+        if (!d) return;
+        if (hasTimeLimit && typeof d.remaining === 'number' && d.remaining >= 0) {
+            remainingSeconds = d.remaining;
+            updateTimeDisplay();
+            if (remainingSeconds <= 0) timesUp();
+        }
+    }).catch(function(){});
+}
+function flushWatchProgressOnExit() {
+    var pos = Math.floor(getCurrentPlaybackSeconds());
+    if (playSeconds <= 0 && pos <= 0) return;
+    if (exitFlushSent) return;
+    exitFlushSent = true;
+    var secs = Math.min(Math.max(playSeconds,0),60); playSeconds = 0;
+    var payload = JSON.stringify({video_id: videoId, seconds: secs, position_seconds: pos});
+    if (navigator.sendBeacon) {
+        try { var b = new Blob([payload],{type:'application/json'}); if (navigator.sendBeacon('/api/watch-heartbeat',b)) return; } catch(e){}
+    }
+    fetch('/api/watch-heartbeat',{method:'POST',headers:{'Content-Type':'application/json'},body:payload,keepalive:true}).catch(function(){});
+}
+
+// ── Time display / warnings ────────────────────────────────────────
+function tickCountdown() {
+    if (!isPlaying || !hasTimeLimit) return;
+    remainingSeconds--; playSeconds++;
+    updateTimeDisplay();
+    if (remainingSeconds <= 0) timesUp();
+}
+function updateTimeDisplay() {
+    var counterEl = document.getElementById('time-counter');
+    var warningEl = document.getElementById('time-warning');
+    var criticalEl = document.getElementById('time-critical');
+    var budgetEl = document.getElementById('watch-time-budget');
+    var budgetPrimaryEl = document.getElementById('watch-time-budget-primary');
+    if (!counterEl) return;
+    if (remainingSeconds > 60) { counterEl.textContent = Math.max(0,Math.ceil(remainingSeconds/60))+' min'; }
+    else { counterEl.textContent = Math.max(0,remainingSeconds)+' sec'; counterEl.className = 'time-low'; }
+    if (budgetEl && budgetPrimaryEl && limitMinutes > 0) {
+        var used = Math.max(0,(limitMinutes*60)-Math.max(0,remainingSeconds));
+        var pct = Math.min(100,(used/(limitMinutes*60))*100);
+        var hue = Math.max(0,120-(pct*1.2));
+        budgetEl.style.setProperty('--time-budget-pct',pct+'%');
+        budgetEl.style.setProperty('--time-budget-fill','hsl('+hue+',72%,46%)');
+        if (remainingSeconds <= 0) {
+            budgetEl.classList.add('time-budget-low');
+            budgetPrimaryEl.textContent = noTimeRemainingText;
+            budgetPrimaryEl.classList.add('time-low');
+        } else {
+            budgetPrimaryEl.textContent = remainingTodayText.replace('__REMAINING__',Math.max(0,Math.ceil(remainingSeconds/60)));
+            budgetPrimaryEl.classList.toggle('time-low', remainingSeconds <= 900);
+            budgetEl.classList.toggle('time-budget-low', remainingSeconds <= 900);
+        }
+    }
+    if (warningEl && remainingSeconds <= 300 && remainingSeconds > 60) { warningEl.style.display='block'; if(criticalEl) criticalEl.style.display='none'; }
+    else if (criticalEl && remainingSeconds <= 60 && remainingSeconds > 0) { criticalEl.style.display='block'; if(warningEl) warningEl.style.display='none'; }
+}
+function timesUp() {
+    isPlaying = false;
+    clearInterval(heartbeatInterval); heartbeatInterval = null;
+    clearInterval(countdownInterval); countdownInterval = null;
+    clearInterval(endCheckInterval); endCheckInterval = null;
+    stopPositionSaving(); clearPlaybackPosition();
+    if (plyrInstance) plyrInstance.pause();
+    else if (player && player.pauseVideo) player.pauseVideo();
+    var ov = document.getElementById('time-overlay');
+    if (ov) ov.style.display = 'flex';
+    if (playSeconds > 0) { doHeartbeat(playSeconds, Math.floor(getCurrentPlaybackSeconds())); playSeconds = 0; }
+    setTimeout(function(){ window.location.href = '/'; }, 3000);
+}
+
+// ── Near-end check + overlays ──────────────────────────────────────
+function checkNearEnd() {
+    var dur = 0, cur = 0;
+    if (plyrInstance) { dur = plyrInstance.duration||0; cur = plyrInstance.currentTime||0; }
+    else if (player && player.getDuration) { dur = player.getDuration(); cur = player.getCurrentTime(); }
+    if (dur > 0 && cur > 0 && (dur-cur) <= 3) { clearInterval(endCheckInterval); endCheckInterval = null; showEndOverlay(); }
+}
+function showEndOverlay() {
+    var existing = document.getElementById('end-overlay');
+    if (existing) { existing.style.display = 'flex'; return; }
+    var ov = document.createElement('div');
+    ov.id = 'end-overlay';
+    ov.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;background:#1a1a2e;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10;border-radius:8px;gap:16px;';
+    var msg = document.createElement('p');
+    msg.textContent = videoFinishedText;
+    msg.style.cssText = 'color:#ccc;font-size:1.2em;margin:0;';
+    var btn = document.createElement('div');
+    btn.style.cssText = 'width:72px;height:72px;background:rgba(231,76,111,0.9);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;';
+    var svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+    svg.setAttribute('width','32'); svg.setAttribute('height','32');
+    svg.setAttribute('viewBox','0 0 24 24'); svg.setAttribute('fill','white');
+    var path = document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d','M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z');
+    svg.appendChild(path); btn.appendChild(svg);
+    btn.onclick = function() {
+        ov.style.display = 'none'; clearPlaybackPosition();
+        if (plyrInstance) { plyrInstance.currentTime = 0; plyrInstance.play(); }
+        else if (player && player.seekTo) { player.seekTo(0,true); player.playVideo(); }
+    };
+    var link = document.createElement('a');
+    link.href = '/'; link.textContent = backToLibraryText;
+    link.style.cssText = 'color:#888;font-size:1em;text-decoration:none;';
+    ov.appendChild(msg); ov.appendChild(btn); ov.appendChild(link);
+    var w = document.querySelector('.video-wrapper');
+    if (w) { w.style.position = 'relative'; w.appendChild(ov); }
+}
+
+// ── Page lifecycle ─────────────────────────────────────────────────
+window.addEventListener('pagehide', function() { savePlaybackPosition(); flushWatchProgressOnExit(); });
+window.addEventListener('focus', function() { exitFlushSent = false; });
+document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'hidden') { savePlaybackPosition(); flushWatchProgressOnExit(); }
+    else { exitFlushSent = false; }
+});
+
+// ══════════════════════════════════════════════════════════════════
+//  LOCAL PLAYBACK — Plyr
+// ══════════════════════════════════════════════════════════════════
+if (useLocalPlayer) {
+(function() {
+    var script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/plyr/3.7.8/plyr.min.js';
+    script.onload = function() { initPlyr(); };
+    document.head.appendChild(script);
+
+    function initPlyr() {
+        plyrInstance = new Plyr('#localplayer', {
+            iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/plyr/3.7.8/plyr.svg',
+            controls: ['play-large','play','progress','current-time','duration','mute','volume','captions','settings','fullscreen'],
+            settings: ['captions','speed'],
+            captions: { active: false, language: 'auto', update: true },
+            speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] },
+            keyboard: { focused: true, global: true },
+            tooltips: { controls: true, seek: true },
+            invertTime: false,
+            autoplay: true,
+        });
+
+        plyrInstance.on('play', function() {
+            // Unmute after autoplay (browsers require muted for autoplay without gesture)
+            if (plyrInstance.muted) { plyrInstance.muted = false; plyrInstance.volume = 1; }
+            isPlaying = true; exitFlushSent = false; autoplayPending = false;
+            startPositionSaving();
+            if (!heartbeatInterval) heartbeatInterval = setInterval(sendHeartbeat, 15000);
+            if (hasTimeLimit && !countdownInterval) countdownInterval = setInterval(tickCountdown, 1000);
+            if (!endCheckInterval) endCheckInterval = setInterval(checkNearEnd, 1000);
+            var eo = document.getElementById('end-overlay'); if (eo) eo.style.display = 'none';
+        });
+        plyrInstance.on('pause', function() {
+            isPlaying = false; stopPositionSaving(); savePlaybackPosition();
+            if (playSeconds > 0) sendHeartbeat();
+        });
+        plyrInstance.on('ended', function() {
+            isPlaying = false;
+            clearInterval(heartbeatInterval); heartbeatInterval = null;
+            clearInterval(countdownInterval); countdownInterval = null;
+            clearInterval(endCheckInterval); endCheckInterval = null;
+            stopPositionSaving(); clearPlaybackPosition();
+            if (playSeconds > 0) sendHeartbeat();
+            showEndOverlay();
+        });
+        plyrInstance.on('loadedmetadata', function() {
+            restorePlaybackPosition();
+        });
+        plyrInstance.on('ready', function() {
+            restorePlaybackPosition();
+            if (autoplayPending) {
+                autoplayPending = false;
+                var p = plyrInstance.play();
+                if (p && typeof p.catch === 'function') {
+                    p.catch(function() {
+                        // Fallback: muted autoplay
+                        plyrInstance.muted = true;
+                        plyrInstance.play();
+                    });
+                }
+            }
+        });
+    }
+})();
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  YOUTUBE EMBED — unchanged
+// ══════════════════════════════════════════════════════════════════
+if (!useLocalPlayer) {
+(function() {
+    var tag = document.createElement('script');
+    tag.src = "/api/yt-iframe-api.js";
+    document.getElementsByTagName('script')[0].parentNode.insertBefore(tag, document.getElementsByTagName('script')[0]);
+
+    // Replace placeholder div with iframe
+    var placeholder = document.getElementById('ytplayer');
+    var iframe = document.createElement('iframe');
+    iframe.id = 'ytplayer';
+    iframe.setAttribute('allow', 'autoplay; fullscreen; encrypted-media; picture-in-picture');
+    iframe.setAttribute('allowfullscreen', '');
+    iframe.src = 'https://www.youtube.com/embed/' + videoId
+        + '?enablejsapi=1&autoplay=0&rel=0&modestbranding=1'
+        + '&origin=' + encodeURIComponent(window.location.origin);
+    placeholder.parentNode.replaceChild(iframe, placeholder);
+})();
+
+function isPageActive() {
+    return document.visibilityState === 'visible' && (typeof document.hasFocus !== 'function' || document.hasFocus());
+}
+function attemptAutoplayIfActive() {
+    if (!autoplayPending) return;
+    if (!isPageActive()) return;
+    exitFlushSent = false; autoplayPending = false;
+    if (player && player.playVideo) player.playVideo();
+}
+window.addEventListener('focus', attemptAutoplayIfActive);
+document.addEventListener('visibilitychange', function() { if (document.visibilityState === 'visible') attemptAutoplayIfActive(); });
+
+function getFullscreenElement() { return document.fullscreenElement || document.webkitFullscreenElement; }
+function prefersFallbackFullscreen() {
+    return window.matchMedia('(pointer: coarse)').matches
+        && (window.matchMedia('(display-mode: standalone)').matches || !!window.navigator.standalone);
+}
+function enterFallbackFullscreen() {
+    var w = document.querySelector('.video-wrapper'); if (!w) return;
+    fallbackFullscreenActive = true;
+    w.classList.add('video-wrapper-fallback-fullscreen');
+    document.documentElement.classList.add('video-fallback-fullscreen');
+    document.body.classList.add('video-fallback-fullscreen');
+    updateFsButton();
+}
+function exitFallbackFullscreen() {
+    var w = document.querySelector('.video-wrapper');
+    fallbackFullscreenActive = false;
+    if (w) w.classList.remove('video-wrapper-fallback-fullscreen');
+    document.documentElement.classList.remove('video-fallback-fullscreen');
+    document.body.classList.remove('video-fallback-fullscreen');
+    updateFsButton();
+}
+function toggleFullscreen() {
+    var w = document.querySelector('.video-wrapper'); if (!w) return;
+    if (getFullscreenElement()) { (document.exitFullscreen||document.webkitExitFullscreen).call(document); return; }
+    if (fallbackFullscreenActive) { exitFallbackFullscreen(); return; }
+    if (prefersFallbackFullscreen()) { enterFallbackFullscreen(); return; }
+    var rfs = w.requestFullscreen || w.webkitRequestFullscreen;
+    if (!rfs) { enterFallbackFullscreen(); return; }
+    try {
+        var result = rfs.call(w);
+        if (result && typeof result.catch === 'function') result.catch(function(){ enterFallbackFullscreen(); });
+        setTimeout(function(){ if (!getFullscreenElement() && !fallbackFullscreenActive) enterFallbackFullscreen(); }, 350);
+    } catch(e) { enterFallbackFullscreen(); }
+}
+document.addEventListener('fullscreenchange', updateFsButton);
+document.addEventListener('webkitfullscreenchange', updateFsButton);
+function updateFsButton() {
+    var btn = document.getElementById('fs-toggle');
+    if (btn) btn.classList.toggle('fs-exit', !!getFullscreenElement() || fallbackFullscreenActive);
+}
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape' && fallbackFullscreenActive) exitFallbackFullscreen(); });
+}
+
+function onYouTubeIframeAPIReady() {
+    if (useLocalPlayer) return;
+    player = new YT.Player('ytplayer', {
+        events: { 'onReady': function() { restorePlaybackPosition(); attemptAutoplayIfActive(); }, 'onStateChange': onPlayerStateChange }
+    });
+}
+function onPlayerStateChange(event) {
+    if (event.data === YT.PlayerState.PLAYING) {
+        isPlaying = true; exitFlushSent = false; autoplayPending = false;
+        hidePauseOverlay(); restorePlaybackPosition(); startPositionSaving();
+        if (!heartbeatInterval) heartbeatInterval = setInterval(sendHeartbeat, 10000);
+        if (hasTimeLimit && !countdownInterval) countdownInterval = setInterval(tickCountdown, 1000);
+        if (!endCheckInterval) endCheckInterval = setInterval(checkNearEnd, 1000);
+    } else if (event.data === YT.PlayerState.ENDED) {
+        isPlaying = false; hidePauseOverlay(); stopPositionSaving(); clearPlaybackPosition();
+        clearInterval(countdownInterval); countdownInterval = null;
+        clearInterval(endCheckInterval); endCheckInterval = null;
+        if (playSeconds > 0) sendHeartbeat();
+        showEndOverlay();
+    } else if (event.data === YT.PlayerState.PAUSED) {
+        isPlaying = false; showPauseOverlay(); stopPositionSaving(); savePlaybackPosition();
+        clearInterval(countdownInterval); countdownInterval = null;
+        if (playSeconds > 0) sendHeartbeat();
+    } else {
+        isPlaying = false; stopPositionSaving(); savePlaybackPosition();
+        clearInterval(countdownInterval); countdownInterval = null;
+        clearInterval(endCheckInterval); endCheckInterval = null;
+        if (playSeconds > 0) sendHeartbeat();
+    }
+}
+function showPauseOverlay() {
+    var existing = document.getElementById('pause-overlay');
+    if (existing) { existing.style.display = 'flex'; return; }
+    var ov = document.createElement('div');
+    ov.id = 'pause-overlay';
+    ov.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(26,26,46,0.85);display:flex;align-items:center;justify-content:center;z-index:10;border-radius:8px;cursor:pointer;';
+    var btn = document.createElement('div');
+    btn.style.cssText = 'width:72px;height:72px;background:rgba(231,76,111,0.9);border-radius:50%;display:flex;align-items:center;justify-content:center;';
+    var svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+    svg.setAttribute('width','32'); svg.setAttribute('height','32'); svg.setAttribute('viewBox','0 0 24 24');
+    var tri = document.createElementNS('http://www.w3.org/2000/svg','polygon');
+    tri.setAttribute('points','8,5 19,12 8,19'); tri.setAttribute('fill','white');
+    svg.appendChild(tri); btn.appendChild(svg); ov.appendChild(btn);
+    ov.onclick = function() { ov.style.display = 'none'; if (player && player.playVideo) player.playVideo(); };
+    var w = document.querySelector('.video-wrapper');
+    if (w) w.appendChild(ov);
+}
+function hidePauseOverlay() {
+    var el = document.getElementById('pause-overlay');
+    if (el) el.style.display = 'none';
+}
+</script>
+{% endblock %}

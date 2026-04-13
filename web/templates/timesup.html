@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}{{ t("Time's Up") }}{% endblock %}
+
+{% block content %}
+<div class="timesup-container">
+    <div class="timesup-icon">&#x23F0;</div>
+    {% if category %}
+    <h2>{{ t("{category} Time's Up!", category=category) }}</h2>
+    <p class="timesup-text">{% if child_name %}{{ t("{name} has used {used} out of {limit} {category} minutes today.", name=child_name, used=time_info.used_min | int, limit=time_info.limit_min, category=category | lower) }}{% else %}{{ t("You've used {used} out of {limit} {category} minutes today.", used=time_info.used_min | int, limit=time_info.limit_min, category=category | lower) }}{% endif %}</p>
+    {% if available_categories %}
+    <p class="timesup-subtext">{% if child_name %}{{ t("{name} can still watch:", name=child_name) }}{% else %}{{ t("You can still watch:") }}{% endif %}</p>
+    {% for cat in available_categories %}
+    <a href="/?category={{ cat.name }}" class="back-link">
+        {{ cat.label }}{% if cat.remaining_min > 0 %} {{ t("({minutes} min left)", minutes=cat.remaining_min | int) }}{% endif %}
+    </a>
+    {% endfor %}
+    {% else %}
+    <p class="timesup-subtext">{% if next_start %}{{ t("Videos available again at {time}.", time=next_start) }}{% else %}{{ t("Time resets tomorrow at midnight.") }}{% endif %}</p>
+    {% endif %}
+    {% else %}
+    <h2>{{ t("Time's Up") }}!</h2>
+    <p class="timesup-text">{% if child_name %}{{ t("{name} has used {used} out of {limit} minutes today.", name=child_name, used=time_info.used_min | int, limit=time_info.limit_min) }}{% else %}{{ t("You've used {used} out of {limit} minutes today.", used=time_info.used_min | int, limit=time_info.limit_min) }}{% endif %}</p>
+    <p class="timesup-subtext">{% if next_start %}{{ t("Videos available again at {time}.", time=next_start) }}{% else %}{{ t("Time resets tomorrow at midnight.") }}{% endif %}</p>
+    {% endif %}
+    <a href="/" class="back-link back-link-home back-link-previous">{{ t("Back") }}</a>
+</div>
+{% endblock %}

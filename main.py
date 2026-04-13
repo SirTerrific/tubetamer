@@ -1,0 +1,340 @@
+#!/usr/bin/env python3
+"""BrainRotGuard - YouTube approval system for kids."""
+
+import argparse
+import asyncio
+import logging
+import random
+import signal
+import os
+from pathlib import Path
+
+import uvicorn
+
+from config import load_config, Config, VALID_LOG_LEVELS
+from data.child_store import ChildStore
+from data.video_store import VideoStore
+from bot.telegram_bot import BrainRotGuardBot
+from web.app import app as fastapi_app
+from web.cache import init_app_state, invalidate_channel_cache, invalidate_catalog_cache
+from web.middleware import SecurityHeadersMiddleware, PinAuthMiddleware
+from youtube.extractor import configure_timeout, YouTubeExtractor
+from video_downloader import VideoDownloader
+from i18n import get_locale, get_time_format
+
+LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
+logger = logging.getLogger("brainrotguard")
+
+
+class BrainRotGuard:
+    """Main orchestrator - runs FastAPI + Telegram bot."""
+
+    def __init__(self, config: Config):
+        self.config = config
+        self.video_store = None
+        self.bot = None
+        self.downloader = None
+        self.running = False
+
+    def _bootstrap_profiles(self) -> None:
+        """Ensure at least one profile exists. Auto-creates 'default' on first run."""
+        profiles = self.video_store.get_profiles()
+        if profiles:
+            return  # Profiles already exist
+
+        from web.helpers import AVATAR_ICONS, AVATAR_COLORS
+        pin = self.config.web.pin if self.config.web else ""
+        self.video_store.create_profile(
+            "default", "Default", pin=pin,
+            icon=random.choice(AVATAR_ICONS), color=random.choice(AVATAR_COLORS),
+        )
+        logger.info("Created default profile (PIN: %s)", "set" if pin else "none")
+
+    async def setup(self) -> None:
+        """Initialize all components."""
+        db_path = self.config.database.path
+        os.makedirs(os.path.dirname(db_path) or ".", exist_ok=True)
+        self.video_store = VideoStore(db_path=db_path)
+        logger.info("Database initialized")
+
+        # Bootstrap default profile from config on first run
+        self._bootstrap_profiles()
+
+        if self.config.telegram.bot_token and self.config.telegram.admin_chat_id:
+            self.bot = BrainRotGuardBot(
+                bot_token=self.config.telegram.bot_token,
+                admin_chat_id=self.config.telegram.admin_chat_id,
+                video_store=self.video_store,
+                config=self.config,
+                starter_channels_path=Path(__file__).parent / "starter-channels.yaml",
+            )
+            state = fastapi_app.state
+            self.bot.on_channel_change = lambda pid="": invalidate_channel_cache(state, pid)
+            self.bot.on_video_change = lambda: invalidate_catalog_cache(state)
+            logger.info("Telegram bot initialized")
+
+        # Wire dependencies onto app.state (replaces old setup() call)
+        async def notify_callback(video: dict, profile_id: str = "default"):
+            if self.bot:
+                await self.bot.notify_new_request(video, profile_id=profile_id)
+
+        async def time_limit_cb(used_min: float, limit_min: int,
+                                category: str = "", profile_id: str = "default"):
+            if self.bot:
+                await self.bot.notify_time_limit_reached(
+                    used_min, limit_min, category, profile_id=profile_id)
+
+        state = fastapi_app.state
+        state.video_store = self.video_store
+        state.notify_callback = notify_callback
+        state.time_limit_notify_cb = time_limit_cb
+
+        # Download trigger: called when a video is approved (from web or bot)
+        async def download_on_approve(video_id: str, profile_id: str = "default"):
+            if self.downloader:
+                await self.downloader.enqueue(video_id, profile_id)
+
+        async def delete_on_revoke(video_id: str):
+            if self.downloader:
+                await self.downloader.delete_video_file(video_id)
+
+        state.download_on_approve = download_on_approve
+        state.delete_on_revoke = delete_on_revoke
+        state.youtube_config = self.config.youtube
+        state.web_config = self.config.web
+        state.wl_config = self.config.watch_limits
+        state.locale = get_locale(self.config)
+        state.time_format = get_time_format(self.config)
+        if state.wl_config:
+            state.wl_config.locale = state.locale
+            state.wl_config.time_format = state.time_format
+        init_app_state(state)
+
+        ydl_timeout = self.config.youtube.ydl_timeout if self.config.youtube else 30
+        if ydl_timeout:
+            configure_timeout(ydl_timeout)
+        state.extractor = YouTubeExtractor()
+
+        # Initialize local playback downloader if enabled
+        lp_cfg = self.config.local_playback
+        if lp_cfg and lp_cfg.enabled:
+            self.downloader = VideoDownloader(
+                video_dir=lp_cfg.video_dir,
+                video_store=self.video_store,
+                log_dir="db/logs",
+                max_storage_gb=lp_cfg.max_storage_gb,
+                quality=lp_cfg.quality,
+                max_concurrent=lp_cfg.max_concurrent_downloads,
+                ydl_timeout=lp_cfg.download_timeout,
+                subtitle_langs=lp_cfg.subtitle_langs,
+                retention_days=lp_cfg.retention_days,
+            )
+            state.video_downloader = self.downloader
+            state.local_playback_enabled = True
+            logger.info("Local playback enabled (dir=%s, quality=%s, max=%sGB)",
+                        lp_cfg.video_dir, lp_cfg.quality, lp_cfg.max_storage_gb)
+            # Wire bot callbacks for download triggers
+            if self.bot:
+                dl = self.downloader
+                self.bot.on_video_approve = lambda vid, pid: dl.enqueue(vid, pid)
+                self.bot.on_video_revoke = lambda vid: dl.delete_video_file(vid)
+        else:
+            state.video_downloader = None
+            state.local_playback_enabled = False
+
+        # Wire download callbacks on bot if downloader is active
+        if self.bot and self.downloader:
+            self.bot.on_video_approve = state.download_on_approve
+            self.bot.on_video_revoke = state.delete_on_revoke
+
+        # Configure middleware
+        import secrets as _secrets
+        if self.config.web and self.config.web.session_secret:
+            session_secret = self.config.web.session_secret
+        else:
+            session_secret = self.video_store.get_setting("session_secret")
+            if not session_secret:
+                session_secret = _secrets.token_hex(32)
+                self.video_store.set_setting("session_secret", session_secret)
+                logger.info("Generated and persisted new session secret")
+        pin = self.config.web.pin if self.config.web else ""
+
+        from starlette.middleware.sessions import SessionMiddleware
+        fastapi_app.add_middleware(SecurityHeadersMiddleware)
+        fastapi_app.add_middleware(PinAuthMiddleware, pin=pin)
+        fastapi_app.add_middleware(SessionMiddleware, secret_key=session_secret, max_age=86400, same_site="strict")
+
+        logger.info("Web app initialized")
+
+    async def run(self) -> None:
+        """Start everything."""
+        self.running = True
+        await self.setup()
+
+        # Start Telegram bot
+        if self.bot:
+            await self.bot.start()
+
+        # Start video downloader workers
+        if self.downloader:
+            await self.downloader.start(
+                num_workers=self.config.local_playback.max_concurrent_downloads
+            )
+            # Re-queue previously failed downloads
+            await self.downloader.retry_failed()
+
+        # Start FastAPI via uvicorn
+        uvi_level = logging.getLogger().getEffectiveLevel()
+        config = uvicorn.Config(
+            fastapi_app,
+            host=self.config.web.host,
+            port=self.config.web.port,
+            log_level=logging.getLevelName(uvi_level).lower(),
+        )
+        server = uvicorn.Server(config)
+
+        # Prune old log data on startup
+        w_pruned, s_pruned = self.video_store.prune_old_data()
+        if w_pruned or s_pruned:
+            logger.info(f"Pruned {w_pruned} watch_log and {s_pruned} search_log entries")
+
+        # Periodic backfill of missing channel_id / handle on channels + videos
+        self._backfill_task = asyncio.create_task(self._backfill_loop())
+
+        stats = self.video_store.get_stats()
+        logger.info(
+            f"BrainRotGuard started - {stats['approved']} approved videos, "
+            f"{stats['pending']} pending"
+        )
+
+        try:
+            await server.serve()
+        except asyncio.CancelledError:
+            logger.info("Server cancelled")
+
+    async def _backfill_loop(self) -> None:
+        """Periodically backfill missing channel_id and handle on channels + videos."""
+        _INTERVAL = 3600  # re-check every hour
+        while self.running:
+            try:
+                await self._backfill_identifiers()
+            except Exception as e:
+                logger.error(f"Backfill error: {e}")
+            await asyncio.sleep(_INTERVAL)
+
+    async def _backfill_identifiers(self) -> None:
+        """One-shot backfill of all missing unique identifiers across all profiles."""
+        from youtube.extractor import (
+            resolve_channel_handle,
+            resolve_handle_from_channel_id,
+            extract_metadata,
+        )
+
+        profiles = self.video_store.get_profiles()
+        if not profiles:
+            profiles = [{"id": "default"}]
+
+        for profile in profiles:
+            pid = profile["id"]
+            cs = ChildStore(self.video_store, pid)
+
+            # 1) Channels missing channel_id
+            missing_cid = cs.get_channels_missing_ids()
+            if missing_cid:
+                logger.info(f"Backfilling channel_id for {len(missing_cid)} channels (profile={pid})")
+            for name, handle in missing_cid:
+                try:
+                    lookup = handle or f"@{name}"
+                    info = await resolve_channel_handle(lookup)
+                    if info and info.get("channel_id"):
+                        cs.update_channel_id(name, info["channel_id"])
+                        if info.get("handle") and not handle:
+                            cs.update_channel_handle(name, info["handle"])
+                        logger.info(f"Backfilled channel_id: {name} → {info['channel_id']}")
+                except Exception as e:
+                    logger.debug(f"Failed to backfill channel_id for {name}: {e}")
+
+            # 2) Channels missing @handle (have channel_id)
+            missing_handles = cs.get_channels_missing_handles()
+            if missing_handles:
+                logger.info(f"Backfilling @handles for {len(missing_handles)} channels (profile={pid})")
+            for name, channel_id in missing_handles:
+                try:
+                    handle = await resolve_handle_from_channel_id(channel_id)
+                    if handle:
+                        cs.update_channel_handle(name, handle)
+                        logger.info(f"Backfilled handle: {name} → {handle}")
+                except Exception as e:
+                    logger.debug(f"Failed to resolve handle for {name}: {e}")
+
+            # 3) Videos missing channel_id
+            missing_vid_cid = cs.get_videos_missing_channel_id()
+            if missing_vid_cid:
+                logger.info(f"Backfilling channel_id for {len(missing_vid_cid)} videos (profile={pid})")
+            for v in missing_vid_cid:
+                try:
+                    metadata = await extract_metadata(v["video_id"])
+                    if metadata and metadata.get("channel_id"):
+                        cs.update_video_channel_id(v["video_id"], metadata["channel_id"])
+                        logger.info(
+                            f"Backfilled video channel_id: {v['video_id']} → {metadata['channel_id']}"
+                        )
+                except Exception as e:
+                    logger.debug(f"Failed to backfill channel_id for video {v['video_id']}: {e}")
+
+    async def stop(self) -> None:
+        """Stop all components."""
+        self.running = False
+        if hasattr(self, '_backfill_task'):
+            self._backfill_task.cancel()
+        if self.downloader:
+            await self.downloader.stop()
+        if self.bot:
+            await self.bot.stop()
+        if self.video_store:
+            self.video_store.close()
+        logger.info("BrainRotGuard stopped")
+
+
+async def main() -> None:
+    parser = argparse.ArgumentParser(description="BrainRotGuard")
+    parser.add_argument("-c", "--config", help="Path to config file", default=None)
+    parser.add_argument("-v", "--verbose", action="store_true", help="Verbose logging (overrides log_level to debug)")
+    parser.add_argument("--log-level", choices=sorted(VALID_LOG_LEVELS),
+                        help="Set log level (overrides config file)")
+    args = parser.parse_args()
+
+    # Apply CLI-only overrides before load_config so config-time warnings respect them
+    if args.verbose:
+        logging.getLogger().setLevel(logging.DEBUG)
+    elif args.log_level:
+        logging.getLogger().setLevel(getattr(logging, args.log_level.upper()))
+
+    config = load_config(args.config)
+
+    # If no CLI override, apply config/env level
+    if not args.verbose and not args.log_level:
+        logging.getLogger().setLevel(getattr(logging, config.app.log_level.upper()))
+
+    app = BrainRotGuard(config)
+
+    loop = asyncio.get_event_loop()
+
+    def signal_handler():
+        asyncio.create_task(app.stop())
+
+    for sig in (signal.SIGINT, signal.SIGTERM):
+        try:
+            loop.add_signal_handler(sig, signal_handler)
+        except NotImplementedError:
+            signal.signal(sig, lambda s, f: signal_handler())
+
+    try:
+        await app.run()
+    except KeyboardInterrupt:
+        await app.stop()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

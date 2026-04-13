@@ -1,0 +1,44 @@
+app:
+  locale: en  # supported: en, nb
+  time_format: locale  # locale, 12h, or 24h
+  log_level: info  # debug, info, warning, error
+
+web:
+  host: 0.0.0.0
+  port: 8080
+  poll_interval: 3000  # ms between status checks on pending page
+  pin: ${BRG_PIN}  # optional, empty = no auth
+  # session_secret: auto-generated if not set
+  # base_url: http://10.0.0.1:8080  # LAN IP for Telegram links (auto-detected by deploy.sh, or set BRG_BASE_URL env var)
+
+telegram:
+  bot_token: ${BRG_BOT_TOKEN}
+  admin_chat_id: ${BRG_ADMIN_CHAT_ID}
+
+youtube:
+  search_max_results: 50
+  channel_cache_results: 200  # max videos per allowlisted channel in cache
+  channel_cache_ttl: 1800     # seconds between channel cache refreshes (default 30min)
+  ydl_timeout: 30             # seconds — max wall-clock time per yt-dlp operation
+  shorts_enabled: false       # show Shorts in dedicated row (toggle via /shorts command)
+
+database:
+  path: db/videos.db
+
+watch_limits:
+  daily_limit_minutes: 120  # 0 = unlimited
+  timezone: America/New_York
+  notify_on_limit: true
+
+# Local playback: download videos to the server and stream from there
+# instead of embedding YouTube directly. Removes all YouTube tracking
+# from the child's device. Requires ffmpeg (included in Docker image).
+local_playback:
+  enabled: false             # set to true to enable (or BRG_LOCAL_PLAYBACK=true)
+  video_dir: db/videos       # storage directory for downloaded videos
+  max_storage_gb: 10         # auto-cleanup oldest files when limit reached
+  quality: 720p              # 360p, 480p, 720p, 1080p, best
+  max_concurrent_downloads: 2
+  download_timeout: 300      # seconds per download
+  subtitle_langs: en,fr      # "all", "en,fr,es", or "" to disable subtitles
+  retention_days: 1          # auto-delete video files after N days (0 = keep forever)

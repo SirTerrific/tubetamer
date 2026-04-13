@@ -1,0 +1,557 @@
+"""Setup hub mixin: /start and /setup interactive setup wizard with section sub-menus."""
+
+import logging
+import re
+
+from telegram import ForceReply, Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import ContextTypes
+
+from bot.helpers import _md, _answer_bg, _edit_msg, MD2
+
+logger = logging.getLogger(__name__)
+
+
+class SetupMixin:
+    """Interactive setup hub for first-run and returning configuration."""
+
+    # --- Hub ---
+
+    async def _send_reply_prompt(self, message, prompt: str, markdown: bool = False) -> None:
+        """Send a ForceReply prompt so free-text steps work reliably in groups."""
+        kwargs = {"reply_markup": ForceReply(selective=True)}
+        text = _md(prompt) if markdown else prompt
+        if markdown:
+            kwargs["parse_mode"] = MD2
+        await message.reply_text(text, **kwargs)
+
+    def _build_setup_hub(self, chat_id: int) -> tuple[str, InlineKeyboardMarkup]:
+        """Build the setup hub message text + 4 category buttons with current status."""
+        from version import __version__
+        profiles = self._get_profiles()
+
+        # Children status
+        if len(profiles) == 1 and profiles[0]["display_name"].lower() == "default" and not profiles[0]["pin"]:
+            children_status = self.tr("not configured")
+        elif profiles:
+            parts = []
+            for p in profiles:
+                pin = self.tr(" (PIN set)") if p["pin"] else ""
+                parts.append(f"{p['display_name']}{pin}")
+            children_status = ", ".join(parts)
+        else:
+            children_status = self.tr("not configured")
+
+        # Time limits status
+        time_parts = []
+        for p in profiles:
+            cs = self._child_store(p["id"])
+            simple = cs.get_setting("daily_limit_minutes", "")
+            edu = cs.get_setting("edu_limit_minutes", "")
+            fun = cs.get_setting("fun_limit_minutes", "")
+            sched_start = cs.get_setting("schedule_start", "")
+            if simple:
+                time_parts.append(f"{p['display_name']}: {self.tr('{minutes}m/day', minutes=simple)}")
+            elif edu or fun:
+                e = self.tr("{minutes}m edu", minutes=edu) if edu else ""
+                f_ = self.tr("{minutes}m fun", minutes=fun) if fun else ""
+                time_parts.append(f"{p['display_name']}: {' / '.join(x for x in [e, f_] if x)}")
+            elif sched_start:
+                time_parts.append(f"{p['display_name']}: {self.tr('schedule only')}")
+        if time_parts:
+            time_status = "; ".join(time_parts) if len(profiles) > 1 else time_parts[0].split(": ", 1)[1]
+        else:
+            time_status = self.tr("not configured")
+
+        # Channels status
+        total_allowed = 0
+        for p in profiles:
+            cs = self._child_store(p["id"])
+            total_allowed += len(cs.get_channels_with_ids("allowed"))
+        channels_status = self.tr("{channels} channels", channels=total_allowed)
+
+        # Shorts status
+        shorts_parts = []
+        for p in profiles:
+            cs = self._child_store(p["id"])
+            db_val = cs.get_setting("shorts_enabled", "")
+            if db_val:
+                enabled = db_val.lower() == "true"
+            elif p["id"] == "default" and self.config and hasattr(self.config.youtube, 'shorts_enabled'):
+                enabled = self.config.youtube.shorts_enabled
+            else:
+                enabled = False
+            shorts_parts.append((p["display_name"], enabled))
+        if not shorts_parts:
+            shorts_status = self.tr("disabled")
+        elif len(profiles) > 1:
+            shorts_status = "; ".join(
+                f"{name}: {self.tr('enabled') if enabled else self.tr('disabled')}"
+                for name, enabled in shorts_parts
+            )
+        else:
+            shorts_status = self.tr("enabled") if shorts_parts[0][1] else self.tr("disabled")
+
+        intro = self.tr(
+            "{app_name} v{version}\n\nYouTube approval system for kids. Tap a section below to set things up.",
+            app_name=self.tr("App Name"),
+            version=__version__,
+        )
+        text = (
+            f"{intro}\n\n"
+            f"  {self.tr('Children')} — {children_status}\n"
+            f"  {self.tr('Time Limits')} — {time_status}\n"
+            f"  {self.tr('Channels')} — {channels_status}\n"
+            f"  {self.tr('Shorts')} — {shorts_status}"
+        )
+
+        keyboard = InlineKeyboardMarkup([
+            [
+                InlineKeyboardButton(f"\U0001f9d2 {self.tr('Children')}", callback_data="onboard_children"),
+                InlineKeyboardButton(f"\u23f0 {self.tr('Time Limits')}", callback_data="onboard_time"),
+            ],
+            [
+                InlineKeyboardButton(f"\U0001f4fa {self.tr('Channels')}", callback_data="onboard_channels"),
+                InlineKeyboardButton(f"\U0001f3ac {self.tr('Shorts')}", callback_data="onboard_shorts"),
+            ],
+            [InlineKeyboardButton(f"\u2705 {self.tr('Done')}", callback_data="onboard_done")],
+        ])
+        return _md(text), keyboard
+
+    async def _cmd_setup(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """Send the setup hub (alias for /start)."""
+        if not await self._require_admin(update):
+            return
+        await self._send_setup_hub(update)
+
+    async def _send_setup_hub(self, update: Update) -> None:
+        """Send the hub message and track its message_id."""
+        chat_id = update.effective_chat.id
+        text, markup = self._build_setup_hub(chat_id)
+        msg = await update.effective_message.reply_text(text, parse_mode=MD2, reply_markup=markup)
+        self._pending_wizard[chat_id] = {
+            "step": "onboard_hub",
+            "hub_message_id": msg.message_id,
+        }
+
+    async def _edit_hub(self, query) -> None:
+        """Re-render the hub in place and restore wizard state."""
+        chat_id = query.message.chat_id
+        text, markup = self._build_setup_hub(chat_id)
+        await _edit_msg(query, text, markup)
+        # Restore hub state so _is_onboard_active works for channel browsing
+        self._pending_wizard[chat_id] = {
+            "step": "onboard_hub",
+            "hub_message_id": query.message.message_id,
+        }
+
+    async def _cb_onboard_done(self, query) -> None:
+        """Remove hub buttons, clean up wizard state."""
+        _answer_bg(query)
+        chat_id = query.message.chat_id
+        self._pending_wizard.pop(chat_id, None)
+        try:
+            await query.edit_message_reply_markup(reply_markup=None)
+        except Exception:
+            pass
+
+    def _profile_name(self, profile_id: str) -> str:
+        """Resolve a profile_id to its display name."""
+        p = self.video_store.get_profile(profile_id)
+        return p["display_name"] if p else profile_id
+
+    # --- Children section ---
+
+    def _build_children_submenu(self) -> tuple[str, InlineKeyboardMarkup]:
+        """Render children sub-menu showing current profiles."""
+        profiles = self._get_profiles()
+        lines = [f"**{self.tr('Children Setup')}**\n"]
+        if not profiles or (len(profiles) == 1 and profiles[0]["display_name"].lower() == "default"):
+            lines.append(self.tr("Current: default (no name)"))
+        else:
+            for p in profiles:
+                pin = self.tr(" (PIN set)") if p["pin"] else self.tr(" (no PIN)")
+                lines.append(f"  {p['display_name']}{pin}")
+
+        buttons = []
+        # Show rename button if default profile exists (unnamed)
+        has_default = any(p["display_name"].lower() == "default" for p in profiles)
+        if has_default:
+            buttons.append([InlineKeyboardButton(self.tr("Rename Default"), callback_data="onboard_child_rename")])
+        buttons.append([InlineKeyboardButton(self.tr("Add Child"), callback_data="onboard_child_add")])
+        buttons.append([InlineKeyboardButton(f"\u2190 {self.tr('Back')}", callback_data="onboard_child_back")])
+
+        return _md("\n".join(lines)), InlineKeyboardMarkup(buttons)
+
+    async def _cb_onboard_children(self, query) -> None:
+        """Enter children sub-menu."""
+        _answer_bg(query)
+        text, markup = self._build_children_submenu()
+        await _edit_msg(query, text, markup)
+
+    async def _cb_onboard_child_rename(self, query) -> None:
+        """Prompt for new name to rename default profile."""
+        _answer_bg(query)
+        chat_id = query.message.chat_id
+        hub_mid = self._pending_wizard.get(chat_id, {}).get("hub_message_id")
+        self._pending_wizard[chat_id] = {
+            "step": "onboard_child_name:rename",
+            "hub_message_id": hub_mid,
+            "target_profile": "default",
+        }
+        prompt = self.tr("Reply with the child's name:")
+        await _edit_msg(query, _md(prompt))
+        await self._send_reply_prompt(query.message, prompt)
+
+    async def _cb_onboard_child_add(self, query) -> None:
+        """Prompt for new child name."""
+        _answer_bg(query)
+        chat_id = query.message.chat_id
+        hub_mid = self._pending_wizard.get(chat_id, {}).get("hub_message_id")
+        self._pending_wizard[chat_id] = {
+            "step": "onboard_child_name:add",
+            "hub_message_id": hub_mid,
+        }
+        prompt = self.tr("Reply with the child's name:")
+        await _edit_msg(query, _md(prompt))
+        await self._send_reply_prompt(query.message, prompt)
+
+    async def _cb_onboard_child_pin(self, query, choice: str) -> None:
+        """Handle PIN yes/no choice."""
+        _answer_bg(query)
+        chat_id = query.message.chat_id
+        state = self._pending_wizard.get(chat_id, {})
+        if not state.get("last_profile_id"):
+            await query.answer(self.tr("Session expired — run /setup to restart."))
+            return
+        if choice == "yes":
+            state["step"] = "onboard_child_pin"
+            self._pending_wizard[chat_id] = state
+            prompt = self.tr("Reply with a PIN:")
+            await _edit_msg(query, _md(prompt))
+            await self._send_reply_prompt(query.message, prompt)
+        else:
+            # Skip PIN, return to children sub-menu
+            state["step"] = "onboard_hub"
+            self._pending_wizard[chat_id] = state
+            text, markup = self._build_children_submenu()
+            await _edit_msg(query, text, markup)
+
+    async def _cb_onboard_child_back(self, query) -> None:
+        """Return to hub from children sub-menu."""
+        _answer_bg(query)
+        await self._edit_hub(query)
+
+    # --- Channels section ---
+
+    def _build_channels_submenu(self) -> tuple[str, InlineKeyboardMarkup]:
+        """Render channels sub-menu with per-profile stats."""
+        profiles = self._get_profiles()
+        lines = [f"**{self.tr('Channels')}**\n"]
+        for p in profiles:
+            cs = self._child_store(p["id"])
+            allowed = len(cs.get_channels_with_ids("allowed"))
+            blocked = len(cs.get_channels_with_ids("blocked"))
+            lines.append(
+                f"  {p['display_name']}: {allowed} {self.tr('allowed')}, {blocked} {self.tr('blocked')}"
+            )
+
+        buttons = []
+        if len(profiles) == 1:
+            buttons.append([InlineKeyboardButton(
+                self.tr("Browse Starters"), callback_data=f"onboard_chan_sel:{profiles[0]['id']}",
+            )])
+        else:
+            row = []
+            for p in profiles:
+                row.append(InlineKeyboardButton(
+                    p["display_name"], callback_data=f"onboard_chan_sel:{p['id']}",
+                ))
+                if len(row) == 3:
+                    buttons.append(row)
+                    row = []
+            if row:
+                buttons.append(row)
+        buttons.append([InlineKeyboardButton(f"\u2190 {self.tr('Back')}", callback_data="onboard_chan_back")])
+        return _md("\n".join(lines)), InlineKeyboardMarkup(buttons)
+
+    async def _cb_onboard_channels(self, query) -> None:
+        """Enter channels sub-menu."""
+        _answer_bg(query)
+        text, markup = self._build_channels_submenu()
+        await _edit_msg(query, text, markup)
+
+    async def _cb_onboard_channels_sel(self, query, profile_id: str) -> None:
+        """Select profile for channels — render starter browser."""
+        _answer_bg(query)
+        name = self._profile_name(profile_id)
+        cs = self._child_store(profile_id)
+        text, markup = self._render_starter_message(
+            store=cs, profile_id=profile_id, onboard=True, onboard_name=name,
+        )
+        await _edit_msg(query, text, markup, disable_preview=True)
+
+    async def _cb_onboard_channels_back(self, query) -> None:
+        """Return to hub from channels sub-menu."""
+        _answer_bg(query)
+        await self._edit_hub(query)
+
+    # --- Time section ---
+
+    def _build_time_submenu(self) -> tuple[str, InlineKeyboardMarkup]:
+        """Render time limits sub-menu with per-profile status."""
+        profiles = self._get_profiles()
+        lines = [f"**{self.tr('Time Limits')}**\n"]
+        for p in profiles:
+            cs = self._child_store(p["id"])
+            simple = cs.get_setting("daily_limit_minutes", "")
+            edu = cs.get_setting("edu_limit_minutes", "")
+            fun = cs.get_setting("fun_limit_minutes", "")
+            sched_start = cs.get_setting("schedule_start", "")
+            sched_end = cs.get_setting("schedule_end", "")
+            parts = []
+            if simple:
+                parts.append(self.tr("{minutes}m/day", minutes=simple))
+            elif edu or fun:
+                if edu:
+                    parts.append(self.tr("{minutes}m edu", minutes=edu))
+                if fun:
+                    parts.append(self.tr("{minutes}m fun", minutes=fun))
+            if sched_start or sched_end:
+                s_disp = self.fmt_time(sched_start) if sched_start else "?"
+                e_disp = self.fmt_time(sched_end) if sched_end else "?"
+                parts.append(f"{s_disp}\u2013{e_disp}")
+            if not parts:
+                parts.append(self.tr("no limits set"))
+            lines.append(f"  {p['display_name']}: {' / '.join(parts)}")
+
+        buttons = []
+        if len(profiles) == 1:
+            buttons.append([InlineKeyboardButton(
+                self.tr("Set Limits"), callback_data=f"onboard_time_sel:{profiles[0]['id']}",
+            )])
+        else:
+            row = []
+            for p in profiles:
+                row.append(InlineKeyboardButton(
+                    p["display_name"], callback_data=f"onboard_time_sel:{p['id']}",
+                ))
+                if len(row) == 3:
+                    buttons.append(row)
+                    row = []
+            if row:
+                buttons.append(row)
+        buttons.append([InlineKeyboardButton(f"\u2190 {self.tr('Back')}", callback_data="onboard_time_back")])
+        return _md("\n".join(lines)), InlineKeyboardMarkup(buttons)
+
+    async def _cb_onboard_time(self, query) -> None:
+        """Enter time limits sub-menu."""
+        _answer_bg(query)
+        text, markup = self._build_time_submenu()
+        await _edit_msg(query, text, markup)
+
+    async def _cb_onboard_time_sel(self, query, profile_id: str) -> None:
+        """Select profile and chain to /time setup wizard."""
+        _answer_bg(query)
+        chat_id = query.message.chat_id
+        hub_mid = self._pending_wizard.get(chat_id, {}).get("hub_message_id")
+        name = self._profile_name(profile_id)
+        self._pending_wizard[chat_id] = {
+            "step": "setup_top",
+            "profile_id": profile_id,
+            "onboard_return": True,
+            "hub_message_id": hub_mid,
+        }
+        text = _md(
+            f"\u23f0 **{self.tr('Time Setup for {name}', name=name)}**\n\n"
+            f"{self.tr('What would you like to configure?')}\n\n"
+            f"**{self.tr('Limits')}** \u2014 {self.tr('daily screen time budgets')}\n"
+            f"**{self.tr('Schedule')}** \u2014 {self.tr('when videos are available')}"
+        )
+        keyboard = InlineKeyboardMarkup([
+            [
+                InlineKeyboardButton(self.tr("Limits"), callback_data="setup_top:limits"),
+                InlineKeyboardButton(self.tr("Schedule"), callback_data="setup_top:schedule"),
+            ],
+            [InlineKeyboardButton(f"\u2190 {self.tr('Back')}", callback_data="onboard_time_back")],
+        ])
+        await _edit_msg(query, text, keyboard)
+
+    async def _cb_onboard_time_back(self, query) -> None:
+        """Return to hub from time sub-menu."""
+        _answer_bg(query)
+        await self._edit_hub(query)
+
+    async def _send_onboard_time_return(self, chat_id: int) -> None:
+        """After time setup wizard completes, send fresh time sub-menu."""
+        text, markup = self._build_time_submenu()
+        try:
+            await self._app.bot.send_message(
+                chat_id=chat_id, text=text, parse_mode=MD2, reply_markup=markup,
+            )
+        except Exception as e:
+            logger.error(f"Failed to send onboard time return: {e}")
+
+    # --- Shorts section ---
+
+    def _build_shorts_submenu(self, selected_profile_id: str = "", selected_name: str = "") -> tuple[str, InlineKeyboardMarkup]:
+        """Render shorts sub-menu with per-profile status."""
+        profiles = self._get_profiles()
+        if selected_name:
+            lines = [f"**{self.tr('YouTube Shorts for {name}', name=selected_name)}** ({self.tr('under 60s')})\n"]
+        else:
+            lines = [f"**{self.tr('YouTube Shorts')}** ({self.tr('under 60s')})\n"]
+        for p in profiles:
+            cs = self._child_store(p["id"])
+            db_val = cs.get_setting("shorts_enabled", "")
+            if db_val:
+                enabled = db_val.lower() == "true"
+            elif p["id"] == "default" and self.config and hasattr(self.config.youtube, 'shorts_enabled'):
+                enabled = self.config.youtube.shorts_enabled
+            else:
+                enabled = False
+            lines.append(f"  {p['display_name']}: {self.tr('enabled') if enabled else self.tr('disabled')}")
+
+        buttons = []
+        if len(profiles) == 1:
+            # Direct enable/disable for single child
+            pid = profiles[0]["id"]
+            buttons.append([
+                InlineKeyboardButton(self.tr("Enable"), callback_data=f"onboard_shorts_tog:{pid}:on"),
+                InlineKeyboardButton(self.tr("Disable"), callback_data=f"onboard_shorts_tog:{pid}:off"),
+            ])
+        elif selected_profile_id:
+            # Show toggle for selected profile
+            buttons.append([
+                InlineKeyboardButton(self.tr("Enable"), callback_data=f"onboard_shorts_tog:{selected_profile_id}:on"),
+                InlineKeyboardButton(self.tr("Disable"), callback_data=f"onboard_shorts_tog:{selected_profile_id}:off"),
+            ])
+        else:
+            # Profile selector
+            row = []
+            for p in profiles:
+                row.append(InlineKeyboardButton(
+                    p["display_name"], callback_data=f"onboard_shorts_sel:{p['id']}",
+                ))
+                if len(row) == 3:
+                    buttons.append(row)
+                    row = []
+            if row:
+                buttons.append(row)
+        buttons.append([InlineKeyboardButton(f"\u2190 {self.tr('Back')}", callback_data="onboard_shorts_back")])
+        return _md("\n".join(lines)), InlineKeyboardMarkup(buttons)
+
+    async def _cb_onboard_shorts(self, query) -> None:
+        """Enter shorts sub-menu."""
+        _answer_bg(query)
+        text, markup = self._build_shorts_submenu()
+        await _edit_msg(query, text, markup)
+
+    async def _cb_onboard_shorts_select(self, query, profile_id: str) -> None:
+        """Select profile for shorts toggle (multi-child)."""
+        _answer_bg(query)
+        name = self._profile_name(profile_id)
+        text, markup = self._build_shorts_submenu(selected_profile_id=profile_id, selected_name=name)
+        await _edit_msg(query, text, markup)
+
+    async def _cb_onboard_shorts_toggle(self, query, profile_id: str, choice: str) -> None:
+        """Toggle shorts for a profile."""
+        _answer_bg(query, self.tr("Shorts {status}", status=self.tr("enabled") if choice == "on" else self.tr("disabled")))
+        cs = self._child_store(profile_id)
+        cs.set_setting("shorts_enabled", str(choice == "on").lower())
+        if self.on_channel_change:
+            self.on_channel_change()
+        # Return to shorts sub-menu with updated status
+        text, markup = self._build_shorts_submenu()
+        await _edit_msg(query, text, markup)
+
+    async def _cb_onboard_shorts_back(self, query) -> None:
+        """Return to hub from shorts sub-menu."""
+        _answer_bg(query)
+        await self._edit_hub(query)
+
+    # --- Onboard return from time wizard ---
+
+    async def _maybe_onboard_return(self, chat_id: int) -> None:
+        """If the time wizard was launched from the setup hub, send time sub-menu."""
+        state = self._pending_wizard.get(chat_id, {})
+        if state.get("onboard_return"):
+            await self._send_onboard_time_return(chat_id)
+            self._pending_wizard.pop(chat_id, None)
+
+    # --- Onboard text reply handler ---
+
+    async def _handle_onboard_reply(self, update: Update, state: dict) -> bool:
+        """Handle text replies for onboard wizard steps.
+
+        Returns True if the reply was handled, False otherwise.
+        """
+        chat_id = update.effective_chat.id
+        text = update.message.text.strip()
+        step = state["step"]
+
+        if step.startswith("onboard_child_name:"):
+            action = step.split(":")[1]  # "rename" or "add"
+            name = text[:30].strip()
+            if not name:
+                await update.effective_message.reply_text(self.tr("Name can't be empty. Try again:"))
+                return True
+            # Validate name
+            pid = re.sub(r'[^a-z0-9]', '', name.lower())[:20]
+            if not pid:
+                await update.effective_message.reply_text(
+                    self.tr("Name must contain at least one alphanumeric character. Try again:")
+                )
+                return True
+
+            if action == "rename":
+                target_pid = state.get("target_profile", "default")
+                target = self.video_store.get_profile(target_pid)
+                if target:
+                    self.video_store.update_profile(target_pid, display_name=name)
+                state["step"] = "onboard_child_pin_prompt"
+                state["last_profile_id"] = target_pid
+                state["last_profile_name"] = name
+                self._pending_wizard[chat_id] = state
+                keyboard = InlineKeyboardMarkup([[
+                    InlineKeyboardButton(self.tr("Set PIN"), callback_data="onboard_child_pin:yes"),
+                    InlineKeyboardButton(self.tr("No PIN"), callback_data="onboard_child_pin:no"),
+                ]])
+                await update.effective_message.reply_text(
+                    self.tr("Set a PIN for {name}?", name=name),
+                    reply_markup=keyboard,
+                )
+            elif action == "add":
+                # Check for conflict
+                existing = self.video_store.get_profile(pid)
+                if existing:
+                    await update.effective_message.reply_text(
+                        self.tr("A profile with that name already exists. Try a different name:")
+                    )
+                    return True
+                self.video_store.create_profile(pid, name)
+                state["step"] = "onboard_child_pin_prompt"
+                state["last_profile_id"] = pid
+                state["last_profile_name"] = name
+                self._pending_wizard[chat_id] = state
+                keyboard = InlineKeyboardMarkup([[
+                    InlineKeyboardButton(self.tr("Set PIN"), callback_data="onboard_child_pin:yes"),
+                    InlineKeyboardButton(self.tr("No PIN"), callback_data="onboard_child_pin:no"),
+                ]])
+                await update.effective_message.reply_text(
+                    self.tr("Set a PIN for {name}?", name=name),
+                    reply_markup=keyboard,
+                )
+            return True
+
+        if step == "onboard_child_pin":
+            pin = text.strip()
+            pid = state.get("last_profile_id", "default")
+            self.video_store.update_profile(pid, pin=pin)
+            # Return to children sub-menu
+            state["step"] = "onboard_hub"
+            self._pending_wizard[chat_id] = state
+            text_msg, markup = self._build_children_submenu()
+            await update.effective_message.reply_text(text_msg, parse_mode=MD2, reply_markup=markup)
+            return True
+
+        return False

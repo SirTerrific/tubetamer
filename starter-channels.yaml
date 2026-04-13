@@ -1,0 +1,75 @@
+channels:
+  - handle: "@SciShow"
+    name: "SciShow"
+    category: edu
+    description: "Science explainers for all ages"
+
+  - handle: "@kurzgesagt"
+    name: "Kurzgesagt – In a Nutshell"
+    category: edu
+    description: "Animated science and philosophy"
+
+  - handle: "@crashcourse"
+    name: "CrashCourse"
+    category: edu
+    description: "Bite-sized courses on science, history, and more"
+
+  - handle: "@smartereveryday"
+    name: "SmarterEveryDay"
+    category: edu
+    description: "Deep dives into how things work"
+
+  - handle: "@TedEd"
+    name: "TED-Ed"
+    category: edu
+    description: "Animated educational lessons"
+
+  - handle: "@NatGeo"
+    name: "National Geographic"
+    category: edu
+    description: "Nature, wildlife, and exploration"
+
+  - handle: "@numberphile"
+    name: "Numberphile"
+    category: edu
+    description: "Videos about numbers and mathematics"
+
+  - handle: "@MinutePhysics"
+    name: "minutephysics"
+    category: edu
+    description: "Short physics explainers with hand-drawn animation"
+
+  - handle: "@DrBecky"
+    name: "Dr. Becky"
+    category: edu
+    description: "Astrophysics and space discoveries"
+
+  - handle: "@besmart"
+    name: "Be Smart"
+    category: edu
+    description: "Science, nature, and curiosity"
+
+  - handle: "@BraveWilderness"
+    name: "Brave Wilderness"
+    category: fun
+    description: "Wildlife encounters and animal close-ups"
+
+  - handle: "@okgo"
+    name: "OK Go"
+    category: fun
+    description: "Creative music videos with elaborate stunts"
+
+  - handle: "@CorridorCrew"
+    name: "Corridor Crew"
+    category: fun
+    description: "VFX breakdowns and filmmaking"
+
+  - handle: "@MythicalKitchen"
+    name: "Mythical Kitchen"
+    category: fun
+    description: "Creative cooking and food experiments"
+
+  - handle: "@LEGO"
+    name: "LEGO"
+    category: fun
+    description: "Official LEGO builds, stories, and stop-motion"

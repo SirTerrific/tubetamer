@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}{{ t("Requests") }} - {{ app_name() }}{% endblock %}
+
+{% block content %}
+<div class="activity-container requests-page">
+    <div class="activity-header">
+        <h2 class="section-title">{{ t("Requests") }}</h2>
+    </div>
+
+    {% if pending_videos or approved_videos %}
+    <section class="requests-page-section">
+        <div class="section-header requests-page-header">
+            <h3 class="section-title">{{ t("Pending Requests") }}</h3>
+        </div>
+        {% if pending_videos %}
+        <div class="video-grid request-grid">
+            {% for video in pending_videos %}
+            <a href="/pending/{{ video.video_id }}" class="video-card request-video-card request-video-card-pending">
+                <div class="thumbnail-wrap">
+                    <img src="{{ video.thumbnail_url or ('https://i.ytimg.com/vi/' ~ video.video_id ~ '/hqdefault.jpg') }}" alt="{{ video.title }}" class="video-thumbnail" loading="lazy">
+                    <span class="request-status-badge request-status-badge-pending">{{ t("Pending") }}</span>
+                    {% if video.duration %}
+                    <span class="duration-badge">{{ format_duration(video.duration) }}</span>
+                    {% endif %}
+                </div>
+                <div class="video-info">
+                    <h3 class="video-title">{{ video.title }}</h3>
+                    <p class="video-channel">{{ video.channel_name }}{% if video.category %}<span class="category-badge category-{{ video.category }} request-cat-badge">{{ cat_label(video.category, short=True) }}</span>{% endif %}</p>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state request-empty-state">
+            <p>{{ t("No pending requests") }}</p>
+            <p class="empty-hint">{{ t("Videos waiting for approval will appear here") }}</p>
+        </div>
+        {% endif %}
+    </section>
+
+    <section class="requests-page-section">
+        <div class="section-header requests-page-header">
+            <h3 class="section-title">{{ t("Approved by Request") }}</h3>
+        </div>
+        {% if approved_videos %}
+        <div class="video-grid request-grid">
+            {% for video in approved_videos %}
+            <a href="/watch/{{ video.video_id }}" class="video-card request-video-card request-video-card-approved">
+                <div class="thumbnail-wrap">
+                    <img src="{{ video.thumbnail_url or ('https://i.ytimg.com/vi/' ~ video.video_id ~ '/hqdefault.jpg') }}" alt="{{ video.title }}" class="video-thumbnail" loading="lazy">
+                    <span class="request-status-badge request-status-badge-approved">{{ t("Approved by Request") }}</span>
+                    {% if video.duration %}
+                    <span class="duration-badge">{{ format_duration(video.duration) }}</span>
+                    {% endif %}
+                </div>
+                <div class="video-info">
+                    <h3 class="video-title">{{ video.title }}</h3>
+                    <p class="video-channel">{{ video.channel_name }}{% if video.category %}<span class="category-badge category-{{ video.category }} request-cat-badge">{{ cat_label(video.category, short=True) }}</span>{% endif %}</p>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state request-empty-state">
+            <p>{{ t("No approved requests") }}</p>
+            <p class="empty-hint">{{ t("Approved videos outside allowed channels will stay here") }}</p>
+        </div>
+        {% endif %}
+    </section>
+    {% else %}
+    <div class="empty-state">
+        <p>{{ t("No requests yet") }}</p>
+        <p class="empty-hint">{{ t("Requested videos will appear here") }}</p>
+    </div>
+    {% endif %}
+
+    <a href="/" class="back-link back-link-home back-link-previous">{{ t("Back") }}</a>
+</div>
+{% endblock %}

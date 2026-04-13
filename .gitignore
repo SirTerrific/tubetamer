@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+*.pyo
+.env
+config.yaml
+db/
+*.db
+*.log
+.venv/
+venv/
+TODO.md
+.claude/
