@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="web/static/brg-logo.png" alt="BrainRotGuard" width="300">
+  <img src="web/static/brg-logo.png" alt="67guard" width="300">
 </p>
 
 <p align="center">
@@ -19,7 +19,7 @@
 
 ## What Is This?
 
-BrainRotGuard puts you in control of what your kids watch on YouTube — without standing over their shoulder.
+67guard puts you in control of what your kids watch on YouTube — without standing over their shoulder.
 
 Your child gets a simple web page on their tablet where they can search YouTube and request videos. Every request sends you a Telegram message with the video thumbnail, title, channel, and duration. You tap **Approve** or **Deny** right in the chat. If approved, the video starts playing on their tablet automatically.
 
@@ -28,13 +28,13 @@ No YouTube account needed. No ads. No algorithmic rabbit holes. No "up next" aut
 ### How It Works
 
 ```
-Kid's Tablet ----> BrainRotGuard Server ----> Router ----> Telegram Cloud ----> Parent's Phone
+Kid's Tablet ----> 67guard Server ----> Router ----> Telegram Cloud ----> Parent's Phone
                         |
                   Tablet lockdown (Family Link / Screen Time)
-                  only BrainRotGuard PWA allowed
+                  only 67guard PWA allowed
 ```
 
-1. Kid opens BrainRotGuard on their tablet and searches for a video
+1. Kid opens 67guard on their tablet and searches for a video
 2. They tap **Request** on the one they want to watch
 3. You get a Telegram notification with all the details
 4. You tap **Approve** or **Deny**
@@ -44,7 +44,7 @@ Kid's Tablet ----> BrainRotGuard Server ----> Router ----> Telegram Cloud ----> 
 
 Works on any screen size — desktop, tablet, and phone:
 
-<img src="docs/screenshots/screenshots-combined.png" alt="BrainRotGuard on desktop, tablet, and phone — homepage, search, watch, and activity views" width="900">
+<img src="docs/screenshots/screenshots-combined.png" alt="67guard on desktop, tablet, and phone — homepage, search, watch, and activity views" width="900">
 
 ### Demo
 
@@ -65,11 +65,11 @@ Every parental control I tried was either too restrictive (block YouTube entirel
 
 I'm not a developer — just a dad who wanted to protect his kid from YouTube's brainrot algorithms. I am a homelab enthusiast though, so I'm comfortable tinkering with self-hosted tools. I built this entirely with Claude (Anthropic's AI) — I described what I wanted, Claude wrote the code. Every release went through security reviews and code reviews via Claude before I pushed it.
 
-BrainRotGuard removes the algorithm entirely. There's no autoplay, no "up next" sidebar, no recommendation engine pulling him deeper. He searches for what he wants, I approve or deny, and the video plays and stops. Done. No rabbit holes.
+67guard removes the algorithm entirely. There's no autoplay, no "up next" sidebar, no recommendation engine pulling him deeper. He searches for what he wants, I approve or deny, and the video plays and stops. Done. No rabbit holes.
 
 Don't want them watching gaming content? Block those channels. Tired of a specific creator? One tap. You can allow the channels you trust (educational, science, building, nature) and block the ones you don't — and it sticks. He picks what to ask for, I have the final say.
 
-Now I curate his content and I can see the difference. He's not parroting gamer lingo back at me anymore. The stuff he watches is actually interesting — things he's curious about, things he's learning from. I pair this with Google Family Link on his device for general screen time, but BrainRotGuard is what controls YouTube specifically: daily time limits, scheduled access windows, and per-channel approval. Family Link says "the tablet turns off at 8pm." BrainRotGuard says "you can watch 2 hours of entertainment YouTube today, but educational content is unlimited — and only from channels I've approved."
+Now I curate his content and I can see the difference. He's not parroting gamer lingo back at me anymore. The stuff he watches is actually interesting — things he's curious about, things he's learning from. I pair this with Google Family Link on his device for general screen time, but 67guard is what controls YouTube specifically: daily time limits, scheduled access windows, and per-channel approval. Family Link says "the tablet turns off at 8pm." 67guard says "you can watch 2 hours of entertainment YouTube today, but educational content is unlimited — and only from channels I've approved."
 </details>
 
 ## Features
@@ -116,8 +116,8 @@ Now I curate his content and I can see the difference. He's not parroting gamer 
 > **Prerequisites:** [Docker](https://docs.docker.com/get-docker/), a [Telegram bot token](https://core.telegram.org/bots#how-do-i-create-a-bot), and your [chat ID](docs/setup.md#step-2-get-your-chat-id). New to this? The **[full setup guide](docs/setup.md)** walks through everything step by step.
 
 ```bash
-git clone https://github.com/GHJJ123/brainrotguard.git
-cd brainrotguard
+git clone https://github.com/SirTerrific/67guard.git
+cd 67guard
 cp .env.example .env
 cp config.example.yaml config.yaml
 # Edit .env with your bot token and chat ID
@@ -128,18 +128,18 @@ Open `http://<your-server-ip>:8080` on the kid's tablet.
 
 **Pre-built image** (no build step, supports amd64 + arm64):
 ```bash
-docker pull ghcr.io/ghjj123/brainrotguard:latest
+docker pull ghcr.io/sirterrific/67guard:latest
 ```
 See the [full setup guide](docs/setup.md#using-the-pre-built-docker-image) for compose file details.
 
-**Unraid:** Search for **BrainRotGuard** in Community Applications, or download the template manually:
+**Unraid:** Search for **67guard** in Community Applications, or download the template manually:
 ```bash
-wget -O /boot/config/plugins/dockerMan/templates-user/my-brainrotguard.xml \
-  https://raw.githubusercontent.com/GHJJ123/brainrotguard/main/unraid-template.xml
+wget -O /boot/config/plugins/dockerMan/templates-user/my-67guard.xml \
+  https://raw.githubusercontent.com/SirTerrific/67guard/main/unraid-template.xml
 ```
 See the [full Unraid setup guide](docs/setup.md#installing-on-unraid) for details.
 
-**Important:** You'll also want to [lock down the kid's device](docs/setup.md#step-5-lock-down-the-kids-device) so they can't bypass BrainRotGuard by opening YouTube directly.
+**Important:** You'll also want to [lock down the kid's device](docs/setup.md#step-5-lock-down-the-kids-device) so they can't bypass 67guard by opening YouTube directly.
 
 ## What You'll Need
 
@@ -153,7 +153,7 @@ See the [full Unraid setup guide](docs/setup.md#installing-on-unraid) for detail
 
 > **Why Telegram?** It was the easiest way to build instant notifications with approve/deny buttons that work from your phone. No custom app to develop, no push notification infrastructure to maintain — Telegram handles all of that.
 
-> **Network note:** BrainRotGuard runs on your home network. Your child's device needs to be on the same network to access the web UI. You can approve/deny from anywhere via Telegram — you don't need to be home for that part.
+> **Network note:** 67guard runs on your home network. Your child's device needs to be on the same network to access the web UI. You can approve/deny from anywhere via Telegram — you don't need to be home for that part.
 
 ## Documentation
 
@@ -168,9 +168,9 @@ See the [full Unraid setup guide](docs/setup.md#installing-on-unraid) for detail
 
 ## Support
 
-If you find BrainRotGuard useful:
+If you find 67guard useful:
 
-[![Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/coffee4jj)
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-support-yellow?logo=buymeacoffee)](https://buymeacoffee.com/menelikiii)
 
 ## License
 

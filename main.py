@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""BrainRotGuard - YouTube approval system for kids."""
+"""67guard - YouTube approval system for kids."""
 
 import argparse
 import asyncio
@@ -24,7 +24,7 @@ from i18n import get_locale, get_time_format
 
 LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
-logger = logging.getLogger("brainrotguard")
+logger = logging.getLogger("67guard")
 
 
 class BrainRotGuard:
@@ -204,7 +204,7 @@ class BrainRotGuard:
 
         stats = self.video_store.get_stats()
         logger.info(
-            f"BrainRotGuard started - {stats['approved']} approved videos, "
+            f"67guard started - {stats['approved']} approved videos, "
             f"{stats['pending']} pending"
         )
 
@@ -294,11 +294,11 @@ class BrainRotGuard:
             await self.bot.stop()
         if self.video_store:
             self.video_store.close()
-        logger.info("BrainRotGuard stopped")
+        logger.info("67guard stopped")
 
 
 async def main() -> None:
-    parser = argparse.ArgumentParser(description="BrainRotGuard")
+    parser = argparse.ArgumentParser(description="67guard")
     parser.add_argument("-c", "--config", help="Path to config file", default=None)
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose logging (overrides log_level to debug)")
     parser.add_argument("--log-level", choices=sorted(VALID_LOG_LEVELS),

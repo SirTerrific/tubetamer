@@ -1,4 +1,4 @@
-"""BrainRotGuard Telegram Bot - parent approval for YouTube videos."""
+"""67guard Telegram Bot - parent approval for YouTube videos."""
 
 import asyncio
 import logging
@@ -231,7 +231,7 @@ class BrainRotGuardBot(SetupMixin, ApprovalMixin, ChannelMixin, TimeLimitMixin, 
 
     async def start(self) -> None:
         """Start the bot."""
-        logger.info("Starting BrainRotGuard bot...")
+        logger.info("Starting 67guard bot...")
         from telegram.request import HTTPXRequest
         request = HTTPXRequest(
             connect_timeout=10.0, read_timeout=15.0, write_timeout=15.0,
@@ -266,7 +266,7 @@ class BrainRotGuardBot(SetupMixin, ApprovalMixin, ChannelMixin, TimeLimitMixin, 
         await self._app.initialize()
         await self._app.start()
         await self._app.updater.start_polling(drop_pending_updates=True)
-        logger.info("BrainRotGuard bot started")
+        logger.info("67guard bot started")
 
         # First-run: send setup hub if channel list is empty
         if not self.video_store.get_channel_handles_set():
@@ -294,11 +294,11 @@ class BrainRotGuardBot(SetupMixin, ApprovalMixin, ChannelMixin, TimeLimitMixin, 
         if self._update_check_task:
             self._update_check_task.cancel()
         if self._app:
-            logger.info("Stopping BrainRotGuard bot...")
+            logger.info("Stopping 67guard bot...")
             await self._app.updater.stop()
             await self._app.stop()
             await self._app.shutdown()
-            logger.info("BrainRotGuard bot stopped")
+            logger.info("67guard bot stopped")
 
     async def _version_check_loop(self) -> None:
         """Periodically check GitHub for new releases. Stops after notifying."""

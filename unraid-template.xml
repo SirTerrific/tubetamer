@@ -1,21 +1,21 @@
 <?xml version="1.0"?>
 <Container version="2">
-    <Name>BrainRotGuard</Name>
-    <Repository>ghcr.io/ghjj123/brainrotguard:latest</Repository>
-    <Registry>https://github.com/GHJJ123/brainrotguard/pkgs/container/brainrotguard</Registry>
+    <Name>67guard</Name>
+    <Repository>ghcr.io/sirterrific/67guard:latest</Repository>
+    <Registry>https://github.com/SirTerrific/67guard/pkgs/container/67guard</Registry>
     <Branch>
         <Tag>latest</Tag>
         <TagDescription>Latest stable release</TagDescription>
     </Branch>
     <Network>bridge</Network>
     <Privileged>false</Privileged>
-    <Support>https://github.com/GHJJ123/brainrotguard/issues</Support>
-    <Project>https://github.com/GHJJ123/brainrotguard</Project>
+    <Support>https://github.com/SirTerrific/67guard/issues</Support>
+    <Project>https://github.com/SirTerrific/67guard</Project>
     <Overview>YouTube approval system for kids. Your child searches YouTube via a kid-friendly web UI, you get a Telegram notification with thumbnail and details, tap Approve or Deny, and approved videos play via privacy-enhanced embeds. Includes channel allow/block lists, daily watch time limits, scheduled access windows, category labeling, and search history tracking. Pair with DNS blocking (Pi-hole/AdGuard) for full control.</Overview>
     <Category>MediaApp:Video HomeAutomation Tools:</Category>
     <WebUI>http://[IP]:[PORT:8080]</WebUI>
-    <TemplateURL>https://raw.githubusercontent.com/GHJJ123/brainrotguard/main/unraid-template.xml</TemplateURL>
-    <Icon>https://raw.githubusercontent.com/GHJJ123/brainrotguard/main/web/static/brg-icon-512.png</Icon>
+    <TemplateURL>https://raw.githubusercontent.com/SirTerrific/67guard/main/unraid-template.xml</TemplateURL>
+    <Icon>https://raw.githubusercontent.com/SirTerrific/67guard/main/web/static/brg-icon-512.png</Icon>
     <ExtraSearchTerms>youtube kids parental controls screen time telegram</ExtraSearchTerms>
     <Requires>A Telegram Bot Token (create one via @BotFather) and your Telegram Chat ID.</Requires>
     <DonateText/>
@@ -28,7 +28,7 @@
         Target="8080"
         Default="8080"
         Mode="tcp"
-        Description="Port for the BrainRotGuard web interface."
+        Description="Port for the 67guard web interface."
         Type="Port"
         Display="always"
         Required="true"
@@ -38,7 +38,7 @@
     <Config
         Name="Database"
         Target="/app/db"
-        Default="/mnt/user/appdata/brainrotguard/db"
+        Default="/mnt/user/appdata/67guard/db"
         Mode="rw"
         Description="Stores the SQLite database (watch history, approvals, channel lists)."
         Type="Path"

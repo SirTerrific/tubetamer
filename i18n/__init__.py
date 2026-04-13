@@ -1,4 +1,4 @@
-"""Minimal localization helpers for BrainRotGuard."""
+"""Minimal localization helpers for 67guard."""
 
 from __future__ import annotations
 

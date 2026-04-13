@@ -1,5 +1,5 @@
-const STATIC_CACHE = "brainrotguard-static-v2";
-const RUNTIME_CACHE = "brainrotguard-runtime-v2";
+const STATIC_CACHE = "67guard-static-v2";
+const RUNTIME_CACHE = "67guard-runtime-v2";
 const STATIC_ASSETS = [
   "/manifest.webmanifest",
   "/static/style.css",

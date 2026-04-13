@@ -1,4 +1,4 @@
-"""Shared utilities for BrainRotGuard."""
+"""Shared utilities for 67guard."""
 
 import logging
 import re

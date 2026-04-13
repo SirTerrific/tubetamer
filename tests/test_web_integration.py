@@ -1,4 +1,4 @@
-"""Integration tests for BrainRotGuard web endpoints.
+"""Integration tests for 67guard web endpoints.
 
 Uses httpx ASGITransport with a real VideoStore (temp SQLite) and a mock
 YouTubeExtractor to test actual HTTP flows end-to-end.
@@ -212,7 +212,7 @@ class TestPageLoads:
         assert resp.status_code == 200
         assert "application/javascript" in resp.headers.get("content-type", "")
         assert resp.headers.get("service-worker-allowed", "") == "/"
-        assert "brainrotguard-static-v1" in resp.text
+        assert "67guard-static-v" in resp.text
 
     def test_home_includes_pwa_metadata(self, auth_client):
         resp = auth_client.get("/")

@@ -1,4 +1,4 @@
-"""Shared pytest fixtures for BrainRotGuard tests."""
+"""Shared pytest fixtures for 67guard tests."""
 
 import os
 import pytest

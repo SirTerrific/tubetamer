@@ -1,5 +1,5 @@
 #!/bin/bash
-# Deploy BrainRotGuard via Docker
+# Deploy 67guard via Docker
 # Usage: ./deploy.sh [TARGET] [REMOTE_PATH]
 
 set -e
@@ -10,21 +10,21 @@ GREEN='\033[0;32m'
 NC='\033[0m'
 
 TARGET="${1:?Usage: $0 <user@host> [remote_path]}"
-REMOTE_PATH="${2:-/opt/brainrotguard}"
+REMOTE_PATH="${2:-/opt/67guard}"
 
 if [[ "$1" == "--help" ]] || [[ "$1" == "-h" ]]; then
     echo "Usage: $0 [TARGET] [REMOTE_PATH]"
     echo ""
     echo "Arguments:"
     echo "  TARGET       SSH target (e.g. user@myserver)"
-    echo "  REMOTE_PATH  Deployment path (default: /opt/brainrotguard)"
+    echo "  REMOTE_PATH  Deployment path (default: /opt/67guard)"
     exit 0
 fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-TEMP_TAR="/tmp/brainrotguard.tar"
+TEMP_TAR="/tmp/67guard.tar"
 
-echo -e "${CYAN}=== Deploying BrainRotGuard to $TARGET ===${NC}"
+echo -e "${CYAN}=== Deploying 67guard to $TARGET ===${NC}"
 
 echo -e "${YELLOW}Creating archive...${NC}"
 cd "$SCRIPT_DIR"
@@ -38,14 +38,14 @@ tar -cf "$TEMP_TAR" \
     .
 
 echo -e "${YELLOW}Uploading and deploying...${NC}"
-scp "$TEMP_TAR" "${TARGET}:/tmp/brainrotguard.tar"
+scp "$TEMP_TAR" "${TARGET}:/tmp/67guard.tar"
 
 ssh "$TARGET" <<EOF
 set -e
 mkdir -p $REMOTE_PATH
 cd $REMOTE_PATH
-tar -xf /tmp/brainrotguard.tar
-rm /tmp/brainrotguard.tar
+tar -xf /tmp/67guard.tar
+rm /tmp/67guard.tar
 [ ! -f config.yaml ] && cp config.example.yaml config.yaml && echo 'Created config.yaml - edit with your tokens!'
 # Auto-detect host LAN IP for base_url (container can't see it)
 HOST_IP=\$(hostname -I | awk '{print \$1}')
@@ -66,4 +66,4 @@ echo ""
 echo -e "${GREEN}=== Deployment complete! ===${NC}"
 echo ""
 echo "Next: ssh $TARGET 'nano $REMOTE_PATH/config.yaml'"
-echo "Logs: ssh $TARGET 'docker logs -f brainrotguard'"
+echo "Logs: ssh $TARGET 'docker logs -f 67guard'"

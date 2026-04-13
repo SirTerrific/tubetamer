@@ -13,7 +13,7 @@ Only the latest release receives security updates. Upgrade to the latest version
 
 **Do not open a public issue for security vulnerabilities.**
 
-Instead, please report them privately via [GitHub Security Advisories](https://github.com/GHJJ123/brainrotguard/security/advisories/new).
+Instead, please report them privately via [GitHub Security Advisories](https://github.com/SirTerrific/67guard/security/advisories/new).
 
 Include:
 - Description of the vulnerability
@@ -40,7 +40,7 @@ Out of scope:
 
 ## Security Architecture
 
-BrainRotGuard is designed as a self-hosted, single-family application. Key security properties:
+67guard is designed as a self-hosted, single-family application. Key security properties:
 
 - **No external data collection** — all data stays on the host, no telemetry or phone-home
 - **PIN-gated web UI** — optional session-based PIN auth with rate limiting

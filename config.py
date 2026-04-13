@@ -1,4 +1,4 @@
-"""Configuration management for BrainRotGuard."""
+"""Configuration management for 67guard."""
 
 import logging
 import os

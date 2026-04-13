@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "BrainRotGuard",
-  "short_name": "BrainRotGuard",
+  "name": "67guard",
+  "short_name": "67guard",
   "description": "Kid-friendly YouTube approval system with parent review and tablet playback.",
   "start_url": "/",
   "scope": "/",

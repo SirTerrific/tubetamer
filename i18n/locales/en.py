@@ -2,7 +2,7 @@
 
 TRANSLATIONS: dict[str, str] = {
     "Active": "Activity",
-    "App Name": "BrainRotGuard",
+    "App Name": "67guard",
     "Approved by Request": "Approved by Request",
     "Approved videos outside allowed channels will stay here": "Approved videos outside allowed channels will stay here",
     "Dismiss": "Dismiss",

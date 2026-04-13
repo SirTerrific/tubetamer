@@ -1,7 +1,7 @@
 services:
-  brainrotguard:
-    image: ghcr.io/ghjj123/brainrotguard:latest
-    container_name: brainrotguard
+  67guard:
+    image: ghcr.io/sirterrific/67guard:latest
+    container_name: 67guard
     restart: unless-stopped
     ports:
       - "8080:8080"

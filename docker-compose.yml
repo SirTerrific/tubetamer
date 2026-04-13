@@ -1,8 +1,8 @@
 services:
-  brainrotguard:
+  67guard:
     build: .
-    image: brainrotguard
-    container_name: brainrotguard
+    image: 67guard
+    container_name: 67guard
     restart: unless-stopped
     ports:
       - "8080:8080"
@@ -16,12 +16,12 @@ services:
       - brg_db:/app/db
       - brg_videos:/app/db/videos
     networks:
-      - brainrotguard
+      - 67guard
 
 volumes:
   brg_db:
   brg_videos:
 
 networks:
-  brainrotguard:
+  67guard:
     driver: bridge

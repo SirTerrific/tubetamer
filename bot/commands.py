@@ -186,7 +186,7 @@ class CommandsMixin:
             return
         from version import __version__
         help_link = self.tr("📖 [Full command reference]({url})\n",
-                            url="https://github.com/GHJJ123/brainrotguard/blob/main/docs/telegram-commands.md")
+                            url="https://github.com/SirTerrific/67guard/blob/main/docs/telegram-commands.md")
         await update.effective_message.reply_text(_md(
             self.tr(
                 "**{app_name} v{version}**\n\n"
@@ -229,7 +229,7 @@ class CommandsMixin:
                 version=__version__,
             )
             + f"{help_link}"
-            + self.tr("☕ [Buy me a coffee]({url})", url="https://ko-fi.com/coffee4jj")
+            + self.tr("☕ [Buy me a coffee]({url})", url="https://buymeacoffee.com/menelikiii")
         ), parse_mode=MD2, disable_web_page_preview=True)
 
     async def _cmd_shorts(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
