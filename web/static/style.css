@@ -7,16 +7,16 @@
 }
 
 :root {
-    --bg-base: #0f0f23;
-    --bg-card: #1a1a3e;
-    --bg-card-hover: #1e1e45;
-    --accent: #e94560;
-    --accent-dark: #c73650;
-    --text-primary: #e0e0e0;
-    --text-muted: #888;
-    --text-dim: #555;
-    --border-subtle: rgba(255, 255, 255, 0.06);
-    --border-faint: rgba(255, 255, 255, 0.04);
+    --bg-base: #0F1828;
+    --bg-card: #182442;
+    --bg-card-hover: #1E2D50;
+    --accent: #C9A84C;
+    --accent-dark: #A88928;
+    --text-primary: #E5DDD0;
+    --text-muted: #8A9EC0;
+    --text-dim: #4A5E7A;
+    --border-subtle: rgba(201, 168, 76, 0.12);
+    --border-faint: rgba(201, 168, 76, 0.07);
     --radius-card: 14px;
     --radius-btn: 10px;
     --safe-top: env(safe-area-inset-top, 0px);
@@ -53,7 +53,7 @@ header {
     display: flex;
     align-items: center;
     gap: 1rem;
-    background: linear-gradient(135deg, rgba(26, 26, 62, 0.72) 0%, rgba(15, 15, 35, 0.6) 100%);
+    background: linear-gradient(135deg, rgba(18, 36, 66, 0.82) 0%, rgba(9, 16, 28, 0.68) 100%);
     padding-top: calc(0.625rem + var(--safe-top));
     padding-right: max(calc(1.5rem + var(--safe-right)), calc((100% - 75rem) / 2 + 1.5rem));
     padding-bottom: 0.625rem;
@@ -237,7 +237,7 @@ main {
 }
 
 .section-collapse-btn:focus-visible {
-    outline: 2px solid rgba(233, 69, 96, 0.55);
+    outline: 2px solid rgba(201, 168, 76, 0.55);
     outline-offset: 2px;
 }
 
@@ -841,7 +841,7 @@ main {
 }
 
 .pin-input:focus {
-    border-color: rgba(233, 69, 96, 0.4);
+    border-color: rgba(201, 168, 76, 0.4);
 }
 
 .login-button {
@@ -878,8 +878,8 @@ main {
 }
 
 .profile-btn:hover {
-    border-color: rgba(233, 69, 96, 0.4);
-    background: rgba(233, 69, 96, 0.08);
+    border-color: rgba(201, 168, 76, 0.4);
+    background: rgba(201, 168, 76, 0.08);
 }
 
 .profile-badge {
@@ -1066,7 +1066,7 @@ main {
 }
 
 .time-budget-low {
-    border-color: rgba(233, 69, 96, 0.3);
+    border-color: rgba(201, 168, 76, 0.3);
 }
 
 .time-budget-summary {
@@ -1122,7 +1122,7 @@ main {
     bottom: 0;
     left: 0;
     right: 0;
-    background: rgba(233, 69, 96, 0.95);
+    background: rgba(201, 168, 76, 0.95);
     color: white;
     text-align: center;
     padding: 12px 12px calc(12px + var(--safe-bottom));
@@ -1144,7 +1144,7 @@ main {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(15, 15, 35, 0.95);
+    background: rgba(9, 16, 28, 0.95);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1344,8 +1344,8 @@ main {
 }
 
 .channel-pill.active {
-    background: rgba(233, 69, 96, 0.15);
-    border-color: rgba(233, 69, 96, 0.4);
+    background: rgba(201, 168, 76, 0.15);
+    border-color: rgba(201, 168, 76, 0.4);
     color: var(--accent);
 }
 
@@ -1356,7 +1356,7 @@ main {
 }
 
 .channel-pill.active .pill-count {
-    color: rgba(233, 69, 96, 0.6);
+    color: rgba(201, 168, 76, 0.6);
 }
 
 /* === Mobile === */
@@ -1472,9 +1472,9 @@ main {
     inset: 0;
     background: linear-gradient(
         to top,
-        rgba(15, 15, 35, 0.95) 0%,
-        rgba(15, 15, 35, 0.6) 30%,
-        rgba(15, 15, 35, 0.1) 60%,
+        rgba(9, 16, 28, 0.95) 0%,
+        rgba(9, 16, 28, 0.6) 30%,
+        rgba(9, 16, 28, 0.1) 60%,
         transparent 100%
     );
     z-index: 1;
@@ -1526,7 +1526,7 @@ main {
     gap: 8px;
     margin-top: 14px;
     padding: 10px 24px;
-    background: rgba(233, 69, 96, 0.9);
+    background: rgba(201, 168, 76, 0.9);
     border-radius: 24px;
     font-size: 14px;
     font-weight: 600;
@@ -1535,7 +1535,7 @@ main {
 }
 
 .hero-slide:hover .hero-play-hint {
-    background: rgba(233, 69, 96, 1);
+    background: rgba(201, 168, 76, 1);
 }
 
 .play-icon {
@@ -2359,7 +2359,7 @@ main {
 
 .avatar-option.selected {
     border-color: var(--accent);
-    background: rgba(233, 69, 96, 0.12);
+    background: rgba(201, 168, 76, 0.12);
 }
 
 .color-grid {
@@ -2433,7 +2433,7 @@ main {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: rgba(15, 15, 35, 0.78);
+    background: rgba(9, 16, 28, 0.78);
     color: #fff;
     font-size: 16px;
     font-weight: 700;
@@ -2471,7 +2471,7 @@ main {
 
 .active-dismiss-btn:hover,
 .active-dismiss-btn:focus-visible {
-    background: rgba(15, 15, 35, 0.92);
+    background: rgba(9, 16, 28, 0.92);
     outline: none;
 }
 /* Login page: avatar on profile picker buttons */
