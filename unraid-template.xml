@@ -15,7 +15,7 @@
     <Category>MediaApp:Video HomeAutomation Tools:</Category>
     <WebUI>http://[IP]:[PORT:8080]</WebUI>
     <TemplateURL>https://raw.githubusercontent.com/SirTerrific/tubetamer/main/unraid-template.xml</TemplateURL>
-    <Icon>https://raw.githubusercontent.com/SirTerrific/tubetamer/main/web/static/brg-icon-512.png</Icon>
+    <Icon>https://raw.githubusercontent.com/SirTerrific/tubetamer/main/web/static/tubetamer-icon-512.png</Icon>
     <ExtraSearchTerms>youtube kids parental controls screen time telegram</ExtraSearchTerms>
     <Requires>A Telegram Bot Token (create one via @BotFather) and your Telegram Chat ID.</Requires>
     <DonateText/>

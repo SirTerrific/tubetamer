@@ -16,7 +16,7 @@ MONTHS_SHORT = (
 )
 
 TRANSLATIONS: dict[str, str] = {
-    "App Name": "HjerneVakt",
+    "App Name": "TubeTamer",
     "Too many requests": "For mange forespørsler",
     "Please wait a moment and try again.": "Vent litt og prøv igjen.",
     "Search": "Søk",

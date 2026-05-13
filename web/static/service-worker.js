@@ -1,13 +1,13 @@
-const STATIC_CACHE = "tubetamer-static-v2";
-const RUNTIME_CACHE = "tubetamer-runtime-v2";
+const STATIC_CACHE = "tubetamer-static-v3";
+const RUNTIME_CACHE = "tubetamer-runtime-v3";
 const STATIC_ASSETS = [
   "/manifest.webmanifest",
   "/static/style.css",
   "/static/favicon-32.png",
   "/static/favicon.png",
-  "/static/brg-icon-512.png",
-  "/static/logo.png",
-  "/static/brg-logo.png",
+  "/static/tubetamer-icon-512.png",
+  "/static/tubetamer-icon.svg",
+  "/static/tubetamer-logo.svg",
   "/static/bg-doodle.png",
   "/static/thumb-preview.js",
 ];

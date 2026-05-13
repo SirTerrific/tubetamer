@@ -7,8 +7,8 @@ class TestAppName:
     def test_defaults_to_TubeTamer_in_english(self):
         assert app_name("en") == "TubeTamer"
 
-    def test_uses_hjernevakt_in_norwegian(self):
-        assert app_name("nb") == "HjerneVakt"
+    def test_uses_tubetamer_in_norwegian(self):
+        assert app_name("nb") == "TubeTamer"
 
 
 class TestNormalizeTimeFormat:

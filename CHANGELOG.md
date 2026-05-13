@@ -32,7 +32,7 @@
 - PWA support: installable as tablet app with manifest, service worker, standalone mode, safe-area insets (PR #29 -- thanks @NoLooseEnds)
 - Watch autoplay/resume: remembers playback position via localStorage, more reliable auto-start (PR #30 -- thanks @NoLooseEnds)
 - Persistent playback progress: watch progress stored to database and restored on return, survives app restarts (PR #32 -- thanks @NoLooseEnds)
-- Localized app name: "BrainRotGuard" renders as "HjerneVakt" in Norwegian (PR #31 -- thanks @NoLooseEnds)
+- Localized app name: renders as "TubeTamer" in all locales (PR #31 -- thanks @NoLooseEnds)
 - `/autoload [on|off]` toggle: switch homepage between Show More buttons (default) and infinite scroll mode (PR #27 -- thanks @NoLooseEnds)
 - New `/api/catalog/status` endpoint for lightweight cache polling (PR #27)
 - Re-request flow: re-requesting a pending video resends the Telegram notification to parent (PR #27)
