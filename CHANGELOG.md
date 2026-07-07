@@ -1,4 +1,28 @@
 # Changelog
+
+## v1.2.0 - 2026-07-06
+
+**Added**
+- Thumbnail proxy: new `/thumb/{video_id}[/{variant}]` route serves YouTube thumbnails from a server-side disk cache (`db/thumbs`). Kid devices now load every thumbnail from the TubeTamer server itself — **zero network access to Google/YouTube is needed on the tablet**, so full IP-range blocking (Firewalla, Pi-hole, AdGuard, router shields) works without exceptions
+- Hover preview frames (hq1–3) and hero banners served through the proxy, with `maxresdefault` → `hqdefault` fallback and negative caching for missing variants
+
+## v1.1.0 - 2026-07-02
+
+**Changed**
+- New visual identity applied everywhere: navy + gold theme, circus-tamer favicons (SVG + regenerated PNGs), PWA manifest updated
+- Dependency updates: Python 3.12 base image, python-telegram-bot 22.x, actions/checkout@v5
+- Norwegian locale now uses "TubeTamer" as app name
+- Old-branding filenames renamed (`brg-icon-512.png` → `tubetamer-icon-512.png`); service worker cache bumped to v3
+- CI: release builds fail if `version.py` doesn't match the release tag
+
+## v1.0.0 - 2026-04-13
+
+First TubeTamer release — fork of [GHJJ123/brainrotguard](https://github.com/GHJJ123/brainrotguard), rebranded and extended with local video playback and a DNS-blocking workflow. Version numbering restarts at 1.0.0; upstream BrainRotGuard history is preserved below.
+
+---
+
+# Upstream history (BrainRotGuard)
+
 ## v1.31.1 - 2026-04-09
 
 **Fixed**

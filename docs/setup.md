@@ -95,6 +95,8 @@ TubeTamer UI ──► OK ✓       downloads via yt-dlp ──► streams back 
 
 The kid opens any browser (Firefox, Chrome, etc.), goes to YouTube — blocked. Goes to TubeTamer — works. The server handles all YouTube communication on their behalf.
 
+Since v1.2.0 this includes **thumbnails**: the server fetches and caches them from YouTube's image CDN (`i.ytimg.com`) and serves them from `/thumb/...`. You can block Google's entire IP space for the kid's device — no exceptions needed for images.
+
 ### Block via AdGuard Home or Pi-hole
 
 Add these to your blocklist:

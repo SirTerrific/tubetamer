@@ -91,6 +91,7 @@ All the original features (multi-child profiles, Telegram approvals, time limits
 - **Works on any device and any browser** — Android tablet, iPad, Firefox, Chrome, Kindle Fire — no Google account required
 - **Simple search** — type what you want, see results, tap Request
 - **Instant playback** — approved videos stream from your server, no YouTube, no ads
+- **Zero Google traffic on the tablet** — videos *and* thumbnails are served by your server, so the kid's device works even with Google's entire IP space blocked
 - **Video library** — browse everything that's been approved before
 - **Category browsing** — filter by educational or entertainment content with one tap
 - **Channel browsing** — see latest videos from pre-approved channels without needing to request each one
