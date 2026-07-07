@@ -142,8 +142,8 @@ Manage child profiles. Each profile has its own PIN, watch history, and time bud
 | `/child` | List child profiles |
 | `/child add <name> [pin]` | Add a new child profile with optional PIN |
 | `/child remove <name>` | Remove a child profile |
-| `/child rename <name>` | Rename a child profile |
-| `/child pin <name>` | Change a child profile's PIN |
+| `/child rename <name> <new>` | Rename a child profile |
+| `/child pin <name> [pin]` | Set a child profile's PIN — omit the PIN to clear it |
 
 ## Other
 

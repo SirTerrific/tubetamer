@@ -45,16 +45,14 @@ Edit the `.env` file and fill in your values:
 BRG_BOT_TOKEN=123456789:ABCdefGhIjKlMnOpQrStUvWxYz
 BRG_ADMIN_CHAT_ID=987654321
 BRG_PIN=1234
-BRG_BASE_URL=http://192.168.1.100:8080
 ```
-You can optionally edit the defaults in the config.yaml.
+You can optionally edit the defaults in the config.yaml — notably `local_playback.enabled: true` to have the server download and stream videos itself (recommended, see Step 5).
 
 | Setting | What to put | Required? |
 |---------|------------|-----------|
 | `BRG_BOT_TOKEN` | The token from Step 1 | Yes |
 | `BRG_ADMIN_CHAT_ID` | The chat ID from Step 2 | Yes |
 | `BRG_PIN` | A PIN code kids enter to use the web UI. Leave empty to skip. | No |
-| `BRG_BASE_URL` | Your server's LAN address (e.g. `http://192.168.1.100:8080`). Enables clickable links in Telegram bot messages. Use an IP address, not a hostname. | No |
 
 ## Step 4: Start It Up
 

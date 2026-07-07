@@ -9,7 +9,6 @@ web:
   poll_interval: 3000  # ms between status checks on pending page
   pin: ${BRG_PIN}  # optional, empty = no auth
   # session_secret: auto-generated if not set
-  # base_url: http://10.0.0.1:8080  # LAN IP for Telegram links (auto-detected by deploy.sh, or set BRG_BASE_URL env var)
 
 telegram:
   bot_token: ${BRG_BOT_TOKEN}
@@ -34,7 +33,7 @@ watch_limits:
 # instead of embedding YouTube directly. Removes all YouTube tracking
 # from the child's device. Requires ffmpeg (included in Docker image).
 local_playback:
-  enabled: false             # set to true to enable (or BRG_LOCAL_PLAYBACK=true)
+  enabled: false             # set to true to enable
   video_dir: db/videos       # storage directory for downloaded videos
   max_storage_gb: 10         # auto-cleanup oldest files when limit reached
   quality: 720p              # 360p, 480p, 720p, 1080p, best

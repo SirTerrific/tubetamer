@@ -143,10 +143,11 @@ Open `http://<your-server-ip>:8080` on the kid's tablet.
 
 **Enable local video downloads** (recommended — removes YouTube from the tablet entirely):
 
-In your `.env` file:
-```
-BRG_LOCAL_PLAYBACK=true
-BRG_VIDEO_QUALITY=720p
+In `config.yaml`:
+```yaml
+local_playback:
+  enabled: true
+  quality: 720p
 ```
 
 **Pre-built image** (no build step, supports amd64 + arm64):
