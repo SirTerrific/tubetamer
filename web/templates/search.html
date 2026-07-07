@@ -16,7 +16,7 @@
         {% for result in results %}
         <div class="result-card" data-index="{{ loop.index }}" data-video-id="{{ result.video_id }}"{% if loop.index > 5 %} style="display:none"{% endif %}>
             <div class="thumbnail-wrap result-thumb-wrap">
-                <img src="{{ result.thumbnail_url }}" alt="{{ result.title }}" class="result-thumbnail" loading="lazy">
+                <img src="/thumb/{{ result.video_id }}" alt="{{ result.title }}" class="result-thumbnail" loading="lazy">
                 <span class="duration-badge">{{ format_duration(result.duration) }}</span>
                 {% if result.is_short %}<span class="shorts-badge">{{ t("Short") }}</span>{% endif %}
             </div>

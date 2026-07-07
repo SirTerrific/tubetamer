@@ -78,7 +78,7 @@
     <div class="activity-list">
         {% for v in cat_vids %}
         <a href="/watch/{{ v.video_id }}" class="activity-row">
-            <img src="{{ v.thumbnail_url }}" alt="" class="activity-thumb" loading="lazy">
+            <img src="/thumb/{{ v.video_id }}" alt="" class="activity-thumb" loading="lazy">
             <div class="activity-info">
                 <span class="activity-title">{{ v.title }}</span>
                 <span class="activity-channel">{{ v.channel_name }}</span>
@@ -96,7 +96,7 @@
     <div class="activity-list">
         {% for v in uncat_vids %}
         <a href="/watch/{{ v.video_id }}" class="activity-row">
-            <img src="{{ v.thumbnail_url }}" alt="" class="activity-thumb" loading="lazy">
+            <img src="/thumb/{{ v.video_id }}" alt="" class="activity-thumb" loading="lazy">
             <div class="activity-info">
                 <span class="activity-title">{{ v.title }}</span>
                 <span class="activity-channel">{{ v.channel_name }}</span>
@@ -111,7 +111,7 @@
     <div class="activity-list">
         {% for v in breakdown %}
         <a href="/watch/{{ v.video_id }}" class="activity-row">
-            <img src="{{ v.thumbnail_url }}" alt="" class="activity-thumb" loading="lazy">
+            <img src="/thumb/{{ v.video_id }}" alt="" class="activity-thumb" loading="lazy">
             <div class="activity-info">
                 <span class="activity-title">{{ v.title }}</span>
                 <span class="activity-channel">{{ v.channel_name }}</span>

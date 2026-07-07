@@ -6,7 +6,7 @@
     <div class="video-player">
         <div class="video-wrapper" style="padding-bottom:0 !important;background:#1a1a2e;position:relative;overflow:hidden;">
             {% if video.thumbnail_url %}
-            <img src="{{ video.thumbnail_url }}" alt="" style="width:100%;display:block;opacity:0.15;filter:blur(6px);">
+            <img src="/thumb/{{ video.video_id }}" alt="" style="width:100%;display:block;opacity:0.15;filter:blur(6px);">
             {% else %}
             <div style="width:100%;padding-top:56.25%;"></div>
             {% endif %}

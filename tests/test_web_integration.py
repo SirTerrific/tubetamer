@@ -32,6 +32,7 @@ from web.routers.pwa import router as pwa_router
 from web.routers.search import router as search_router
 from web.routers.watch import router as watch_router
 from web.routers.catalog import router as catalog_router
+from web.routers.ytproxy import router as ytproxy_router
 from youtube.extractor import YouTubeExtractor
 
 
@@ -111,6 +112,7 @@ def _create_test_app(store: VideoStore, pin: str = "1234") -> FastAPI:
     test_app.include_router(search_router)
     test_app.include_router(watch_router)
     test_app.include_router(catalog_router)
+    test_app.include_router(ytproxy_router)
 
     # State
     state = test_app.state
@@ -807,3 +809,49 @@ class TestCatalogAndHistory:
         data = resp.json()
         assert data["groups"]
         assert data["groups"][0]["videos"][0]["watched_percent"] == 75
+
+
+class TestThumbnailProxy:
+    """The /thumb proxy lets tablets load thumbnails without any Google access."""
+
+    def test_invalid_video_id_returns_404(self, auth_client):
+        resp = auth_client.get("/thumb/bad!id")
+        assert resp.status_code == 404
+
+    def test_invalid_variant_returns_404(self, auth_client):
+        resp = auth_client.get("/thumb/dQw4w9WgXcQ/evil")
+        assert resp.status_code == 404
+
+    def test_serves_cached_file_without_network(self, auth_client, tmp_path):
+        auth_client.app.state.thumb_dir = str(tmp_path)
+        (tmp_path / "dQw4w9WgXcQ_hqdefault.jpg").write_bytes(b"\xff\xd8fakejpg")
+        resp = auth_client.get("/thumb/dQw4w9WgXcQ")
+        assert resp.status_code == 200
+        assert resp.headers.get("content-type", "").startswith("image/jpeg")
+        assert "max-age" in resp.headers.get("cache-control", "")
+
+    def test_variant_served_from_cache(self, auth_client, tmp_path):
+        auth_client.app.state.thumb_dir = str(tmp_path)
+        (tmp_path / "dQw4w9WgXcQ_hq1.jpg").write_bytes(b"\xff\xd8fakejpg")
+        resp = auth_client.get("/thumb/dQw4w9WgXcQ/hq1")
+        assert resp.status_code == 200
+
+    def test_negative_cache_returns_404(self, auth_client, tmp_path):
+        auth_client.app.state.thumb_dir = str(tmp_path)
+        (tmp_path / "dQw4w9WgXcQ_hq2.404").touch()
+        resp = auth_client.get("/thumb/dQw4w9WgXcQ/hq2")
+        assert resp.status_code == 404
+
+    def test_templates_use_thumb_proxy(self, auth_client, store):
+        cs = ChildStore(store, "default")
+        cs.add_video(
+            video_id="thumbproxy1",
+            title="Proxied Thumb",
+            channel_name="Test Channel",
+            thumbnail_url="https://i.ytimg.com/vi/thumbproxy1/hqdefault.jpg",
+        )
+        cs.update_status("thumbproxy1", "approved")
+        resp = auth_client.get("/")
+        assert resp.status_code == 200
+        assert "/thumb/thumbproxy1" in resp.text
+        assert 'src="https://i.ytimg.com' not in resp.text

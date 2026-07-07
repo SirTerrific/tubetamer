@@ -16,7 +16,7 @@
                 {% for v in group.videos %}
                 <a href="/watch/{{ v.video_id }}" class="activity-row">
                     <span class="activity-thumb-wrap">
-                        <img src="{{ v.thumbnail_url }}" alt="" class="activity-thumb" loading="lazy">
+                        <img src="/thumb/{{ v.video_id }}" alt="" class="activity-thumb" loading="lazy">
                     </span>
                     <div class="activity-info">
                         <span class="activity-title">{{ v.title }}</span>
@@ -111,7 +111,7 @@
             : '';
         row.innerHTML =
             '<span class="activity-thumb-wrap">' +
-                '<img src="' + escapeHtml(video.thumbnail_url || '') + '" alt="" class="activity-thumb" loading="lazy">' +
+                '<img src="/thumb/' + escapeHtml(video.video_id || '') + '" alt="" class="activity-thumb" loading="lazy">' +
             '</span>' +
             '<div class="activity-info">' +
                 '<span class="activity-title">' + escapeHtml(video.title || '') + '</span>' +

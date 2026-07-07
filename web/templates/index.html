@@ -42,7 +42,7 @@
 <div class="hero-carousel" id="hero-carousel">
     {% for vid in hero_highlights[:10] %}
     <a href="/watch/{{ vid.video_id }}" class="hero-slide{% if loop.first %} active{% endif %}">
-        <img src="https://i.ytimg.com/vi/{{ vid.video_id }}/maxresdefault.jpg" alt="{{ vid.title }}"{% if not loop.first %} loading="lazy"{% endif %}>
+        <img src="/thumb/{{ vid.video_id }}/maxresdefault" alt="{{ vid.title }}"{% if not loop.first %} loading="lazy"{% endif %}>
         <div class="hero-overlay"></div>
         <div class="hero-content">
             <span class="hero-channel">{{ vid.channel_name }}</span>
@@ -119,7 +119,7 @@
                 </svg>
             </span>
             <div class="thumbnail-wrap">
-                <img src="{{ video.thumbnail_url }}" alt="{{ video.title }}" class="video-thumbnail" loading="lazy">
+                <img src="/thumb/{{ video.video_id }}" alt="{{ video.title }}" class="video-thumbnail" loading="lazy">
                 {% if video.duration %}
                 <span class="duration-badge">{{ format_duration(video.duration) }}</span>
                 {% endif %}
@@ -160,7 +160,7 @@
         {% for video in catalog %}
         <a href="/watch/{{ video.video_id }}" class="video-card" data-channel="{{ video.channel_id or video.channel_name }}" data-channel-id="{{ video.channel_id or '' }}" data-channel-name="{{ video.channel_name or '' }}" data-category="{{ video.category or 'fun' }}" data-video-id="{{ video.video_id }}">
             <div class="thumbnail-wrap">
-                <img src="{{ video.thumbnail_url }}" alt="{{ video.title }}" class="video-thumbnail" loading="lazy">
+                <img src="/thumb/{{ video.video_id }}" alt="{{ video.title }}" class="video-thumbnail" loading="lazy">
                 {% if video.duration %}
                 <span class="duration-badge">{{ format_duration(video.duration) }}</span>
                 {% endif %}
@@ -227,7 +227,7 @@
         {% for video in shorts_catalog %}
         <a href="/watch/{{ video.video_id }}" class="shorts-card" data-channel="{{ video.channel_id or video.channel_name }}" data-category="{{ video.category or 'fun' }}">
             <div class="shorts-thumb-wrap">
-                <img src="{{ video.thumbnail_url }}" alt="{{ video.title }}" class="shorts-thumbnail" loading="lazy">
+                <img src="/thumb/{{ video.video_id }}" alt="{{ video.title }}" class="shorts-thumbnail" loading="lazy">
                 {% if video.duration %}
                 <span class="duration-badge">{{ format_duration(video.duration) }}</span>
                 {% endif %}
@@ -853,7 +853,7 @@
         // eslint-disable-next-line no-unsanitized/property -- values are escaped via escapeHtml()
         a.innerHTML =
             '<div class="thumbnail-wrap">' +
-                '<img src="' + escapeHtml(v.thumbnail_url || '') + '" alt="' + escapeHtml(v.title || '') + '" class="video-thumbnail" loading="lazy">' +
+                '<img src="/thumb/' + escapeHtml(v.video_id || '') + '" alt="' + escapeHtml(v.title || '') + '" class="video-thumbnail" loading="lazy">' +
                 dur +
                 catBadge +
                 progressBar +
@@ -1142,7 +1142,7 @@
         var dur = v.duration ? '<span class="duration-badge">' + escapeHtml(formatDuration(v.duration)) + '</span>' : '';
         a.innerHTML =
             '<div class="shorts-thumb-wrap">' +
-                '<img src="' + escapeHtml(v.thumbnail_url || '') + '" alt="' + escapeHtml(v.title || '') + '" class="shorts-thumbnail" loading="lazy">' +
+                '<img src="/thumb/' + escapeHtml(v.video_id || '') + '" alt="' + escapeHtml(v.title || '') + '" class="shorts-thumbnail" loading="lazy">' +
                 dur +
                 '<span class="category-badge category-' + escapeHtml(cat) + '">' + escapeHtml(catLabel) + '</span>' +
             '</div>' +

@@ -17,7 +17,7 @@
             {% for video in pending_videos %}
             <a href="/pending/{{ video.video_id }}" class="video-card request-video-card request-video-card-pending">
                 <div class="thumbnail-wrap">
-                    <img src="{{ video.thumbnail_url or ('https://i.ytimg.com/vi/' ~ video.video_id ~ '/hqdefault.jpg') }}" alt="{{ video.title }}" class="video-thumbnail" loading="lazy">
+                    <img src="/thumb/{{ video.video_id }}" alt="{{ video.title }}" class="video-thumbnail" loading="lazy">
                     <span class="request-status-badge request-status-badge-pending">{{ t("Pending") }}</span>
                     {% if video.duration %}
                     <span class="duration-badge">{{ format_duration(video.duration) }}</span>
@@ -47,7 +47,7 @@
             {% for video in approved_videos %}
             <a href="/watch/{{ video.video_id }}" class="video-card request-video-card request-video-card-approved">
                 <div class="thumbnail-wrap">
-                    <img src="{{ video.thumbnail_url or ('https://i.ytimg.com/vi/' ~ video.video_id ~ '/hqdefault.jpg') }}" alt="{{ video.title }}" class="video-thumbnail" loading="lazy">
+                    <img src="/thumb/{{ video.video_id }}" alt="{{ video.title }}" class="video-thumbnail" loading="lazy">
                     <span class="request-status-badge request-status-badge-approved">{{ t("Approved by Request") }}</span>
                     {% if video.duration %}
                     <span class="duration-badge">{{ format_duration(video.duration) }}</span>

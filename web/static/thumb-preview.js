@@ -35,7 +35,7 @@
             return;
         }
         var urls = THUMB_NAMES.map(function(name) {
-            return 'https://i.ytimg.com/vi/' + videoId + '/' + name + '.jpg';
+            return '/thumb/' + encodeURIComponent(videoId) + '/' + name;
         });
         var valid = [];
         var pending = urls.length;
