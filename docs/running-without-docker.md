@@ -2,11 +2,11 @@
 
 If you'd rather run TubeTamer directly with Python instead of Docker Compose:
 
-**Requires:** Python 3.11 or newer
+**Requires:** Python 3.12 or newer (3.11 works too). For local playback you also need `ffmpeg` on the PATH.
 
 ```bash
 git clone https://github.com/SirTerrific/tubetamer.git
-cd TubeTamer
+cd tubetamer
 
 # Install dependencies
 pip install -r requirements.txt
