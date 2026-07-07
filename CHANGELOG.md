@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.2.1 - 2026-07-07
+
+**Fixed**
+- Documentation accuracy pass: local playback is enabled via `config.yaml` (the previously documented env vars are ignored when a config.yaml exists); removed the phantom `base_url` / "clickable Telegram links" feature from docs, examples, compose file, Unraid template, and deploy.sh; complete `configuration.md` rewrite with the full `local_playback` section and all env vars; fixed `/child rename` and `/child pin` command signatures; fixed the non-Docker run command; replaced stale pre-fork architecture PNGs with Mermaid diagrams
+
 ## v1.2.0 - 2026-07-06
 
 **Added**
