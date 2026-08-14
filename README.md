@@ -112,7 +112,7 @@ All the original features (multi-child profiles, Telegram approvals, time limits
 - **Bonus time** — grant extra minutes for today only (`/time add 30`)
 - **Shorts control** — toggle YouTube Shorts visibility across the entire app
 - **Watch activity log** — see what was watched, for how long, grouped by category
-- **Localized UI and bot** — English and Norwegian support, with locale-aware or forced 12h/24h time display
+- **Localized UI and bot** — English, French and Norwegian, switchable from a toggle in the header (per browser), with locale-aware or forced 12h/24h time display
 - **Word filters** — block videos whose titles contain specific words
 - **Search history** — see everything your child has searched for
 - **Starter channels** — curated list of kid-friendly channels (edu + fun) to import on first boot

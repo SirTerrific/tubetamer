@@ -12,7 +12,7 @@ BRG_PIN=1234
 **`config.yaml`** — app behavior (references `.env` variables via `${VAR}` syntax):
 ```yaml
 app:
-  locale: en             # UI/bot language: en or nb
+  locale: en             # default UI/bot language: en, fr or nb
   time_format: locale    # locale default, or force 12h / 24h time display
   log_level: info        # debug, info, warning, or error
 
@@ -60,15 +60,18 @@ local_playback:
 
 Language and time display are configured under the `app:` section:
 
-- `locale` sets the language used by both the web UI and Telegram bot
+- `locale` sets the **default** language for the web UI and the language used by the Telegram bot
 - `time_format` controls how times are rendered in schedules, status messages, and other time-related labels
 
 Supported canonical locales:
 
 - `en` — English
+- `fr` — French
 - `nb` — Norwegian Bokmal
 
-`locale` is normalized on load, so common variants such as `en-US`, `en_GB`, `nb-NO`, and `no` resolve to the supported internal locale automatically.
+The web UI also has a language toggle in the header. Picking a language there overrides `locale` **for that browser only** (stored in the session cookie), so different family members can use different languages on the same server. The Telegram bot always follows the configured `locale`.
+
+`locale` is normalized on load, so common variants such as `en-US`, `en_GB`, `fr-FR`, `fr_CA`, `nb-NO`, and `no` resolve to the supported internal locale automatically.
 
 Supported time format values:
 
@@ -76,7 +79,7 @@ Supported time format values:
 - `12h` — force 12-hour time
 - `24h` — force 24-hour time
 
-When `time_format` is set to `locale`, English defaults to 12-hour time and Norwegian defaults to 24-hour time.
+When `time_format` is set to `locale`, English defaults to 12-hour time; French and Norwegian default to 24-hour time.
 
 For contributors adding another language, see the locale guide in [`i18n/locales/README.md`](../i18n/locales/README.md).
 
@@ -119,7 +122,7 @@ If **no `config.yaml` exists**, everything falls back to environment variables. 
 | `BRG_PIN` | Web UI access PIN (empty = no auth) | — |
 | `BRG_SESSION_SECRET` | Session signing secret | auto-generated |
 | `BRG_POLL_INTERVAL` | Pending page poll interval (ms) | `3000` |
-| `BRG_LOCALE` | UI/bot language (`en` or `nb`) | `en` |
+| `BRG_LOCALE` | Default UI/bot language (`en`, `fr` or `nb`) | `en` |
 | `BRG_TIME_FORMAT` | Time display format (`locale`, `12h`, `24h`) | `locale` |
 | `BRG_LOG_LEVEL` | Log level (`debug`, `info`, `warning`, `error`) | `info` |
 | `BRG_YOUTUBE_MAX_RESULTS` | Max search results | `50` |

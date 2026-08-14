@@ -6,6 +6,7 @@ web UI and the Telegram bot.
 Current locales:
 
 - `en` — English
+- `fr` — French
 - `nb` — Norwegian Bokmal
 
 ## How the translation layer works

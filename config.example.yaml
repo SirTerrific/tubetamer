@@ -1,5 +1,5 @@
 app:
-  locale: en  # supported: en, nb
+  locale: en  # default UI language; supported: en, fr, nb (kids can switch in the header)
   time_format: locale  # locale, 12h, or 24h
   log_level: info  # debug, info, warning, error
 
