@@ -41,3 +41,28 @@ class TestFormatTimeCompact:
 
     def test_compact_24h(self):
         assert format_time_compact("20:00", "en", time_format="24h") == "20"
+
+
+class TestFrenchLocale:
+    def test_app_name_stays_untranslated(self):
+        assert app_name("fr") == "TubeTamer"
+
+    def test_locale_variants_normalize_to_fr(self):
+        from i18n import normalize_locale
+        for variant in ("fr", "FR", "fr-FR", "fr_CA", "fr-ca"):
+            assert normalize_locale(variant) == "fr"
+
+    def test_translates_a_known_key(self):
+        from i18n import t
+        assert t("fr", "Search") != "Search"
+
+    def test_unknown_key_falls_back_to_key(self):
+        from i18n import t
+        assert t("fr", "__no_such_key__") == "__no_such_key__"
+
+    def test_uses_24h_time(self):
+        assert format_time("14:30", "fr") == "14:30"
+
+    def test_placeholders_survive_formatting(self):
+        from i18n import t
+        assert "Alice" in t("fr", "Hi {name}!", name="Alice")

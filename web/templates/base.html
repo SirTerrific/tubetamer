@@ -42,6 +42,13 @@
             <button type="submit" class="btn-primary header-search-btn">{{ t("Search") }}</button>
         </form>
         {% endif %}
+        <div class="lang-switch">
+            {% for code in locales %}
+            <button type="button" class="lang-option{% if code == locale %} selected{% endif %}"
+                    data-locale="{{ code }}" aria-label="{{ code|upper }}"
+                    {% if code == locale %}aria-current="true"{% endif %}>{{ code|upper }}</button>
+            {% endfor %}
+        </div>
         {% if child_name %}
         <div class="avatar-dropdown-wrap">
             <button type="button" class="profile-badge avatar-toggle" onclick="document.querySelector('.avatar-dropdown').classList.toggle('open')">
@@ -160,6 +167,18 @@
             }
             return previous;
         }
+
+        // Language switch: persist to session, then reload so the server re-renders
+        document.querySelectorAll('.lang-option').forEach(function(btn){
+            btn.addEventListener('click', function(){
+                if (btn.classList.contains('selected')) return;
+                fetch('/api/locale', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({locale: btn.dataset.locale})
+                }).then(function(r){ if (r.ok) window.location.reload(); });
+            });
+        });
 
         // Search dropdown: outside-click close
         var sw=document.querySelector('.search-dropdown-wrap');

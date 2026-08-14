@@ -8,7 +8,7 @@ from fastapi import Request
 from pydantic import BaseModel, Field
 
 from data.child_store import ChildStore
-from i18n import format_time, normalize_locale, normalize_time_format, t
+from i18n import SUPPORTED_LOCALES, format_time, normalize_locale, normalize_time_format, t
 from utils import (
     get_today_str, get_day_utc_bounds, get_weekday,
     is_within_schedule, resolve_setting,
@@ -83,7 +83,10 @@ def base_ctx(request: Request) -> dict:
     """Common template context: child_name + multi_profile for base.html header."""
     vs = request.app.state.video_store
     profiles = vs.get_profiles() if vs else []
-    locale = normalize_locale(getattr(request.app.state, "locale", "en"))
+    # Session locale (set via the header language toggle) wins over the configured default
+    locale = normalize_locale(
+        request.session.get("locale") or getattr(request.app.state, "locale", "en")
+    )
     # Populate avatar fields from session (or DB on first load after upgrade)
     avatar_icon = request.session.get("avatar_icon", "")
     avatar_color = request.session.get("avatar_color", "")
@@ -106,6 +109,7 @@ def base_ctx(request: Request) -> dict:
         "avatar_color": avatar_color,
         "avatar_icons": AVATAR_ICONS,
         "avatar_colors": AVATAR_COLORS,
+        "locales": sorted(SUPPORTED_LOCALES),
     }
 
 

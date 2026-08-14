@@ -93,6 +93,46 @@ header {
     line-height: 1;
 }
 
+/* === Language Switch === */
+.lang-switch {
+    display: flex;
+    gap: 2px;
+    flex-shrink: 0;
+    padding: 2px;
+    border: 1px solid var(--border-subtle);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.lang-option {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: var(--text-dim);
+    background: none;
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
+    line-height: 1;
+    transition: color 0.15s, background 0.15s;
+}
+
+.lang-option:hover {
+    color: var(--text-primary);
+}
+
+.lang-option.selected {
+    color: var(--bg-base);
+    background: var(--accent);
+    cursor: default;
+}
+
+.lang-option:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+}
+
 /* === Footer === */
 footer {
     text-align: center;
@@ -1394,8 +1434,11 @@ main {
     }
     .profile-badge,
     .avatar-dropdown-wrap {
-        order: 2;
+        order: 3;
         margin-left: auto;
+    }
+    .lang-switch {
+        order: 2;
     }
     .header-search {
         display: none;

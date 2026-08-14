@@ -33,6 +33,7 @@ from web.routers.search import router as search_router
 from web.routers.watch import router as watch_router
 from web.routers.catalog import router as catalog_router
 from web.routers.ytproxy import router as ytproxy_router
+from web.routers.profile import router as profile_router
 from youtube.extractor import YouTubeExtractor
 
 
@@ -113,6 +114,7 @@ def _create_test_app(store: VideoStore, pin: str = "1234") -> FastAPI:
     test_app.include_router(watch_router)
     test_app.include_router(catalog_router)
     test_app.include_router(ytproxy_router)
+    test_app.include_router(profile_router)
 
     # State
     state = test_app.state
@@ -855,3 +857,33 @@ class TestThumbnailProxy:
         assert resp.status_code == 200
         assert "/thumb/thumbproxy1" in resp.text
         assert 'src="https://i.ytimg.com' not in resp.text
+
+
+class TestLocaleSwitch:
+    """POST /api/locale switches the UI language for the browser session."""
+
+    def test_rejects_unsupported_locale(self, auth_client):
+        resp = auth_client.post("/api/locale", json={"locale": "xx"})
+        assert resp.status_code == 400
+
+    def test_rejects_missing_locale(self, auth_client):
+        resp = auth_client.post("/api/locale", json={})
+        assert resp.status_code == 400
+
+    def test_accepts_supported_locale(self, auth_client):
+        resp = auth_client.post("/api/locale", json={"locale": "fr"})
+        assert resp.status_code == 200
+        assert resp.json()["locale"] == "fr"
+
+    def test_switch_changes_rendered_page_language(self, auth_client):
+        auth_client.post("/api/locale", json={"locale": "fr"})
+        resp = auth_client.get("/")
+        assert resp.status_code == 200
+        assert 'lang="fr"' in resp.text
+        assert 'data-locale="fr"' in resp.text
+
+    def test_switch_back_to_english(self, auth_client):
+        auth_client.post("/api/locale", json={"locale": "fr"})
+        auth_client.post("/api/locale", json={"locale": "en"})
+        resp = auth_client.get("/")
+        assert 'lang="en"' in resp.text

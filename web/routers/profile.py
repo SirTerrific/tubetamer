@@ -1,12 +1,30 @@
-"""Profile management routes: avatar customization."""
+"""Profile management routes: avatar customization and UI language."""
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
+from i18n import SUPPORTED_LOCALES, normalize_locale
 from web.shared import limiter
 from web.helpers import AVATAR_ICONS, AVATAR_COLORS
 
 router = APIRouter()
+
+
+@router.post("/api/locale")
+@limiter.limit("30/minute")
+async def set_locale(request: Request):
+    """Switch the UI language for this browser session."""
+    try:
+        body = await request.json()
+    except Exception:
+        return JSONResponse({"error": "invalid json"}, status_code=400)
+
+    requested = str(body.get("locale", ""))
+    if requested not in SUPPORTED_LOCALES:
+        return JSONResponse({"error": "unsupported locale"}, status_code=400)
+
+    request.session["locale"] = normalize_locale(requested)
+    return JSONResponse({"ok": True, "locale": request.session["locale"]})
 
 
 @router.post("/api/avatar")

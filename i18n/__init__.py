@@ -5,17 +5,20 @@ from __future__ import annotations
 from datetime import datetime
 
 from i18n.locales.en import TRANSLATIONS as EN_TRANSLATIONS
+from i18n.locales.fr import MONTHS_SHORT as FR_MONTHS_SHORT
+from i18n.locales.fr import TRANSLATIONS as FR_TRANSLATIONS
 from i18n.locales.nb import MONTHS_SHORT as NB_MONTHS_SHORT
 from i18n.locales.nb import TRANSLATIONS as NB_TRANSLATIONS
 
 DEFAULT_LOCALE = "en"
-SUPPORTED_LOCALES = {"en", "nb"}
+SUPPORTED_LOCALES = {"en", "nb", "fr"}
 DEFAULT_TIME_FORMAT = "locale"
 SUPPORTED_TIME_FORMATS = {"locale", "12h", "24h"}
 
 _TRANSLATIONS: dict[str, dict[str, str]] = {
     "en": EN_TRANSLATIONS,
     "nb": NB_TRANSLATIONS,
+    "fr": FR_TRANSLATIONS,
 }
 
 
@@ -28,6 +31,8 @@ def normalize_locale(locale: str | None) -> str:
         return "nb"
     if value.startswith("nb"):
         return "nb"
+    if value.startswith("fr"):
+        return "fr"
     if value.startswith("en"):
         return "en"
     return DEFAULT_LOCALE
@@ -106,7 +111,7 @@ def _uses_24h(locale: str | None, time_format: str | None) -> bool:
         return True
     if normalized_format == "12h":
         return False
-    return normalize_locale(locale) == "nb"
+    return normalize_locale(locale) in ("nb", "fr")
 
 
 def format_time(hhmm: str | None, locale: str | None, time_format: str | None = None) -> str | None:
@@ -147,8 +152,11 @@ def format_time_compact(hhmm: str | None, locale: str | None, time_format: str |
 def format_month_day(date_str: str, locale: str | None) -> str:
     """Format YYYY-MM-DD as a short month/day label."""
     dt = datetime.strptime(date_str, "%Y-%m-%d")
-    if normalize_locale(locale) == "nb":
+    normalized = normalize_locale(locale)
+    if normalized == "nb":
         return f"{NB_MONTHS_SHORT[dt.month - 1]} {dt.day:02d}"
+    if normalized == "fr":
+        return f"{dt.day:02d} {FR_MONTHS_SHORT[dt.month - 1]}"
     return dt.strftime("%b %d")
 
 
