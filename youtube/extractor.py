@@ -77,8 +77,13 @@ def configure_metadata_lang(lang: str | None):
     _METADATA_LANG = (lang or "").strip()
 
 
-def _ydl_opts() -> dict:
-    """Common yt-dlp options - no download, just metadata."""
+def _ydl_opts(lang: str | None = None) -> dict:
+    """Common yt-dlp options - no download, just metadata.
+
+    `lang` asks YouTube for titles/descriptions in that language, falling back
+    to the original when the channel published no translation. Defaults to the
+    configured metadata language.
+    """
     opts = {
         'quiet': True,
         'no_warnings': True,
@@ -87,16 +92,17 @@ def _ydl_opts() -> dict:
         'ignore_no_formats_error': True,
         'socket_timeout': _YDL_TIMEOUT,
     }
-    if _METADATA_LANG:
-        opts['extractor_args'] = {'youtube': {'lang': [_METADATA_LANG]}}
+    effective = (lang or "").strip() or _METADATA_LANG
+    if effective:
+        opts['extractor_args'] = {'youtube': {'lang': [effective]}}
     return opts
 
 
-async def extract_metadata(video_id: str) -> Optional[dict]:
+async def extract_metadata(video_id: str, lang: str | None = None) -> Optional[dict]:
     """Extract metadata for a single YouTube video."""
     def _extract():
         try:
-            with yt_dlp.YoutubeDL(_ydl_opts()) as ydl:
+            with yt_dlp.YoutubeDL(_ydl_opts(lang)) as ydl:
                 info = ydl.extract_info(f"https://www.youtube.com/watch?v={video_id}", download=False)
                 if not info:
                     return None
@@ -119,11 +125,11 @@ async def extract_metadata(video_id: str) -> Optional[dict]:
         logger.error(f"Metadata extraction timed out for {video_id}")
         return None
 
-async def search(query: str, max_results: int = 10) -> list[dict]:
+async def search(query: str, max_results: int = 10, lang: str | None = None) -> list[dict]:
     """Search YouTube via yt-dlp ytsearch."""
     def _search():
         try:
-            opts = _ydl_opts()
+            opts = _ydl_opts(lang)
             opts['extract_flat'] = True
             with yt_dlp.YoutubeDL(opts) as ydl:
                 results = ydl.extract_info(f"ytsearch{max_results}:{query}", download=False)
@@ -233,10 +239,11 @@ def _resolve_channel_id(channel_name: str) -> Optional[str]:
     return None
 
 
-def _fetch_from_channel_page(channel_id: str, channel_name: str, max_results: int) -> list[dict]:
+def _fetch_from_channel_page(channel_id: str, channel_name: str, max_results: int,
+                             lang: str | None = None) -> list[dict]:
     """Fetch videos directly from a channel's uploads tab."""
     try:
-        opts = _ydl_opts()
+        opts = _ydl_opts(lang)
         opts['extract_flat'] = True
         opts['playlistend'] = max_results
         url = f"https://www.youtube.com/channel/{channel_id}/videos"
@@ -269,7 +276,8 @@ def _fetch_from_channel_page(channel_id: str, channel_name: str, max_results: in
         return []
 
 
-async def fetch_channel_videos(channel_name: str, max_results: int = 10, channel_id: Optional[str] = None) -> list[dict]:
+async def fetch_channel_videos(channel_name: str, max_results: int = 10, channel_id: Optional[str] = None,
+                               lang: str | None = None) -> list[dict]:
     """Fetch recent videos from a YouTube channel.
 
     If channel_id is provided, fetches directly from the uploads tab.
@@ -279,14 +287,14 @@ async def fetch_channel_videos(channel_name: str, max_results: int = 10, channel
         # Try direct channel page approach first
         cid = channel_id or _resolve_channel_id(channel_name)
         if cid:
-            videos = _fetch_from_channel_page(cid, channel_name, max_results)
+            videos = _fetch_from_channel_page(cid, channel_name, max_results, lang)
             if videos:
                 return videos
 
         # Fallback: search and filter by exact channel name
         try:
             fetch_count = max_results * 3
-            opts = _ydl_opts()
+            opts = _ydl_opts(lang)
             opts['extract_flat'] = True
             with yt_dlp.YoutubeDL(opts) as ydl:
                 results = ydl.extract_info(f"ytsearch{fetch_count}:{channel_name}", download=False)
@@ -323,10 +331,11 @@ async def fetch_channel_videos(channel_name: str, max_results: int = 10, channel
         return []
 
 
-def _fetch_from_channel_shorts(channel_id: str, channel_name: str, max_results: int) -> list[dict]:
+def _fetch_from_channel_shorts(channel_id: str, channel_name: str, max_results: int,
+                               lang: str | None = None) -> list[dict]:
     """Fetch Shorts directly from a channel's /shorts tab."""
     try:
-        opts = _ydl_opts()
+        opts = _ydl_opts(lang)
         opts['extract_flat'] = True
         opts['playlistend'] = max_results
         url = f"https://www.youtube.com/channel/{channel_id}/shorts"
@@ -358,12 +367,13 @@ def _fetch_from_channel_shorts(channel_id: str, channel_name: str, max_results: 
         return []
 
 
-async def fetch_channel_shorts(channel_name: str, max_results: int = 50, channel_id: Optional[str] = None) -> list[dict]:
+async def fetch_channel_shorts(channel_name: str, max_results: int = 50, channel_id: Optional[str] = None,
+                               lang: str | None = None) -> list[dict]:
     """Fetch recent Shorts from a YouTube channel's /shorts tab."""
     if not channel_id:
         return []
     def _fetch():
-        return _fetch_from_channel_shorts(channel_id, channel_name, max_results)
+        return _fetch_from_channel_shorts(channel_id, channel_name, max_results, lang)
     try:
         return await asyncio.wait_for(asyncio.to_thread(_fetch), timeout=_YDL_TIMEOUT * 2)
     except asyncio.TimeoutError:
@@ -391,12 +401,14 @@ def format_duration(seconds) -> str:
 class YouTubeExtractorProtocol(Protocol):
     """Protocol for YouTube metadata extraction — use for type hints and test mocks."""
 
-    async def extract_metadata(self, video_id: str) -> Optional[dict]: ...
-    async def search(self, query: str, max_results: int = 10) -> list[dict]: ...
+    async def extract_metadata(self, video_id: str, lang: str | None = None) -> Optional[dict]: ...
+    async def search(self, query: str, max_results: int = 10, lang: str | None = None) -> list[dict]: ...
     async def fetch_channel_videos(self, channel_name: str, max_results: int = 10,
-                                    channel_id: Optional[str] = None) -> list[dict]: ...
+                                    channel_id: Optional[str] = None,
+                                    lang: str | None = None) -> list[dict]: ...
     async def fetch_channel_shorts(self, channel_name: str, max_results: int = 50,
-                                    channel_id: Optional[str] = None) -> list[dict]: ...
+                                    channel_id: Optional[str] = None,
+                                    lang: str | None = None) -> list[dict]: ...
     async def resolve_channel_handle(self, handle: str) -> Optional[dict]: ...
     async def resolve_handle_from_channel_id(self, channel_id: str) -> Optional[str]: ...
 
@@ -408,21 +420,23 @@ class YouTubeExtractor:
     Timeout is configured globally via configure_timeout().
     """
 
-    async def extract_metadata(self, video_id: str) -> Optional[dict]:
-        return await extract_metadata(video_id)
+    async def extract_metadata(self, video_id: str, lang: str | None = None) -> Optional[dict]:
+        return await extract_metadata(video_id, lang=lang)
 
-    async def search(self, query: str, max_results: int = 10) -> list[dict]:
-        return await search(query, max_results=max_results)
+    async def search(self, query: str, max_results: int = 10, lang: str | None = None) -> list[dict]:
+        return await search(query, max_results=max_results, lang=lang)
 
     async def fetch_channel_videos(self, channel_name: str, max_results: int = 10,
-                                    channel_id: Optional[str] = None) -> list[dict]:
+                                    channel_id: Optional[str] = None,
+                                    lang: str | None = None) -> list[dict]:
         return await fetch_channel_videos(channel_name, max_results=max_results,
-                                           channel_id=channel_id)
+                                           channel_id=channel_id, lang=lang)
 
     async def fetch_channel_shorts(self, channel_name: str, max_results: int = 50,
-                                    channel_id: Optional[str] = None) -> list[dict]:
+                                    channel_id: Optional[str] = None,
+                                    lang: str | None = None) -> list[dict]:
         return await fetch_channel_shorts(channel_name, max_results=max_results,
-                                           channel_id=channel_id)
+                                           channel_id=channel_id, lang=lang)
 
     async def resolve_channel_handle(self, handle: str) -> Optional[dict]:
         return await resolve_channel_handle(handle)

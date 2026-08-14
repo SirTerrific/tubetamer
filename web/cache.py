@@ -12,6 +12,7 @@ from urllib.parse import urlparse
 import httpx
 
 from data.child_store import ChildStore
+from i18n import normalize_locale
 from web.helpers import annotate_categories
 
 logger = logging.getLogger(__name__)
@@ -178,6 +179,62 @@ async def _refresh_channel_cache_for_profile(state, profile_id: str):
     cache["updated_at"] = time.monotonic()
     logger.info("Refreshed channel cache for profile '%s': %d channels, %d with shorts",
                 profile_id, len(channels), sum(1 for v in shorts.values() if v))
+
+    # Record the titles we just fetched under the configured language, and keep
+    # any other language in use warm so the header toggle has data to show.
+    default_lang = normalize_locale(getattr(state, "locale", "en"))
+    _save_titles_from_lists(vs, default_lang, channels, shorts)
+    for lang in vs.get_title_langs():
+        if lang != default_lang:
+            await backfill_titles_for_locale(state, profile_id, lang)
+
+
+def _save_titles_from_lists(vs, lang: str, *collections) -> None:
+    """Persist titles from {channel: [video, ...]} maps under a language."""
+    titles: dict[str, str] = {}
+    for collection in collections:
+        for videos in collection.values():
+            for v in videos:
+                vid, title = v.get("video_id"), v.get("title")
+                if vid and title:
+                    titles[vid] = title
+    vs.save_titles(lang, titles)
+
+
+async def backfill_titles_for_locale(state, profile_id: str, lang: str) -> None:
+    """Fetch allowlisted channels in `lang` and store the titles YouTube serves.
+
+    Only the titles are kept — the channel cache itself stays single-language,
+    since everything else in it (ids, thumbnails, durations) is language-neutral.
+    """
+    vs = getattr(state, "video_store", None)
+    if not vs or not lang:
+        return
+    allowed = ChildStore(vs, profile_id).get_channels_with_ids("allowed")
+    if not allowed:
+        return
+    yt_cfg = getattr(state, "youtube_config", None)
+    max_vids = yt_cfg.channel_cache_results if yt_cfg else 200
+    extractor = getattr(state, "extractor", None)
+    if extractor is None:
+        from youtube.extractor import fetch_channel_videos as _fetch
+        tasks = [_fetch(name, max_results=max_vids, channel_id=cid, lang=lang)
+                 for name, cid, _h, _c in allowed]
+    else:
+        tasks = [extractor.fetch_channel_videos(name, max_results=max_vids, channel_id=cid, lang=lang)
+                 for name, cid, _h, _c in allowed]
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+    titles: dict[str, str] = {}
+    for (ch_name, _cid, _h, _c), result in zip(allowed, results):
+        if isinstance(result, Exception):
+            logger.debug("Title backfill (%s) failed for '%s': %s", lang, ch_name, result)
+            continue
+        for v in result:
+            vid, title = v.get("video_id"), v.get("title")
+            if vid and title:
+                titles[vid] = title
+    vs.save_titles(lang, titles)
+    logger.info("Backfilled %d '%s' titles for profile '%s'", len(titles), lang, profile_id)
 
 
 async def _refresh_all_channel_caches(state):

@@ -138,6 +138,19 @@ class VideoStore:
                 added_at TEXT NOT NULL DEFAULT (datetime('now'))
             )
         """)
+        # Per-language video titles. YouTube serves a translated title when the
+        # channel published one for that language, so the same video can have a
+        # different title per UI language. Global, not per-profile: a translation
+        # is the same for everyone.
+        self.conn.execute("""
+            CREATE TABLE IF NOT EXISTS video_titles (
+                video_id TEXT NOT NULL,
+                lang TEXT NOT NULL,
+                title TEXT NOT NULL,
+                updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+                PRIMARY KEY (video_id, lang)
+            )
+        """)
         self.conn.commit()
 
         # Run multi-child profile migrations for existing databases
@@ -434,6 +447,52 @@ class VideoStore:
         """Get video by video_id and profile_id."""
         with self._lock:
             return self._get_video_unlocked(video_id, profile_id)
+
+    def save_titles(self, lang: str, titles: dict[str, str]) -> None:
+        """Store per-language video titles, replacing any previous value.
+
+        Called whenever metadata is fetched in a given language, so the
+        translation cache fills in as videos are searched, requested and
+        refreshed. No-op for an empty language or empty batch.
+        """
+        if not lang or not titles:
+            return
+        rows = [(vid, lang, title) for vid, title in titles.items() if vid and title]
+        if not rows:
+            return
+        with self._lock:
+            self.conn.executemany(
+                "INSERT INTO video_titles (video_id, lang, title, updated_at) "
+                "VALUES (?, ?, ?, datetime('now')) "
+                "ON CONFLICT(video_id, lang) DO UPDATE SET "
+                "title = excluded.title, updated_at = excluded.updated_at",
+                rows,
+            )
+            self.conn.commit()
+
+    def get_titles(self, video_ids: list[str], lang: str) -> dict[str, str]:
+        """Look up translated titles for the given videos. Missing ones are absent."""
+        if not lang or not video_ids:
+            return {}
+        with self._lock:
+            out: dict[str, str] = {}
+            # Chunked to stay under SQLite's variable limit on large libraries
+            for i in range(0, len(video_ids), 400):
+                chunk = video_ids[i:i + 400]
+                placeholders = ",".join("?" * len(chunk))
+                cursor = self.conn.execute(
+                    f"SELECT video_id, title FROM video_titles "
+                    f"WHERE lang = ? AND video_id IN ({placeholders})",
+                    (lang, *chunk),
+                )
+                out.update({row[0]: row[1] for row in cursor.fetchall()})
+            return out
+
+    def get_title_langs(self) -> list[str]:
+        """Languages that have at least one stored title — i.e. actually in use."""
+        with self._lock:
+            cursor = self.conn.execute("SELECT DISTINCT lang FROM video_titles")
+            return [row[0] for row in cursor.fetchall()]
 
     def find_video_fuzzy(self, encoded_id: str, profile_id: str = "default") -> Optional[dict]:
         """Find a video where hyphens were encoded as underscores (Telegram command compat)."""

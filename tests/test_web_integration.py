@@ -887,3 +887,57 @@ class TestLocaleSwitch:
         auth_client.post("/api/locale", json={"locale": "en"})
         resp = auth_client.get("/")
         assert 'lang="en"' in resp.text
+
+
+class TestPerLanguageTitles:
+    """Video titles follow the language toggle when a translation was stored."""
+
+    def test_stored_translation_is_used(self, auth_client, store):
+        cs = ChildStore(store, "default")
+        cs.add_video("transtitle1", "How to prevent hair loss?", "C'est pas sorcier")
+        cs.update_status("transtitle1", "approved")
+        store.save_titles("fr", {"transtitle1": "Comment eviter la perte de cheveux ?"})
+
+        auth_client.post("/api/locale", json={"locale": "fr"})
+        resp = auth_client.get("/")
+        assert "Comment eviter la perte de cheveux ?" in resp.text
+
+        auth_client.post("/api/locale", json={"locale": "en"})
+        resp = auth_client.get("/")
+        assert "How to prevent hair loss?" in resp.text
+
+    def test_missing_translation_keeps_original_title(self, auth_client, store):
+        cs = ChildStore(store, "default")
+        cs.add_video("notranslat1", "Original Only", "Some Channel")
+        cs.update_status("notranslat1", "approved")
+
+        auth_client.post("/api/locale", json={"locale": "fr"})
+        resp = auth_client.get("/")
+        assert "Original Only" in resp.text
+
+    def test_titles_roundtrip_through_store(self, store):
+        store.save_titles("fr", {"vid00000001": "Titre", "vid00000002": "Autre"})
+        got = store.get_titles(["vid00000001", "vid00000002", "missing0001"], "fr")
+        assert got == {"vid00000001": "Titre", "vid00000002": "Autre"}
+
+    def test_save_titles_upserts(self, store):
+        store.save_titles("fr", {"vid00000003": "Ancien"})
+        store.save_titles("fr", {"vid00000003": "Nouveau"})
+        assert store.get_titles(["vid00000003"], "fr") == {"vid00000003": "Nouveau"}
+
+    def test_languages_are_isolated(self, store):
+        store.save_titles("fr", {"vid00000004": "Francais"})
+        store.save_titles("en", {"vid00000004": "English"})
+        assert store.get_titles(["vid00000004"], "fr") == {"vid00000004": "Francais"}
+        assert store.get_titles(["vid00000004"], "en") == {"vid00000004": "English"}
+
+    def test_get_title_langs_reports_languages_in_use(self, store):
+        assert store.get_title_langs() == []
+        store.save_titles("fr", {"vid00000005": "Titre"})
+        assert store.get_title_langs() == ["fr"]
+
+    def test_empty_inputs_are_noops(self, store):
+        store.save_titles("", {"vid00000006": "x"})
+        store.save_titles("fr", {})
+        assert store.get_titles(["vid00000006"], "fr") == {}
+        assert store.get_titles([], "fr") == {}

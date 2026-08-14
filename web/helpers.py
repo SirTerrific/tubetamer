@@ -79,14 +79,42 @@ def get_child_name(request: Request) -> str:
     return request.session.get("child_name", "")
 
 
+def current_locale(request: Request) -> str:
+    """Locale for this request: session choice first, configured default otherwise."""
+    return normalize_locale(
+        request.session.get("locale") or getattr(request.app.state, "locale", "en")
+    )
+
+
+def localize_titles(request: Request, videos: list[dict]) -> list[dict]:
+    """Swap in translated titles for the request's locale, in place.
+
+    Videos with no stored translation keep the title they were saved with —
+    YouTube only has a translation when the channel published one.
+    """
+    if not videos:
+        return videos
+    vs = getattr(request.app.state, "video_store", None)
+    if not vs:
+        return videos
+    lang = current_locale(request)
+    ids = [v["video_id"] for v in videos if v.get("video_id")]
+    translated = vs.get_titles(ids, lang)
+    if not translated:
+        return videos
+    for v in videos:
+        title = translated.get(v.get("video_id", ""))
+        if title:
+            v["title"] = title
+    return videos
+
+
 def base_ctx(request: Request) -> dict:
     """Common template context: child_name + multi_profile for base.html header."""
     vs = request.app.state.video_store
     profiles = vs.get_profiles() if vs else []
     # Session locale (set via the header language toggle) wins over the configured default
-    locale = normalize_locale(
-        request.session.get("locale") or getattr(request.app.state, "locale", "en")
-    )
+    locale = current_locale(request)
     # Populate avatar fields from session (or DB on first load after upgrade)
     avatar_icon = request.session.get("avatar_icon", "")
     avatar_color = request.session.get("avatar_color", "")

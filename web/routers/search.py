@@ -7,7 +7,7 @@ from web.shared import templates, limiter
 from web.deps import get_child_store, get_extractor
 from web.helpers import (
     VIDEO_ID_RE, _ERROR_MESSAGES,
-    base_ctx, get_csrf_token, validate_csrf, shorts_enabled,
+    base_ctx, get_csrf_token, validate_csrf, shorts_enabled, current_locale,
 )
 from web.cache import (
     get_word_filter_patterns, title_matches_filter, invalidate_catalog_cache,
@@ -47,16 +47,27 @@ async def search_videos(request: Request, q: str = Query("", max_length=200)):
 
     video_id = extract_video_id(q)
     fetch_failed = False
+    search_lang = current_locale(request)
 
     if video_id:
-        metadata = await extractor.extract_metadata(video_id)
+        metadata = await extractor.extract_metadata(video_id, lang=search_lang)
         results = [metadata] if metadata else []
         if not metadata:
             fetch_failed = True
     else:
         yt_cfg = state.youtube_config
         max_results = yt_cfg.search_max_results if yt_cfg else 10
-        results = await extractor.search(q, max_results=max_results)
+        results = await extractor.search(q, max_results=max_results, lang=search_lang)
+
+    # Remember the titles YouTube served for this language so already-stored
+    # videos can be shown in it later without re-fetching.
+    vs = getattr(state, "video_store", None)
+    if vs and results:
+        vs.save_titles(search_lang, {
+            r["video_id"]: r["title"]
+            for r in results
+            if r.get("video_id") and r.get("title")
+        })
 
     # Filter out blocked channels
     blocked = cs.get_blocked_channels_set()
@@ -78,7 +89,7 @@ async def search_videos(request: Request, q: str = Query("", max_length=200)):
     cs.record_search(q, len(results))
 
     csrf_token = get_csrf_token(request)
-    locale = getattr(request.app.state, "locale", "en")
+    locale = current_locale(request)
     error_message = t(locale, _ERROR_MESSAGES["fetch_failed"]) if fetch_failed else ""
     return templates.TemplateResponse(request, "search.html", {
         **base_ctx(request),

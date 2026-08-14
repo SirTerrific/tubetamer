@@ -12,7 +12,7 @@ from web.deps import get_child_store
 from web.helpers import (
     _ERROR_MESSAGES, base_ctx, shorts_enabled, autoload_enabled,
     get_time_limit_info, get_category_time_info, get_schedule_info,
-    annotate_categories,
+    annotate_categories, localize_titles, current_locale,
 )
 from web.cache import (
     get_profile_cache, build_active_row, build_catalog, build_shorts_catalog,
@@ -99,11 +99,12 @@ def _history_payload(request: Request, offset: int, limit: int) -> dict:
     state = request.app.state
     cs = get_child_store(request)
     history, total = cs.get_watch_history_page(offset=offset, limit=limit)
+    localize_titles(request, history)
     groups = _build_history_groups(
         history,
         cs,
         state.wl_config,
-        getattr(state, "locale", "en"),
+        current_locale(request),
     )
     return {
         "groups": groups,
@@ -126,13 +127,13 @@ async def index(request: Request, error: str = Query("", max_length=50)):
     autoload = autoload_enabled(request, cs)
     page_size = 12
     full_catalog = build_catalog(state, profile_id=profile_id)
-    catalog = full_catalog[:page_size]
+    catalog = localize_titles(request, full_catalog[:page_size])
     active_page = 6
-    active_row = build_active_row(state, limit=active_page, profile_id=profile_id)
+    active_row = localize_titles(request, build_active_row(state, limit=active_page, profile_id=profile_id))
     has_more_active = False
     shorts_page = 9
     full_shorts = build_shorts_catalog(state, profile_id=profile_id)
-    shorts_catalog = full_shorts[:shorts_page]
+    shorts_catalog = localize_titles(request, full_shorts[:shorts_page])
     has_more_shorts = len(full_shorts) > shorts_page
     time_info = get_time_limit_info(store=cs, wl_cfg=wl_cfg)
     schedule_info = get_schedule_info(store=cs, wl_cfg=wl_cfg)
@@ -152,7 +153,7 @@ async def index(request: Request, error: str = Query("", max_length=50)):
         channel_pill_items.append((display.casefold(), display, cache_key))
     for _sort_key, display, cache_key in sorted(channel_pill_items):
         channel_pills[cache_key] = display
-    locale = getattr(request.app.state, "locale", "en")
+    locale = current_locale(request)
     error_message = t(locale, _ERROR_MESSAGES.get(error, "")) if error else ""
     return templates.TemplateResponse(request, "index.html", {
         **base_ctx(request),
@@ -190,6 +191,7 @@ async def activity_page(request: Request):
     cat_info = get_category_time_info(store=cs, wl_cfg=wl_cfg)
     total_min = sum(v["minutes"] for v in breakdown)
     annotate_categories(breakdown, cs)
+    localize_titles(request, breakdown)
     return templates.TemplateResponse(request, "activity.html", {
         **base_ctx(request),
         "breakdown": breakdown,
@@ -207,6 +209,8 @@ async def requests_page(request: Request):
     approved_videos = cs.get_requested_approved(limit=100)
     annotate_categories(pending_videos, cs)
     annotate_categories(approved_videos, cs)
+    localize_titles(request, pending_videos)
+    localize_titles(request, approved_videos)
     return templates.TemplateResponse(request, "requests.html", {
         **base_ctx(request),
         "pending_videos": pending_videos,

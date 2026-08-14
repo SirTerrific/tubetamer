@@ -12,7 +12,7 @@ from web.helpers import (
     _HEARTBEAT_MIN_INTERVAL, _HEARTBEAT_EVICT_AGE,
     base_ctx, resolve_video_category,
     get_time_limit_info, get_category_time_info,
-    get_schedule_info, get_next_start_time,
+    get_schedule_info, get_next_start_time, current_locale, localize_titles,
 )
 from web.cache import invalidate_catalog_cache
 from i18n import category_label
@@ -89,7 +89,8 @@ async def watch_video(request: Request, video_id: str):
         return RedirectResponse(url="/", status_code=303)
 
     video_cat = resolve_video_category(video, store=cs)
-    locale = getattr(request.app.state, "locale", "en")
+    localize_titles(request, [video])
+    locale = current_locale(request)
     cat_label = category_label(video_cat, locale)
     cat_info = get_category_time_info(store=cs, wl_cfg=wl_cfg)
     base = base_ctx(request)

@@ -4,7 +4,7 @@ from fastapi import APIRouter, Request, Query
 from fastapi.responses import JSONResponse
 
 from web.shared import limiter
-from web.helpers import VIDEO_ID_RE
+from web.helpers import VIDEO_ID_RE, localize_titles
 from web.cache import build_active_row, build_catalog, build_shorts_catalog, get_profile_cache
 
 router = APIRouter()
@@ -43,7 +43,7 @@ async def api_catalog(
         full = build_catalog(state, channel_filter=channel, profile_id=profile_id)
     if category:
         full = [v for v in full if v.get("category", "fun") == category]
-    page = full[offset:offset + limit]
+    page = localize_titles(request, full[offset:offset + limit])
     return JSONResponse({
         "videos": page,
         "has_more": offset + limit < len(full),
