@@ -56,6 +56,7 @@ def extract_video_id(url_or_id: str) -> Optional[str]:
     return None
 
 _YDL_TIMEOUT = 30  # default; overridden by configure_timeout()
+_METADATA_LANG = ""  # empty = whatever YouTube defaults to; set by configure_metadata_lang()
 
 
 def configure_timeout(seconds: int):
@@ -64,9 +65,21 @@ def configure_timeout(seconds: int):
     _YDL_TIMEOUT = seconds
 
 
+def configure_metadata_lang(lang: str | None):
+    """Set the preferred language for YouTube titles and descriptions.
+
+    YouTube auto-translates titles on channels that opt into it, and picks the
+    language from the request locale — so a French channel's videos come back
+    with English titles by default. Setting this makes yt-dlp ask for that
+    language instead.
+    """
+    global _METADATA_LANG
+    _METADATA_LANG = (lang or "").strip()
+
+
 def _ydl_opts() -> dict:
     """Common yt-dlp options - no download, just metadata."""
-    return {
+    opts = {
         'quiet': True,
         'no_warnings': True,
         'extract_flat': False,
@@ -74,6 +87,9 @@ def _ydl_opts() -> dict:
         'ignore_no_formats_error': True,
         'socket_timeout': _YDL_TIMEOUT,
     }
+    if _METADATA_LANG:
+        opts['extractor_args'] = {'youtube': {'lang': [_METADATA_LANG]}}
+    return opts
 
 
 async def extract_metadata(video_id: str) -> Optional[dict]:

@@ -80,6 +80,7 @@ class YouTubeConfig:
     channel_cache_ttl: int = 1800  # seconds between channel cache refreshes
     ydl_timeout: int = 30  # seconds — max wall-clock time for a single yt-dlp operation
     shorts_enabled: bool = False  # enable Shorts row on homepage
+    metadata_lang: str = ""  # preferred language for video titles (e.g. "fr"); empty = YouTube default
 
 
 @dataclass
@@ -176,6 +177,7 @@ class Config:
                 channel_cache_ttl=int(os.environ.get("BRG_CHANNEL_CACHE_TTL", "1800")),
                 ydl_timeout=int(os.environ.get("BRG_YDL_TIMEOUT", "30")),
                 shorts_enabled=os.environ.get("BRG_SHORTS_ENABLED", "false").lower() == "true",
+                metadata_lang=os.environ.get("BRG_METADATA_LANG", ""),
             ),
             database=DatabaseConfig(
                 path=os.environ.get("BRG_DB_PATH", "db/videos.db"),

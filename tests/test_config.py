@@ -252,3 +252,24 @@ class TestWebConfig:
         monkeypatch.setenv("BRG_BASE_URL", "http://10.0.0.1:8080")
         cfg = WebConfig(base_url="http://custom:9090")
         assert cfg.base_url == "http://custom:9090"
+
+
+class TestMetadataLang:
+    """metadata_lang controls the language of YouTube titles fetched by yt-dlp."""
+
+    def test_default_is_empty_and_adds_no_extractor_args(self):
+        from youtube.extractor import _ydl_opts, configure_metadata_lang
+        configure_metadata_lang("")
+        assert "extractor_args" not in _ydl_opts()
+
+    def test_set_lang_adds_extractor_args(self):
+        from youtube.extractor import _ydl_opts, configure_metadata_lang
+        configure_metadata_lang("fr")
+        assert _ydl_opts()["extractor_args"] == {"youtube": {"lang": ["fr"]}}
+        configure_metadata_lang("")  # restore default for other tests
+
+    def test_none_and_whitespace_are_treated_as_unset(self):
+        from youtube.extractor import _ydl_opts, configure_metadata_lang
+        for value in (None, "   "):
+            configure_metadata_lang(value)
+            assert "extractor_args" not in _ydl_opts()

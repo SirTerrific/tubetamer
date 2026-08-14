@@ -18,7 +18,7 @@ from bot.telegram_bot import TubeTamerBot
 from web.app import app as fastapi_app
 from web.cache import init_app_state, invalidate_channel_cache, invalidate_catalog_cache
 from web.middleware import SecurityHeadersMiddleware, PinAuthMiddleware
-from youtube.extractor import configure_timeout, YouTubeExtractor
+from youtube.extractor import configure_metadata_lang, configure_timeout, YouTubeExtractor
 from video_downloader import VideoDownloader
 from i18n import get_locale, get_time_format
 
@@ -114,6 +114,7 @@ class TubeTamer:
         ydl_timeout = self.config.youtube.ydl_timeout if self.config.youtube else 30
         if ydl_timeout:
             configure_timeout(ydl_timeout)
+        configure_metadata_lang(self.config.youtube.metadata_lang if self.config.youtube else "")
         state.extractor = YouTubeExtractor()
 
         # Initialize local playback downloader if enabled
