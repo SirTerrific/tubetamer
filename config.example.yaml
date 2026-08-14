@@ -20,6 +20,7 @@ youtube:
   channel_cache_ttl: 1800     # seconds between channel cache refreshes (default 30min)
   ydl_timeout: 30             # seconds — max wall-clock time per yt-dlp operation
   shorts_enabled: false       # show Shorts in dedicated row (toggle via /shorts command)
+  metadata_lang: ""           # language for video titles, e.g. "fr" — empty keeps YouTube's default
 
 database:
   path: db/videos.db

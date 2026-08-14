@@ -33,6 +33,7 @@ youtube:
   channel_cache_ttl: 1800        # seconds between channel refreshes (default 30 min)
   ydl_timeout: 30                # seconds — max time for a single yt-dlp operation
   shorts_enabled: false          # Shorts row on homepage (also toggleable via /shorts)
+  metadata_lang: ""              # language for video titles, e.g. "fr" (see below)
 
 database:
   path: db/videos.db
@@ -79,6 +80,19 @@ When `time_format` is set to `locale`, English defaults to 12-hour time and Norw
 
 For contributors adding another language, see the locale guide in [`i18n/locales/README.md`](../i18n/locales/README.md).
 
+### Video Title Language
+
+YouTube auto-translates video titles on channels that opt into it, and picks the language from the request locale. Without `metadata_lang`, a French channel's videos can come back with English titles — "How to prevent hair loss?" instead of "Comment éviter la perte de cheveux ?".
+
+Set `youtube.metadata_lang` (or `BRG_METADATA_LANG`) to the language you want:
+
+```yaml
+youtube:
+  metadata_lang: fr
+```
+
+Use a YouTube-supported code (`fr`, `es`, `de`, `nb`, …). Empty (the default) keeps YouTube's own choice. This affects titles and descriptions fetched from now on; videos already stored keep the title they were saved with until the channel cache refreshes or they're requested again.
+
 ### Category Time Limits
 
 Category limits are managed via Telegram commands, not config files. They're stored in the SQLite database:
@@ -113,6 +127,7 @@ If **no `config.yaml` exists**, everything falls back to environment variables. 
 | `BRG_CHANNEL_CACHE_TTL` | Seconds between channel cache refreshes | `1800` |
 | `BRG_YDL_TIMEOUT` | Max seconds per yt-dlp operation | `30` |
 | `BRG_SHORTS_ENABLED` | Shorts row on homepage | `false` |
+| `BRG_METADATA_LANG` | Language for video titles (e.g. `fr`) | — |
 | `BRG_DB_PATH` | SQLite database path | `db/videos.db` |
 | `BRG_DAILY_LIMIT_MINUTES` | Global daily watch limit (0 = unlimited) | `0` |
 | `BRG_TIMEZONE` | Timezone for watch limits | `America/New_York` |
