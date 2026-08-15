@@ -62,7 +62,9 @@ non-English locales should include translated values for every key they support.
    Update:
 
    - `SUPPORTED_LOCALES`
+   - `SWITCHER_LOCALES` — only if the language should appear in the header toggle. Locales left out still work when set via `app.locale`, and show up in the toggle while they are the active language.
    - `_TRANSLATIONS`
+   - `normalize_locale` — add a prefix branch so variants (`fr-FR`, `fr_CA`, …) resolve
    - imports for the new locale module
    - any locale-specific data imports used by formatting helpers
 

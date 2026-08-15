@@ -69,7 +69,9 @@ Supported canonical locales:
 - `fr` — French
 - `nb` — Norwegian Bokmal
 
-The web UI also has a language toggle in the header. Picking a language there overrides `locale` **for that browser only** (stored in the session cookie), so different family members can use different languages on the same server. The Telegram bot always follows the configured `locale`.
+The web UI also has an **EN/FR toggle** in the header. Picking a language there overrides `locale` **for that browser only** (stored in the session cookie), so different family members can use different languages on the same server. It switches the interface *and* video titles — see [Video Title Language](#video-title-language). The Telegram bot always follows the configured `locale`.
+
+Norwegian is not in the toggle to keep it short, but it is fully supported: set `locale: nb` and it becomes the default for everyone, and it then appears in the toggle as the active language.
 
 `locale` is normalized on load, so common variants such as `en-US`, `en_GB`, `fr-FR`, `fr_CA`, `nb-NO`, and `no` resolve to the supported internal locale automatically.
 
@@ -85,16 +87,20 @@ For contributors adding another language, see the locale guide in [`i18n/locales
 
 ### Video Title Language
 
-YouTube auto-translates video titles on channels that opt into it, and picks the language from the request locale. Without `metadata_lang`, a French channel's videos can come back with English titles — "How to prevent hair loss?" instead of "Comment éviter la perte de cheveux ?".
+YouTube serves a *translated* title when a channel published one, choosing the language from the request. That is why a French channel's videos could show up as "How to prevent hair loss?" instead of "Comment éviter la perte de cheveux ?".
 
-Set `youtube.metadata_lang` (or `BRG_METADATA_LANG`) to the language you want:
+**In most cases you don't need to configure anything**: the header language toggle drives titles as well as the interface. Titles are cached per language in the `video_titles` table, filled in as videos are searched, as the channel cache refreshes, and by a one-off background fetch the first time a language is selected.
+
+`youtube.metadata_lang` (or `BRG_METADATA_LANG`) sets the language used when no session language applies — the Telegram bot, the background channel refresh, and the first fetch of a newly requested video:
 
 ```yaml
 youtube:
   metadata_lang: fr
 ```
 
-Use a YouTube-supported code (`fr`, `es`, `de`, `nb`, …). Empty (the default) keeps YouTube's own choice. This affects titles and descriptions fetched from now on; videos already stored keep the title they were saved with until the channel cache refreshes or they're requested again.
+Use a YouTube-supported code (`fr`, `es`, `de`, `nb`, …). Empty (the default) keeps YouTube's own choice.
+
+**What this cannot do:** a channel that never published a translation has only its original title, so those videos keep it whatever language is selected. YouTube has nothing else to serve.
 
 ### Category Time Limits
 

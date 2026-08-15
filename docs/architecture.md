@@ -11,7 +11,7 @@ flowchart LR
         THUMB["Thumbnail proxy<br/>/thumb — disk cache"]
         DL["Video downloader<br/>yt-dlp + ffmpeg"]
         BOT["Telegram bot<br/>(approvals, channels, limits)"]
-        DB[("SQLite<br/>profiles, videos, watch log")]
+        DB[("SQLite<br/>profiles, videos, watch log,<br/>per-language titles")]
     end
 
     PARENT["Parent's phone<br/>(Telegram)"]
