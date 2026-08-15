@@ -1,5 +1,20 @@
 # Changelog
 
+## v1.3.0 - 2026-08-15
+
+**Added**
+- French locale (490 strings) and a language switcher in the header. The choice is per browser, so family members can each use their own language; the Telegram bot follows the configured `locale`
+- Video titles follow the language switch. YouTube serves a translated title when the channel published one, so a French channel no longer shows English titles. Titles are cached per language in a new `video_titles` table, filled in by search, channel refresh and a background backfill on first switch
+- `youtube.metadata_lang` (`BRG_METADATA_LANG`) sets the default language for fetched titles
+- History and Activity are now reachable from the header instead of only the avatar dropdown
+
+**Changed**
+- Docker base image `python:3.12-slim` → `python:3.14-slim`
+- GitHub Actions bumped a major each: checkout v7, setup-qemu v4, setup-buildx v4, login v4, metadata v6, build-push v7
+
+**Fixed**
+- Error messages, category labels and history date grouping read the app-level locale instead of the session one, so they ignored the language switch
+
 ## v1.2.1 - 2026-07-07
 
 **Fixed**
