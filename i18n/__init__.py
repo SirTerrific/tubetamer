@@ -12,6 +12,9 @@ from i18n.locales.nb import TRANSLATIONS as NB_TRANSLATIONS
 
 DEFAULT_LOCALE = "en"
 SUPPORTED_LOCALES = {"en", "nb", "fr"}
+# Languages offered in the header switcher. Every locale in SUPPORTED_LOCALES
+# still works when set via config — this is only about keeping the toggle short.
+SWITCHER_LOCALES = ("en", "fr")
 DEFAULT_TIME_FORMAT = "locale"
 SUPPORTED_TIME_FORMATS = {"locale", "12h", "24h"}
 
@@ -170,6 +173,7 @@ __all__ = [
     "DEFAULT_LOCALE",
     "DEFAULT_TIME_FORMAT",
     "SUPPORTED_LOCALES",
+    "SWITCHER_LOCALES",
     "SUPPORTED_TIME_FORMATS",
     "category_label",
     "day_label",

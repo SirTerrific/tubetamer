@@ -8,7 +8,7 @@ from fastapi import Request
 from pydantic import BaseModel, Field
 
 from data.child_store import ChildStore
-from i18n import SUPPORTED_LOCALES, format_time, normalize_locale, normalize_time_format, t
+from i18n import SWITCHER_LOCALES, format_time, normalize_locale, normalize_time_format, t
 from utils import (
     get_today_str, get_day_utc_bounds, get_weekday,
     is_within_schedule, resolve_setting,
@@ -137,7 +137,9 @@ def base_ctx(request: Request) -> dict:
         "avatar_color": avatar_color,
         "avatar_icons": AVATAR_ICONS,
         "avatar_colors": AVATAR_COLORS,
-        "locales": sorted(SUPPORTED_LOCALES),
+        # Keep the current language visible even if it isn't a switcher default
+        # (e.g. a Norwegian install), so the toggle always shows what's active.
+        "locales": list(SWITCHER_LOCALES) + ([locale] if locale not in SWITCHER_LOCALES else []),
     }
 
 

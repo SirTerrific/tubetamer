@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.3.1 - 2026-08-15
+
+**Fixed**
+- Header nav icons rendered at full container size on clients still serving the previous stylesheet from the service worker cache; the cache version is now bumped so the new CSS is fetched, and the icons carry explicit dimensions so they render correctly even without it
+- Norwegian removed from the header language toggle to keep it short. It remains fully supported via `app.locale` and the API, and stays visible in the toggle when it is the active language
+
 ## v1.3.0 - 2026-08-15
 
 **Added**

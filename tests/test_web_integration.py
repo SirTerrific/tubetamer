@@ -970,3 +970,21 @@ class TestHeaderNav:
         })
         resp = auth_client.get("/history")
         assert "Watched Video" in resp.text
+
+
+class TestLanguageSwitcherOptions:
+    """The header toggle stays short; every supported locale still works via config."""
+
+    def test_switcher_offers_en_and_fr_only(self, auth_client):
+        resp = auth_client.get("/")
+        assert 'data-locale="en"' in resp.text
+        assert 'data-locale="fr"' in resp.text
+        assert 'data-locale="nb"' not in resp.text
+
+    def test_active_locale_is_shown_even_if_not_a_switcher_default(self, auth_client):
+        auth_client.post("/api/locale", json={"locale": "nb"})
+        resp = auth_client.get("/")
+        assert 'data-locale="nb"' in resp.text
+
+    def test_api_still_accepts_every_supported_locale(self, auth_client):
+        assert auth_client.post("/api/locale", json={"locale": "nb"}).status_code == 200
