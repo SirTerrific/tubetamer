@@ -93,6 +93,47 @@ header {
     line-height: 1;
 }
 
+/* === Header Nav (History / Activity) === */
+.header-nav {
+    display: flex;
+    gap: 0.25rem;
+    flex-shrink: 0;
+}
+
+.header-nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    white-space: nowrap;
+    transition: color 0.15s, background 0.15s;
+}
+
+.header-nav-link:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.header-nav-link.active {
+    color: var(--accent);
+    background: rgba(201, 168, 76, 0.1);
+}
+
+.header-nav-icon {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+}
+
+.header-nav-link:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+}
+
 /* === Language Switch === */
 .lang-switch {
     display: flex;
@@ -1439,6 +1480,15 @@ main {
     }
     .lang-switch {
         order: 2;
+    }
+    .header-nav {
+        order: 2;
+    }
+    .header-nav-label {
+        display: none;
+    }
+    .header-nav-link {
+        padding: 0.4rem 0.5rem;
     }
     .header-search {
         display: none;

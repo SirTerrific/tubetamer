@@ -941,3 +941,32 @@ class TestPerLanguageTitles:
         store.save_titles("fr", {})
         assert store.get_titles(["vid00000006"], "fr") == {}
         assert store.get_titles([], "fr") == {}
+
+
+class TestHeaderNav:
+    """History and Activity are reachable from the header, not just the avatar menu."""
+
+    def test_header_links_to_history_and_activity(self, auth_client):
+        resp = auth_client.get("/")
+        assert 'href="/history"' in resp.text
+        assert 'href="/activity"' in resp.text
+
+    def test_current_page_is_marked_active(self, auth_client):
+        resp = auth_client.get("/history")
+        assert resp.status_code == 200
+        assert 'href="/history" class="header-nav-link active"' in resp.text
+
+    def test_nav_hidden_before_login(self, client):
+        resp = client.get("/login")
+        assert "header-nav-link" not in resp.text
+
+    def test_history_page_lists_watched_videos(self, auth_client, store):
+        cs = ChildStore(store, "default")
+        cs.add_video("histnav0001", "Watched Video", "Test Channel", duration=120)
+        cs.update_status("histnav0001", "approved")
+        auth_client.get("/watch/histnav0001")
+        auth_client.post("/api/watch-heartbeat", json={
+            "video_id": "histnav0001", "seconds": 30, "position_seconds": 30,
+        })
+        resp = auth_client.get("/history")
+        assert "Watched Video" in resp.text
