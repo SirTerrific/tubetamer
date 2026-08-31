@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.3.2 - 2026-08-31
+
+**Changed**
+- Dependency floors raised to the versions the app is actually verified against (FastAPI 0.141, Starlette 1.6, uvicorn 0.52, aiohttp 3.14, python-telegram-bot 22.8, yt-dlp 2026.8.19). The previous ranges already allowed these releases, so Docker builds were installing them untested
+- `telegramify-markdown` capped below 2.0. It had no upper bound and had already crossed a major version, from 0.x to 1.2
+
+**Fixed**
+- Startup handler migrated from the deprecated `@app.on_event` to a lifespan context, and `HTTP_416_REQUESTED_RANGE_NOT_SATISFIABLE` renamed to `HTTP_416_RANGE_NOT_SATISFIABLE`. Both are removed in the next major of FastAPI and Starlette respectively
+
 ## v1.3.1 - 2026-08-15
 
 **Fixed**
