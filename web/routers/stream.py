@@ -7,7 +7,7 @@ from pathlib import Path
 
 from fastapi import APIRouter, Request
 from fastapi.responses import Response, StreamingResponse
-from starlette.status import HTTP_200_OK, HTTP_206_PARTIAL_CONTENT, HTTP_404_NOT_FOUND, HTTP_416_REQUESTED_RANGE_NOT_SATISFIABLE
+from starlette.status import HTTP_200_OK, HTTP_206_PARTIAL_CONTENT, HTTP_404_NOT_FOUND, HTTP_416_RANGE_NOT_SATISFIABLE
 
 from web.shared import limiter
 from web.deps import get_child_store
@@ -79,7 +79,7 @@ async def stream_video(request: Request, video_id: str):
         match = _RANGE_RE.match(range_header)
         if not match:
             return Response(
-                status_code=HTTP_416_REQUESTED_RANGE_NOT_SATISFIABLE,
+                status_code=HTTP_416_RANGE_NOT_SATISFIABLE,
                 headers={"Content-Range": f"bytes */{file_size}"},
             )
 
@@ -90,7 +90,7 @@ async def stream_video(request: Request, video_id: str):
         # Validate range
         if start >= file_size or end >= file_size or start > end:
             return Response(
-                status_code=HTTP_416_REQUESTED_RANGE_NOT_SATISFIABLE,
+                status_code=HTTP_416_RANGE_NOT_SATISFIABLE,
                 headers={"Content-Range": f"bytes */{file_size}"},
             )
 

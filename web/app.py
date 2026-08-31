@@ -1,6 +1,7 @@
 """FastAPI application — creates app, mounts routers, configures startup."""
 
 import asyncio
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -21,7 +22,13 @@ from web.routers.search import router as search_router
 from web.routers.watch import router as watch_router
 from web.routers.stream import router as stream_router
 
-app = FastAPI(title=app_name("en"))
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    app.state.channel_cache_task = asyncio.create_task(channel_cache_loop(app.state))
+    yield
+
+
+app = FastAPI(title=app_name("en"), lifespan=lifespan)
 app.state.limiter = limiter
 app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
@@ -58,9 +65,3 @@ async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
         status_code=429,
         headers=headers,
     )
-
-
-@app.on_event("startup")
-async def _start_channel_cache():
-    state = app.state
-    state.channel_cache_task = asyncio.create_task(channel_cache_loop(state))
