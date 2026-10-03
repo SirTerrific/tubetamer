@@ -81,9 +81,9 @@ header {
 }
 
 .logo-img {
-    max-height: 2.25rem;
-    height: auto;
-    width: auto;
+    width: 2.25rem;
+    height: 2.25rem;
+    flex-shrink: 0;
 }
 
 .logo-name {
@@ -1508,16 +1508,23 @@ main {
     header {
         justify-content: space-between;
     }
+    /* In normal flow (not absolutely centered) so it can never overlap
+       the logo, nav and language switch on narrower desktop screens */
     .header-search {
-        position: absolute;
-        left: 50%;
-        transform: translateX(-50%);
-        width: min(35rem, calc(100% - 16rem));
-        max-width: none;
-        margin: 0;
+        order: 1;
     }
     .avatar-dropdown-wrap {
+        order: 2;
         margin-left: auto;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1100px) {
+    .header-nav-label {
+        display: none;
+    }
+    .header-nav-link {
+        padding: 0.4rem 0.5rem;
     }
 }
 
