@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.3.3 - 2026-10-03
+
+**Fixed**
+- Header elements overlapped on desktop screens around 1260px wide: the search bar was absolutely centered with a fixed side reserve that predated the History/Activity links and the language switch, so it covered the language switch. It now sits in the normal header flow and can no longer overlap its neighbours
+- The app name next to the logo overflowed onto the History link because the logo image had no fixed size; it now has explicit dimensions
+- Between 769px and 1100px the History/Activity links show their icons only, leaving room for the search bar
+- Service worker cache version bumped so clients fetch the new stylesheet instead of serving the cached one
+
 ## v1.3.2 - 2026-08-31
 
 **Changed**
