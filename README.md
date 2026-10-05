@@ -8,6 +8,10 @@
   The server downloads the video locally. No YouTube on the tablet, no algorithm, no Firefox bot checks.
 </p>
 
+<p align="center">
+  <strong>English</strong> · <a href="README.fr.md">Français</a>
+</p>
+
 ---
 
 ## Contents

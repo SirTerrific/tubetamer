@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:bd5437572f4353f40b7ee6a34ee138aa8c8818a3dd171bcd9e19846b452ee970",
+  "claims": [
+    {
+      "id": "claim_5dbd3306e48d4e14998158a2f000b886",
+      "statement": "VideoStore opens SQLite with check_same_thread=False, enables WAL journal mode and guards access with a threading.Lock.",
+      "evidence": [
+        {
+          "resource": "repo://data/video_store.py",
+          "version": "repo-file-v1:sha256:279518e09706efa0dad02d9c08c3e458a859376fa729b1473aab68d741c56eaa"
+        }
+      ]
+    },
+    {
+      "id": "claim_eb868e2af67543f5a5558ffe873ccb87",
+      "statement": "VideoStore creates the tables profiles, videos, watch_log, channels, settings, search_log, word_filters and video_titles with CREATE TABLE IF NOT EXISTS.",
+      "evidence": [
+        {
+          "resource": "repo://data/video_store.py",
+          "version": "repo-file-v1:sha256:279518e09706efa0dad02d9c08c3e458a859376fa729b1473aab68d741c56eaa"
+        }
+      ]
+    },
+    {
+      "id": "claim_8349a632f02745c0af9147d1aa244472",
+      "statement": "Schema upgrades use _add_column_if_missing with allow-lists and _migrate_profile_id/_rebuild_videos_table.",
+      "evidence": [
+        {
+          "resource": "repo://data/video_store.py",
+          "version": "repo-file-v1:sha256:279518e09706efa0dad02d9c08c3e458a859376fa729b1473aab68d741c56eaa"
+        }
+      ]
+    },
+    {
+      "id": "claim_588265cdaff44ee1bf4e256e3bdf3e51",
+      "statement": "ChildStore prefixes settings keys with profile_id and the default profile falls back to the bare key.",
+      "evidence": [
+        {
+          "resource": "repo://data/child_store.py",
+          "version": "repo-file-v1:sha256:8cc67b42d6ef616b620b2a379450e6ca4fc1677c72a0de6899705bed8e32c39a"
+        }
+      ]
+    },
+    {
+      "id": "claim_a3d62857af9f4cbb840d498d8b54468b",
+      "statement": "load_starter_channels returns an empty list when the file is missing and skips entries with invalid handle or category.",
+      "evidence": [
+        {
+          "resource": "repo://data/starter_channels.py",
+          "version": "repo-file-v1:sha256:a027f84c7c743f12c49b02c7e66567ec9415b259ee2ba00b234c0d012d3b3d44"
+        }
+      ]
+    },
+    {
+      "id": "claim_f8bb8e7a994541479857714b5ed1c234",
+      "statement": "main.py passes starter-channels.yaml to the bot, which loads it at init.",
+      "evidence": [
+        {
+          "resource": "repo://bot/telegram_bot.py",
+          "version": "repo-file-v1:sha256:cd63d21ebae42ee74164f84b16507f1a6386ab938366957ba3e7fff99946ef8f"
+        },
+        {
+          "resource": "repo://main.py",
+          "version": "repo-file-v1:sha256:fb2e263a9c7c24c5b846e739be46b2c616dc696d8fd5484efe5e7c83027d1d0d"
+        }
+      ]
+    },
+    {
+      "id": "claim_0c30e633b1284174b2d64b3c736ad404",
+      "statement": "resolve_setting checks {day}_{base_key} before base_key.",
+      "evidence": [
+        {
+          "resource": "repo://utils.py",
+          "version": "repo-file-v1:sha256:21ddb12de6fd94d3510c5fc645fdcd15879d892df853e734f66854d5eb7f1733"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.7.0",
+    "at": "2026-10-05T04:15:14.909Z"
+  }
+}

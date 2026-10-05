@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:9cb2ab5cd8f4dc40e3edb43925ab268d252da282bdbc8600d7510f19379f38d4",
+  "claims": [
+    {
+      "id": "claim_a25367134e6a473db1c535692029b8f6",
+      "statement": "load_config tries the -c path (FileNotFoundError if missing), then config.yaml/config.yml, then falls back to Config.from_env().",
+      "evidence": [
+        {
+          "resource": "repo://config.py",
+          "version": "repo-file-v1:sha256:af3cb434831078dadeff86043a712f89e4370218fdd805f8abd6c4faae8863fd"
+        }
+      ]
+    },
+    {
+      "id": "claim_b91fe033058a4e0085548b53e440dfb9",
+      "statement": "expand_env_vars replaces ${VAR} and $VAR in YAML strings with environment values, unset variables become empty strings.",
+      "evidence": [
+        {
+          "resource": "repo://config.py",
+          "version": "repo-file-v1:sha256:af3cb434831078dadeff86043a712f89e4370218fdd805f8abd6c4faae8863fd"
+        }
+      ]
+    },
+    {
+      "id": "claim_ac034210cbf0460bab913a3f3452e9fd",
+      "statement": "AppConfig falls back to log_level info with a warning when the level is not debug/info/warning/error.",
+      "evidence": [
+        {
+          "resource": "repo://config.py",
+          "version": "repo-file-v1:sha256:af3cb434831078dadeff86043a712f89e4370218fdd805f8abd6c4faae8863fd"
+        }
+      ]
+    },
+    {
+      "id": "claim_637232e8ec72445eb8f279dafa8a3012",
+      "statement": "Config.from_env maps BRG_* variables to every config section with the documented defaults (e.g. BRG_WEB_PORT 8080, BRG_DB_PATH db/videos.db, BRG_TIMEZONE America/New_York, BRG_VIDEO_QUALITY 720p).",
+      "evidence": [
+        {
+          "resource": "repo://config.py",
+          "version": "repo-file-v1:sha256:af3cb434831078dadeff86043a712f89e4370218fdd805f8abd6c4faae8863fd"
+        }
+      ]
+    },
+    {
+      "id": "claim_f490d6cc903c44ff9e3f956ab5cb3b0b",
+      "statement": "load_config warns when telegram.admin_chat_id is empty or non-numeric.",
+      "evidence": [
+        {
+          "resource": "repo://config.py",
+          "version": "repo-file-v1:sha256:af3cb434831078dadeff86043a712f89e4370218fdd805f8abd6c4faae8863fd"
+        }
+      ]
+    },
+    {
+      "id": "claim_fbd253044a8f40c9b4b3e10e26fb6df0",
+      "statement": "main.py applies --log-level/-v overrides before calling load_config.",
+      "evidence": [
+        {
+          "resource": "repo://main.py",
+          "version": "repo-file-v1:sha256:fb2e263a9c7c24c5b846e739be46b2c616dc696d8fd5484efe5e7c83027d1d0d"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.7.0",
+    "at": "2026-10-05T04:15:14.909Z"
+  }
+}

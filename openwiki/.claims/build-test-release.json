@@ -1,0 +1,94 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:bea36840578519c66d99091f95bf49976f58859b9e8d54084222bb33d3b83152",
+  "claims": [
+    {
+      "id": "claim_414ce9d612294c04abff193d3c8aa26c",
+      "statement": "The Docker image is built on python:3.14-slim and installs gosu, ffmpeg and deno.",
+      "evidence": [
+        {
+          "resource": "repo://Dockerfile",
+          "version": "repo-file-v1:sha256:dd67f604baa0ebb74cc19a97a0b51e23f6227322bceb0e06e5d93b2e9e6c5322"
+        }
+      ]
+    },
+    {
+      "id": "claim_ce1f0461f999411fb40f6cd7f008eba1",
+      "statement": "entrypoint.sh chowns mounted volumes to appuser (UID 999) then drops privileges with gosu.",
+      "evidence": [
+        {
+          "resource": "repo://entrypoint.sh",
+          "version": "repo-file-v1:sha256:1fd1d93a4fda64584c28a38a4d9435ad346bbb60b07070a5dc2676eb4b100b80"
+        }
+      ]
+    },
+    {
+      "id": "claim_baed13d44f39452aa6f488634b58afaa",
+      "statement": "docker-compose.yml maps port 8080 and passes BRG_BOT_TOKEN, BRG_ADMIN_CHAT_ID and BRG_PIN.",
+      "evidence": [
+        {
+          "resource": "repo://docker-compose.yml",
+          "version": "repo-file-v1:sha256:ac21e76e787a1065c9b6994f9fd9eb003bad5c38e8c52fce57256bf40a32b128"
+        }
+      ]
+    },
+    {
+      "id": "claim_cc69ad4499204a5abda72e1503b41419",
+      "statement": "deploy.sh tars the source, copies it over ssh and runs docker compose build and up -d.",
+      "evidence": [
+        {
+          "resource": "repo://deploy.sh",
+          "version": "repo-file-v1:sha256:24deddf0685f444e7013e9664abecc2ac23757194c48c7f4867e2caa261b1849"
+        }
+      ]
+    },
+    {
+      "id": "claim_2b62f336cafe4162871a44b45c7c31c3",
+      "statement": "The Unraid template uses ghcr.io/sirterrific/tubetamer:latest.",
+      "evidence": [
+        {
+          "resource": "repo://unraid-template.xml",
+          "version": "repo-file-v1:sha256:c8898313ef409b3dd8fe3a7350dfcb6c62e3977a5f29738d3286a1d30e6ffd96"
+        }
+      ]
+    },
+    {
+      "id": "claim_baab5d7ab5a04a06ab663f8d34a12744",
+      "statement": "tests/conftest.py provides video_store, child_store and config_yaml fixtures.",
+      "evidence": [
+        {
+          "resource": "repo://tests/conftest.py",
+          "version": "repo-file-v1:sha256:34297a1f3c0d197fcde448294d792023333f6e6f3b6c221edf269696794682c2"
+        }
+      ]
+    },
+    {
+      "id": "claim_aa1b2fa97b1e4ddcb73e76baa70459e0",
+      "statement": "The publish workflow verifies the release tag matches version.py and pushes a linux/amd64 and linux/arm64 image to GHCR with semver and latest tags.",
+      "evidence": [
+        {
+          "resource": "repo://.github/workflows/docker-publish.yaml",
+          "version": "repo-file-v1:sha256:472d01c20edaa916f76ee9c254a2637342cc856c88e70df7aed88913ddb6de50"
+        },
+        {
+          "resource": "repo://version.py",
+          "version": "repo-file-v1:sha256:562ea89b72889a52ac4bf5a0e428d48187dfa22db3c7b4fe4913e79c62f41bb3"
+        }
+      ]
+    },
+    {
+      "id": "claim_d6bb4c8d886441728e82479b242f4cc8",
+      "statement": "CHANGELOG.md has one vX.Y.Z dated section per release.",
+      "evidence": [
+        {
+          "resource": "repo://CHANGELOG.md",
+          "version": "repo-file-v1:sha256:65e0a0a63f18592a83025a4040c119a7d413860a834742e02679e7cb0c57223d"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.7.0",
+    "at": "2026-10-05T04:15:14.909Z"
+  }
+}

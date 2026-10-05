@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:8d0c652bef045fac46db3ae0f0a27e876efb89b6592eac3d4ab7b42c8effe379",
+  "claims": [
+    {
+      "id": "claim_8dcf6c049efb4221a37b6f098fd58ba0",
+      "statement": "The extractor runs yt-dlp in worker threads under asyncio.wait_for and returns None or an empty list on failure or timeout.",
+      "evidence": [
+        {
+          "resource": "repo://youtube/extractor.py",
+          "version": "repo-file-v1:sha256:9c1833d8e55fc7f2477ac1d95efd13e7546cc2859c8dd9ae8dae5dce7cf0f885"
+        }
+      ]
+    },
+    {
+      "id": "claim_752b798e4a9a4904a8d41592fa045598",
+      "statement": "A video is a Short when its URL contains /shorts/; Shorts are fetched from the channel /shorts tab.",
+      "evidence": [
+        {
+          "resource": "repo://youtube/extractor.py",
+          "version": "repo-file-v1:sha256:9c1833d8e55fc7f2477ac1d95efd13e7546cc2859c8dd9ae8dae5dce7cf0f885"
+        }
+      ]
+    },
+    {
+      "id": "claim_17dbce948ea84811b851319a2f5b0f10",
+      "statement": "fetch_channel_videos reads the channel uploads tab by channel id and falls back to ytsearch filtered by exact channel name.",
+      "evidence": [
+        {
+          "resource": "repo://youtube/extractor.py",
+          "version": "repo-file-v1:sha256:9c1833d8e55fc7f2477ac1d95efd13e7546cc2859c8dd9ae8dae5dce7cf0f885"
+        }
+      ]
+    },
+    {
+      "id": "claim_ef18fce9296c489183c053926ff86b07",
+      "statement": "configure_metadata_lang and the per-call lang parameter set yt-dlp extractor_args youtube lang.",
+      "evidence": [
+        {
+          "resource": "repo://youtube/extractor.py",
+          "version": "repo-file-v1:sha256:9c1833d8e55fc7f2477ac1d95efd13e7546cc2859c8dd9ae8dae5dce7cf0f885"
+        }
+      ]
+    },
+    {
+      "id": "claim_c8d7bb4429424c28bbe1fef2d83a62bd",
+      "statement": "_safe_thumbnail only accepts https thumbnails from THUMB_ALLOWED_HOSTS, otherwise builds an i.ytimg.com hqdefault URL.",
+      "evidence": [
+        {
+          "resource": "repo://youtube/extractor.py",
+          "version": "repo-file-v1:sha256:9c1833d8e55fc7f2477ac1d95efd13e7546cc2859c8dd9ae8dae5dce7cf0f885"
+        }
+      ]
+    },
+    {
+      "id": "claim_b51bacf19a0c437e8ea56d10f8a7c2ef",
+      "statement": "VideoDownloader enqueue dedups, queues (video_id, profile_id) and workers run _download under a semaphore.",
+      "evidence": [
+        {
+          "resource": "repo://video_downloader.py",
+          "version": "repo-file-v1:sha256:d277acfed79abfca9758f142913e7fd4f83401ba00546abc50ae4b4668b8e6f7"
+        }
+      ]
+    },
+    {
+      "id": "claim_7f844232841e4d99a215296b88a8f13c",
+      "statement": "_download fails when storage is full, downloads video in phase 1 with quality formats and subtitles best-effort in phase 2, then marks ready.",
+      "evidence": [
+        {
+          "resource": "repo://video_downloader.py",
+          "version": "repo-file-v1:sha256:d277acfed79abfca9758f142913e7fd4f83401ba00546abc50ae4b4668b8e6f7"
+        }
+      ]
+    },
+    {
+      "id": "claim_5af89add10cf4bccac040e6889cd977e",
+      "statement": "Daily cleanup removes mp4 files older than retention_days; storage cleanup removes non-approved files then oldest files until under 80% of the limit.",
+      "evidence": [
+        {
+          "resource": "repo://video_downloader.py",
+          "version": "repo-file-v1:sha256:d277acfed79abfca9758f142913e7fd4f83401ba00546abc50ae4b4668b8e6f7"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.7.0",
+    "at": "2026-10-05T04:15:14.909Z"
+  }
+}

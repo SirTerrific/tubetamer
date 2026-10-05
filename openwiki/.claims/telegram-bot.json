@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:b98752ab6d8847034d2f90b607e7a2b2dea80b63c8cb62edf7fe88dfb8858a86",
+  "claims": [
+    {
+      "id": "claim_c5ad02825d6941e1bcde3f3e99e15593",
+      "statement": "TubeTamerBot is composed of the mixins SetupMixin, ApprovalMixin, ChannelMixin, TimeLimitMixin, CommandsMixin and ActivityMixin.",
+      "evidence": [
+        {
+          "resource": "repo://bot/telegram_bot.py",
+          "version": "repo-file-v1:sha256:cd63d21ebae42ee74164f84b16507f1a6386ab938366957ba3e7fff99946ef8f"
+        }
+      ]
+    },
+    {
+      "id": "claim_201452d15991452c89c523b53f4c52a5",
+      "statement": "_check_admin authorizes an update when chat id or user id equals admin_chat_id, and denies everyone when admin_chat_id is empty.",
+      "evidence": [
+        {
+          "resource": "repo://bot/telegram_bot.py",
+          "version": "repo-file-v1:sha256:cd63d21ebae42ee74164f84b16507f1a6386ab938366957ba3e7fff99946ef8f"
+        }
+      ]
+    },
+    {
+      "id": "claim_bb8a605139a84d048bdb2e4fea83324a",
+      "statement": "start() registers command handlers, a /revoke_<11 chars> message handler, a wizard text handler and a single CallbackQueryHandler, then starts polling with drop_pending_updates=True.",
+      "evidence": [
+        {
+          "resource": "repo://bot/telegram_bot.py",
+          "version": "repo-file-v1:sha256:cd63d21ebae42ee74164f84b16507f1a6386ab938366957ba3e7fff99946ef8f"
+        }
+      ]
+    },
+    {
+      "id": "claim_1e5fbc8b10994f0c95683b5808544c8c",
+      "statement": "On first run with no channels, start() sends the setup hub to the admin.",
+      "evidence": [
+        {
+          "resource": "repo://bot/telegram_bot.py",
+          "version": "repo-file-v1:sha256:cd63d21ebae42ee74164f84b16507f1a6386ab938366957ba3e7fff99946ef8f"
+        }
+      ]
+    },
+    {
+      "id": "claim_9b9b6a1433dc410fb1e0a0429fc1c74f",
+      "statement": "CallbackRoute and match_route implement declarative callback dispatch by prefix with part-count, constraint, int and rejoin rules.",
+      "evidence": [
+        {
+          "resource": "repo://bot/callback_router.py",
+          "version": "repo-file-v1:sha256:7d116d6840bc636577fcccc7a1cf8395def7c76857b30aa76225a1baa2aad9d0"
+        }
+      ]
+    },
+    {
+      "id": "claim_66067c94e83d43e9bc0778b8e74d7b49",
+      "statement": "_handle_callback falls through to video actions in action:profile_id:video_id form, with a legacy two-part form for the default profile.",
+      "evidence": [
+        {
+          "resource": "repo://bot/telegram_bot.py",
+          "version": "repo-file-v1:sha256:cd63d21ebae42ee74164f84b16507f1a6386ab938366957ba3e7fff99946ef8f"
+        }
+      ]
+    },
+    {
+      "id": "claim_cd25151a999c43e7b4e5562450207f28",
+      "statement": "notify_time_limit_reached sends at most one message per day per profile and category.",
+      "evidence": [
+        {
+          "resource": "repo://bot/timelimits.py",
+          "version": "repo-file-v1:sha256:f280ff674e226e8bc6c123f0baa61ad6c19b6564922e78375572cf8c4f1d2072"
+        }
+      ]
+    },
+    {
+      "id": "claim_873b4a1a646b476c82e5b612f13af163",
+      "statement": "The version check loop waits 60 seconds, polls GitHub releases every 12 hours and stops after notifying once.",
+      "evidence": [
+        {
+          "resource": "repo://bot/helpers.py",
+          "version": "repo-file-v1:sha256:4287006e16307560543a12be0a81618bfa8edceb83194af53bb6407c176bc226"
+        },
+        {
+          "resource": "repo://bot/telegram_bot.py",
+          "version": "repo-file-v1:sha256:cd63d21ebae42ee74164f84b16507f1a6386ab938366957ba3e7fff99946ef8f"
+        }
+      ]
+    },
+    {
+      "id": "claim_46767bd2309848c98d9902454692942e",
+      "statement": "Documented user commands and approval buttons are listed in docs/telegram-commands.md.",
+      "evidence": [
+        {
+          "resource": "repo://docs/telegram-commands.md",
+          "version": "repo-file-v1:sha256:31d221e5ee8380a5c780dac9fb4e8849bbe1d1ad6e5e3154564afc72b0c81591"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.7.0",
+    "at": "2026-10-05T04:15:14.909Z"
+  }
+}

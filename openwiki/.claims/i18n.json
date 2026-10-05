@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:bcb237615e0232f60be8f50448f4e64c44a1e9e9385c10a4b726521b5f49c82a",
+  "claims": [
+    {
+      "id": "claim_c33e11daeb5444648222b97fe607aed6",
+      "statement": "t(locale, key) looks the key up in the locale's TRANSLATIONS and falls back to the key (English text); kwargs are applied with str.format.",
+      "evidence": [
+        {
+          "resource": "repo://i18n/__init__.py",
+          "version": "repo-file-v1:sha256:5b48b7c12fce43ff1043e6696e37b5c8134aa5d574fab9a3fd837c1d534e5042"
+        }
+      ]
+    },
+    {
+      "id": "claim_6ad69e09227445639641dfe6ce1e43e1",
+      "statement": "SUPPORTED_LOCALES is en, nb, fr and SWITCHER_LOCALES is en, fr.",
+      "evidence": [
+        {
+          "resource": "repo://i18n/__init__.py",
+          "version": "repo-file-v1:sha256:5b48b7c12fce43ff1043e6696e37b5c8134aa5d574fab9a3fd837c1d534e5042"
+        }
+      ]
+    },
+    {
+      "id": "claim_595d2433db374f1887850b826d756e07",
+      "statement": "normalize_locale maps region variants and no/nn/nb-NO to canonical codes, defaulting to en.",
+      "evidence": [
+        {
+          "resource": "repo://i18n/__init__.py",
+          "version": "repo-file-v1:sha256:5b48b7c12fce43ff1043e6696e37b5c8134aa5d574fab9a3fd837c1d534e5042"
+        }
+      ]
+    },
+    {
+      "id": "claim_a07db626a5bc446fb3056dadb6c7ec81",
+      "statement": "With time_format locale, nb and fr use 24-hour time, other locales use 12-hour AM/PM.",
+      "evidence": [
+        {
+          "resource": "repo://i18n/__init__.py",
+          "version": "repo-file-v1:sha256:5b48b7c12fce43ff1043e6696e37b5c8134aa5d574fab9a3fd837c1d534e5042"
+        }
+      ]
+    },
+    {
+      "id": "claim_7fc4ebd43f70464d96df7c350f9a0719",
+      "statement": "POST /api/locale validates against SUPPORTED_LOCALES, stores the choice in the session and starts a background title backfill when no titles exist for the language.",
+      "evidence": [
+        {
+          "resource": "repo://web/routers/profile.py",
+          "version": "repo-file-v1:sha256:1468b11ab6daf3d6a75ac36fe33eb301de0f75fec9ca766ae7fecd901a4720d0"
+        }
+      ]
+    },
+    {
+      "id": "claim_bfccfaea8d704dd9a4b74f6e361a017c",
+      "statement": "current_locale returns the session locale first and the configured default otherwise.",
+      "evidence": [
+        {
+          "resource": "repo://web/helpers.py",
+          "version": "repo-file-v1:sha256:41ca2157115d5dc6596450978208ac59950f13bdf20ca53aa4931b6b897bc821"
+        }
+      ]
+    },
+    {
+      "id": "claim_c5fba5f86aa04b41b75f8272fa2e5397",
+      "statement": "web/shared.py registers t, cat_label, day_label, fmt_time, html_lang and app_name as Jinja globals.",
+      "evidence": [
+        {
+          "resource": "repo://web/shared.py",
+          "version": "repo-file-v1:sha256:7bdcbc4f4e2ceac3b17d913f2feca8178f846d1407a306af4591075053420637"
+        }
+      ]
+    },
+    {
+      "id": "claim_70ec4586f956471d8741f959299798af",
+      "statement": "i18n/locales/README.md documents the steps to add a language.",
+      "evidence": [
+        {
+          "resource": "repo://i18n/locales/README.md",
+          "version": "repo-file-v1:sha256:aab93d29884764ca143c93b80811d84a7625380e40c2b1859e7583455945303b"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.7.0",
+    "at": "2026-10-05T04:15:14.909Z"
+  }
+}

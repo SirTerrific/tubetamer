@@ -11,3 +11,6 @@ venv/
 CLAUDE.md
 TODO.md
 .claude/
+
+# OpenWiki transient state
+openwiki/.run.json

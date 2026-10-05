@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:ee3a51c221d5653b9849f2b330c081f632f76ad8f7256c44c5e7f215523de839",
+  "claims": [
+    {
+      "id": "claim_6f86e5b5dc05479bb05cad559b346fec",
+      "statement": "TubeTamer is a fork of BrainRotGuard; parents approve requests via Telegram and the server downloads approved videos with yt-dlp for local playback.",
+      "evidence": [
+        {
+          "resource": "repo://README.md",
+          "version": "repo-file-v1:sha256:fe9caf3fc83350251a86029f646c402132b6a3aa567087c83057d9bae11a613e"
+        }
+      ]
+    },
+    {
+      "id": "claim_7a26d43fc3c7435e94bf975d1a8d903d",
+      "statement": "The current version is 1.3.3.",
+      "evidence": [
+        {
+          "resource": "repo://version.py",
+          "version": "repo-file-v1:sha256:562ea89b72889a52ac4bf5a0e428d48187dfa22db3c7b4fe4913e79c62f41bb3"
+        }
+      ]
+    },
+    {
+      "id": "claim_210e4b60d0ac4a739d34dc28ae374aa8",
+      "statement": "Quick start uses git clone, .env and config.yaml copies and docker compose up -d; the pre-built image is ghcr.io/sirterrific/tubetamer:latest for amd64 and arm64.",
+      "evidence": [
+        {
+          "resource": "repo://README.md",
+          "version": "repo-file-v1:sha256:fe9caf3fc83350251a86029f646c402132b6a3aa567087c83057d9bae11a613e"
+        }
+      ]
+    },
+    {
+      "id": "claim_48408e58e1c34331b06389bd5e6cfffd",
+      "statement": "Design decisions: yt-dlp instead of YouTube API, Telegram instead of a custom app, SQLite, local playback, thumbnail proxy and server-side rendering.",
+      "evidence": [
+        {
+          "resource": "repo://docs/design-decisions.md",
+          "version": "repo-file-v1:sha256:e85ed77085be8d96f014a03fd35f9dcdc4b6641cb420880a548412598addb4a0"
+        }
+      ]
+    },
+    {
+      "id": "claim_c413bfcc9e8341738341c6422081b167",
+      "statement": "main.py wires the database, bot, downloader and FastAPI server in one process.",
+      "evidence": [
+        {
+          "resource": "repo://main.py",
+          "version": "repo-file-v1:sha256:fb2e263a9c7c24c5b846e739be46b2c616dc696d8fd5484efe5e7c83027d1d0d"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.7.0",
+    "at": "2026-10-05T04:15:14.909Z"
+  }
+}

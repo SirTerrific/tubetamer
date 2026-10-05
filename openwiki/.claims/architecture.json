@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:a923f41ede7d3d16caf14e746f8d0c1d800f7f22ee552563e9348167af429c51",
+  "claims": [
+    {
+      "id": "claim_831689f4aeb8405da05176a57f7225c5",
+      "statement": "TubeTamer.setup() opens VideoStore.",
+      "evidence": [
+        {
+          "resource": "repo://main.py",
+          "version": "repo-file-v1:sha256:fb2e263a9c7c24c5b846e739be46b2c616dc696d8fd5484efe5e7c83027d1d0d"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.7.0",
+    "at": "2026-10-05T04:15:14.909Z"
+  }
+}

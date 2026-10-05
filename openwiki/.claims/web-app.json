@@ -1,0 +1,110 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:3150ae73691a15f86bdfb6a1066791ad5025e26322064ad248b114328c2875da",
+  "claims": [
+    {
+      "id": "claim_03bf8c79bde0457e812a4b58c41eaf92",
+      "statement": "web/app.py creates the FastAPI app, mounts /static, includes nine routers and starts channel_cache_loop in its lifespan.",
+      "evidence": [
+        {
+          "resource": "repo://web/app.py",
+          "version": "repo-file-v1:sha256:f60ff1db0e0357a13fdc38e075c6af541025d9f0bab09e11b33a34ba1d70680b"
+        }
+      ]
+    },
+    {
+      "id": "claim_3f8e4799f4fb47e7977b833f440babee",
+      "statement": "SecurityHeadersMiddleware sets nosniff, X-Frame-Options DENY, a strict-origin-when-cross-origin referrer policy and a Content-Security-Policy restricting images, frames and media to YouTube hosts.",
+      "evidence": [
+        {
+          "resource": "repo://web/middleware.py",
+          "version": "repo-file-v1:sha256:f146ed22bedbb67867fa8d5941421a9f582a79bba6401d122d3c53c87e1de928"
+        }
+      ]
+    },
+    {
+      "id": "claim_1dd18531ea114709a145eba8461cdd4e",
+      "statement": "PinAuthMiddleware auto-logs in a single profile without PIN, returns 401 JSON for /api/ and redirects others to /login.",
+      "evidence": [
+        {
+          "resource": "repo://web/middleware.py",
+          "version": "repo-file-v1:sha256:f146ed22bedbb67867fa8d5941421a9f582a79bba6401d122d3c53c87e1de928"
+        }
+      ]
+    },
+    {
+      "id": "claim_3409e24817e94327ad1e9f806c288a3b",
+      "statement": "SessionMiddleware is configured with 86400 max_age and same_site strict.",
+      "evidence": [
+        {
+          "resource": "repo://main.py",
+          "version": "repo-file-v1:sha256:fb2e263a9c7c24c5b846e739be46b2c616dc696d8fd5484efe5e7c83027d1d0d"
+        }
+      ]
+    },
+    {
+      "id": "claim_ba343c0c592e4f9693f65c1a0b7d68fe",
+      "statement": "watch-heartbeat requires session watching to match, approved video, schedule window, clamps seconds 0-60 and triggers the time limit callback when a budget is exceeded.",
+      "evidence": [
+        {
+          "resource": "repo://web/routers/watch.py",
+          "version": "repo-file-v1:sha256:30b5526c1cd002bc815dcc2527304c9f28a5b7ecae4057626b3a655a8695f1f1"
+        }
+      ]
+    },
+    {
+      "id": "claim_3f2f35dc74b54594b7441a4f6c240590",
+      "statement": "The watch page renders timesup.html, outsidehours.html or downloading.html depending on budget, schedule and download state.",
+      "evidence": [
+        {
+          "resource": "repo://web/routers/watch.py",
+          "version": "repo-file-v1:sha256:30b5526c1cd002bc815dcc2527304c9f28a5b7ecae4057626b3a655a8695f1f1"
+        }
+      ]
+    },
+    {
+      "id": "claim_ecf2b2c587ff469197ce670b16e51d43",
+      "statement": "/api/stream/{id} serves approved local files with Range support, 60/minute limit and 404/416 responses.",
+      "evidence": [
+        {
+          "resource": "repo://web/routers/stream.py",
+          "version": "repo-file-v1:sha256:9daff289df5c4a7ebbb863de5cc65312ae6f90f164a377ff06ea4ea9006ef66d"
+        }
+      ]
+    },
+    {
+      "id": "claim_a02eeb6b70644070bd2be35f9a4b999f",
+      "statement": "The thumbnail proxy caches ytimg thumbnails on disk, with a negative .404 cache and a one-week immutable cache header.",
+      "evidence": [
+        {
+          "resource": "repo://web/routers/ytproxy.py",
+          "version": "repo-file-v1:sha256:17fa74919a37d7c95caa2345dfa16394cec267f69fc5edf9dd3fa63cd4f473dc"
+        }
+      ]
+    },
+    {
+      "id": "claim_31bbd2fdfb6d41b7b81016dfd709452b",
+      "statement": "channel_cache_loop starts after 5 seconds and refreshes every channel_cache_ttl seconds.",
+      "evidence": [
+        {
+          "resource": "repo://web/cache.py",
+          "version": "repo-file-v1:sha256:e6bd4cdde9399008aa825909a3690b9398e5510c0e262d7ddefa139d65ba698a"
+        }
+      ]
+    },
+    {
+      "id": "claim_beea9164a3cb40e999a968aa9daaceda",
+      "statement": "The service worker pre-caches static assets, uses stale-while-revalidate for /static and the manifest, and uses versioned cache names (v5).",
+      "evidence": [
+        {
+          "resource": "repo://web/static/service-worker.js",
+          "version": "repo-file-v1:sha256:7a06ed952fcfb1d3aabd40c80e9e6190538d16f3615881ef1929f69da9530d10"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.7.0",
+    "at": "2026-10-05T04:15:14.909Z"
+  }
+}
