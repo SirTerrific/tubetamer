@@ -47,9 +47,9 @@ Objectif : une API JSON stable sous `/api/v1/`, sans toucher aux routes HTML exi
   - `POST /api/v1/auth/logout` : révoque le jeton.
 - [x] **A2. `GET /api/v1/profiles`** : liste des profils (id, nom, avatar), sans PIN. Utilisable avant authentification.
 - [x] **A3. `GET /api/v1/home`** : rangées de l'accueil (récents, par catégorie, chaînes, Shorts si activés), avec URLs de miniatures, durée, statut de téléchargement.
-- [ ] **A4. `GET /api/v1/search?q=`** : JSON. Réutiliser la logique de `web/routers/search.py` (filtres de mots, chaînes bloquées, Shorts, historique de recherche) en la factorisant, pas en la dupliquant.
-- [ ] **A5. `POST /api/v1/requests`** : demander une vidéo (déclenche la notification Telegram). Réutiliser la logique de `POST /request`.
-- [ ] **A6. `GET /api/v1/requests`** : demandes du profil avec leur statut (pending, approved, denied).
+- [x] **A4. `GET /api/v1/search?q=`** : JSON. Réutiliser la logique de `web/routers/search.py` (filtres de mots, chaînes bloquées, Shorts, historique de recherche) en la factorisant, pas en la dupliquant.
+- [x] **A5. `POST /api/v1/requests`** : demander une vidéo (déclenche la notification Telegram). Réutiliser la logique de `POST /request`.
+- [x] **A6. `GET /api/v1/requests`** : demandes du profil avec leur statut (pending, approved, denied).
 - [x] **A7. Chaînes :** liste des chaînes autorisées et vidéos d'une chaîne (équivalent des pages chaîne du catalogue web).
 - [ ] **A8. `GET /api/v1/videos/{id}`** : métadonnées, statut de téléchargement, URL de flux, sous-titres disponibles, position de reprise.
 - [x] **A9. Statut du temps restant :** `GET /api/v1/time` → temps restant par catégorie, fenêtre horaire, raison d'un blocage. L'app l'affiche et se bloque proprement.
@@ -68,8 +68,8 @@ Pile : Kotlin, Jetpack Compose for TV (`androidx.tv`), Media3/ExoPlayer, Retrofi
 - [x] **B2. Configuration serveur.** Écran de premier lancement : saisie de l'adresse du serveur (ex. `http://192.168.x.x:8080`), test de connexion. Enregistrée en local. Autoriser le HTTP en clair uniquement vers le réseau local (`network_security_config`).
 - [x] **B3. Choix du profil + PIN.** Grille de profils avec avatars, pavé PIN adapté à la télécommande (D-pad). Jeton stocké dans DataStore, chiffré par une clé AES-GCM du Keystore Android (EncryptedSharedPreferences est déprécié). Déconnexion simple, qui révoque le jeton côté serveur.
 - [x] **B4. Accueil.** Rangées horizontales (catalogue par catégorie, chaînes, Shorts si activés, reprise de lecture), focus et navigation D-pad soignés, miniatures via Coil avec cache mémoire/disque **borné**.
-- [ ] **B5. Recherche.** Champ avec clavier à l'écran et saisie vocale. Résultats avec bouton **Demander**. Écran de confirmation, puis état « en attente d'approbation » avec polling de `/api/v1/requests`.
-- [ ] **B6. Mes demandes.** Liste avec statuts, mise à jour automatique.
+- [x] **B5. Recherche.** Champ avec clavier à l'écran et saisie vocale. Résultats avec bouton **Demander**. Écran de confirmation, puis état « en attente d'approbation » avec polling de `/api/v1/requests`.
+- [x] **B6. Mes demandes.** Liste avec statuts, mise à jour automatique.
 - [x] **B7. Lecteur.**
   - ExoPlayer avec `ProgressiveMediaSource` sur l'URL de flux et l'en-tête `Authorization`.
   - `DefaultLoadControl` : buffer borné (ex. 15 à 30 s), pas de cache vidéo sur disque.

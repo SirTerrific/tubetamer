@@ -59,7 +59,33 @@ data class VideoCard(
     @SerialName("is_short") val isShort: Boolean = false,
     @SerialName("progress_seconds") val progressSeconds: Int = 0,
     val thumbnail: String = "",
+    /** Search results and requests only: the profile's [VideoStatus], "" when never requested. */
+    val status: String = "",
+    @SerialName("requested_at") val requestedAt: String = "",
 )
+
+/** Request status of a video for the signed-in profile. */
+object VideoStatus {
+    const val APPROVED = "approved"
+    const val PENDING = "pending"
+    const val DENIED = "denied"
+}
+
+@Serializable
+data class SearchResponse(
+    val videos: List<VideoCard> = emptyList(),
+    /** "fetch_failed" when a pasted link could not be read. */
+    val error: String = "",
+)
+
+@Serializable
+data class RequestBody(@SerialName("video_id") val videoId: String)
+
+@Serializable
+data class RequestResponse(val status: String = "", val video: VideoCard? = null)
+
+@Serializable
+data class RequestsResponse(val requests: List<VideoCard> = emptyList())
 
 /** Row ids sent by the server, in display order. Unknown ids are shown with a generic title. */
 object RowId {

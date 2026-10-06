@@ -50,4 +50,18 @@
     <string name="block_no_local">La lecture locale est désactivée sur le serveur. Demande à un parent de l\'activer.</string>
     <string name="block_not_found">Vidéo introuvable</string>
     <string name="block_download_failed">La vidéo n\'a pas pu être téléchargée</string>
+    <string name="search">Rechercher</string>
+    <string name="my_requests">Mes demandes</string>
+    <string name="search_hint">Rechercher sur YouTube ou coller un lien</string>
+    <string name="search_voice">Voix</string>
+    <string name="search_empty">Aucun résultat.</string>
+    <string name="search_fetch_failed">Impossible de lire cette vidéo.</string>
+    <string name="status_approved">Approuvée</string>
+    <string name="status_pending">En attente d\'approbation</string>
+    <string name="status_denied">Refusée</string>
+    <string name="request_title">Demander cette vidéo ?</string>
+    <string name="request_body">Un parent reçoit un message pour l\'approuver.</string>
+    <string name="request_send">Demander</string>
+    <string name="cancel">Annuler</string>
+    <string name="requests_empty">Aucune demande pour l\'instant.</string>
 </resources>

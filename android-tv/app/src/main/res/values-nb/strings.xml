@@ -25,4 +25,18 @@
     <string name="block_no_local">Lokal avspilling er slått av på serveren. Be en forelder slå den på.</string>
     <string name="block_not_found">Fant ikke videoen</string>
     <string name="block_download_failed">Videoen kunne ikke lastes ned</string>
+    <string name="search">Søk</string>
+    <string name="my_requests">Mine forespørsler</string>
+    <string name="search_hint">Søk på YouTube eller lim inn en lenke</string>
+    <string name="search_voice">Tale</string>
+    <string name="search_empty">Ingen treff.</string>
+    <string name="search_fetch_failed">Kunne ikke lese denne videoen.</string>
+    <string name="status_approved">Godkjent</string>
+    <string name="status_pending">Venter på godkjenning</string>
+    <string name="status_denied">Avslått</string>
+    <string name="request_title">Be om denne videoen?</string>
+    <string name="request_body">En forelder får en melding for å godkjenne den.</string>
+    <string name="request_send">Spør</string>
+    <string name="cancel">Avbryt</string>
+    <string name="requests_empty">Ingen forespørsler ennå.</string>
 </resources>

@@ -76,6 +76,10 @@ fun HomeScreen(profile: Profile, onSwitchProfile: () -> Unit, onExpired: () -> U
     val nav = remember(profile.id) { HomeNav() }
     var playing by remember(profile.id) { mutableStateOf<VideoCard?>(null) }
     val onPlay: (VideoCard) -> Unit = { playing = it }
+    var page by remember(profile.id) { mutableStateOf(HomePage.HOME) }
+    val search: SearchViewModel = viewModel(key = "search-${profile.id}", factory = SearchViewModel.factory(container))
+    val searchExpired by search.expired.collectAsStateWithLifecycle()
+    LaunchedEffect(searchExpired) { if (searchExpired) onExpired() }
 
     val now = playing
     if (now != null) {
@@ -90,6 +94,16 @@ fun HomeScreen(profile: Profile, onSwitchProfile: () -> Unit, onExpired: () -> U
         return
     }
 
+    if (page != HomePage.HOME) {
+        // Back to the home rows, refreshed: a request may have been approved meanwhile.
+        BackHandler { page = HomePage.HOME; vm.refresh() }
+        Box(Modifier.fillMaxSize().padding(ScreenPadding)) {
+            if (page == HomePage.SEARCH) SearchScreen(search, baseUrl, onPlay)
+            else RequestsScreen(search, baseUrl, onPlay)
+        }
+        return
+    }
+
     val open = channel
     if (open != null) {
         BackHandler { vm.closeChannel() }
@@ -100,7 +114,13 @@ fun HomeScreen(profile: Profile, onSwitchProfile: () -> Unit, onExpired: () -> U
     }
 
     Column(Modifier.fillMaxSize().padding(ScreenPadding)) {
-        val header: @Composable () -> Unit = { HomeHeader(profile, onSwitchProfile) }
+        val header: @Composable () -> Unit = {
+            HomeHeader(
+                profile, onSwitchProfile,
+                onSearch = { page = HomePage.SEARCH },
+                onRequests = { page = HomePage.REQUESTS },
+            )
+        }
         when (val s = home) {
             HomeState.Loading -> {
                 header()
@@ -129,7 +149,7 @@ fun HomeScreen(profile: Profile, onSwitchProfile: () -> Unit, onExpired: () -> U
 }
 
 @Composable
-private fun HomeHeader(profile: Profile, onSwitchProfile: () -> Unit) {
+private fun HomeHeader(profile: Profile, onSwitchProfile: () -> Unit, onSearch: () -> Unit, onRequests: () -> Unit) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Avatar(profile, 44)
         Spacer(Modifier.width(16.dp))
@@ -139,6 +159,10 @@ private fun HomeHeader(profile: Profile, onSwitchProfile: () -> Unit) {
             color = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier.weight(1f),
         )
+        Button(onClick = onSearch) { Text(stringResource(R.string.search)) }
+        Spacer(Modifier.width(12.dp))
+        OutlinedButton(onClick = onRequests) { Text(stringResource(R.string.my_requests)) }
+        Spacer(Modifier.width(12.dp))
         OutlinedButton(onClick = onSwitchProfile) { Text(stringResource(R.string.switch_profile)) }
     }
 }
@@ -283,7 +307,13 @@ private fun ChannelScreen(
 }
 
 @Composable
-private fun VideoCardView(v: VideoCard, baseUrl: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+internal fun VideoCardView(
+    v: VideoCard,
+    baseUrl: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    badge: String? = null,
+) {
     Card(onClick = onClick, modifier = modifier, scale = CardDefaults.scale(focusedScale = 1.06f)) {
         Box(Modifier.fillMaxWidth().aspectRatio(16f / 9f).background(Color(0xFF2A2A2A))) {
             AsyncImage(
@@ -301,6 +331,20 @@ private fun VideoCardView(v: VideoCard, baseUrl: String, onClick: () -> Unit, mo
                         .align(Alignment.BottomEnd)
                         .padding(6.dp)
                         .background(Color(0xCC000000), RoundedCornerShape(4.dp))
+                        .padding(horizontal = 6.dp, vertical = 2.dp),
+                )
+            }
+            if (badge != null) {
+                Text(
+                    badge,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Color.White,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(6.dp)
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.9f), RoundedCornerShape(4.dp))
                         .padding(horizontal = 6.dp, vertical = 2.dp),
                 )
             }
@@ -341,7 +385,7 @@ private fun ChannelChip(ch: ChannelInfo, onClick: () -> Unit, modifier: Modifier
 }
 
 @Composable
-private fun SectionTitle(text: String) {
+internal fun SectionTitle(text: String) {
     Text(
         text,
         style = MaterialTheme.typography.titleLarge,
@@ -351,7 +395,7 @@ private fun SectionTitle(text: String) {
 }
 
 @Composable
-private fun Centered(content: @Composable () -> Unit) {
+internal fun Centered(content: @Composable () -> Unit) {
     Column(
         Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -386,3 +430,6 @@ internal fun formatDuration(seconds: Int): String {
 
 internal fun progressFraction(progress: Int, duration: Int): Float =
     if (duration <= 0 || progress <= 0) 0f else (progress.toFloat() / duration).coerceIn(0f, 1f)
+
+/** What the home screen shows besides its rows (the player and channel screens sit on top of any). */
+private enum class HomePage { HOME, SEARCH, REQUESTS }

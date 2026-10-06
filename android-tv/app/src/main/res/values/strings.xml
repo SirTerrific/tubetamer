@@ -52,4 +52,18 @@
     <string name="block_no_local">Local playback is off on the server. Ask a parent to turn it on.</string>
     <string name="block_not_found">Video not found</string>
     <string name="block_download_failed">The video could not be downloaded</string>
+    <string name="search">Search</string>
+    <string name="my_requests">My requests</string>
+    <string name="search_hint">Search YouTube or paste a link</string>
+    <string name="search_voice">Voice</string>
+    <string name="search_empty">No results.</string>
+    <string name="search_fetch_failed">Couldn\'t read this video.</string>
+    <string name="status_approved">Approved</string>
+    <string name="status_pending">Waiting for approval</string>
+    <string name="status_denied">Denied</string>
+    <string name="request_title">Ask for this video?</string>
+    <string name="request_body">A parent gets a message to approve it.</string>
+    <string name="request_send">Ask</string>
+    <string name="cancel">Cancel</string>
+    <string name="requests_empty">No requests yet.</string>
 </resources>

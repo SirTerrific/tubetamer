@@ -163,4 +163,39 @@ class TubeTamerApiTest {
         val r = api.home(base, "old") as ApiResult.HttpError
         assertEquals(401, r.code)
     }
+    @Test fun searchEncodesQueryAndParsesStatus() = runBlocking {
+        reply(200, """{"videos":[{"video_id":"abc12345678","title":"Cats","status":"pending"}],"error":""}""")
+        val r = (api.search(base, "tok", "chats & chiens") as ApiResult.Ok).value
+        assertEquals("pending", r.videos.single().status)
+        assertEquals("", r.error)
+        val req = server.takeRequest()
+        assertEquals("/api/v1/search", req.url.encodedPath)
+        assertEquals("chats & chiens", req.url.queryParameter("q"))
+        assertEquals("Bearer tok", req.headers["Authorization"])
+    }
+
+    @Test fun requestVideoSendsIdAndParses() = runBlocking {
+        reply(200, """{"status":"approved","video":{"video_id":"abc12345678","title":"Cats"}}""")
+        val r = (api.requestVideo(base, "tok", "abc12345678") as ApiResult.Ok).value
+        assertEquals("approved", r.status)
+        assertEquals("abc12345678", r.video?.videoId)
+        val req = server.takeRequest()
+        assertEquals("POST", req.method)
+        assertEquals("/api/v1/requests", req.url.encodedPath)
+        assertTrue(req.body!!.utf8().contains("\"video_id\":\"abc12345678\""))
+    }
+
+    @Test fun requestFetchFailedIsHttpError() = runBlocking {
+        reply(502, """{"error":"fetch_failed"}""")
+        val r = api.requestVideo(base, "tok", "abc12345678") as ApiResult.HttpError
+        assertEquals(502, r.code)
+        assertEquals("fetch_failed", r.error)
+    }
+
+    @Test fun requestsParse() = runBlocking {
+        reply(200, """{"requests":[{"video_id":"abc12345678","status":"denied","requested_at":"2026-10-06 12:00:00"}]}""")
+        val r = (api.requests(base, "tok") as ApiResult.Ok).value.requests.single()
+        assertEquals("denied", r.status)
+        assertEquals("2026-10-06 12:00:00", r.requestedAt)
+    }
 }

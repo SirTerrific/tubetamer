@@ -20,6 +20,7 @@ from web.helpers import (
     get_schedule_info, get_time_limit_info, localize_titles, resolve_video_category, shorts_enabled,
 )
 from web.middleware import bearer_token
+from web.routers.search import run_search, submit_request
 from web.routers.watch import get_or_auto_approve, process_heartbeat
 from web.shared import limiter
 
@@ -204,6 +205,83 @@ async def api_v1_catalog(
     if row == "shorts" and not shorts_enabled(request, get_child_store(request)):
         return {"videos": [], "total": 0, "has_more": False}
     return _page(request, _row_videos(request, row, channel), offset, limit)
+
+
+# --- Search and requests ------------------------------------------------------
+
+_REQUESTS_MAX = 50
+
+
+def _status_card(v: dict, status: str) -> dict:
+    """Video card plus the profile's request status ("" = never requested)."""
+    return {**_card(v), "status": status}
+
+
+@router.get("/search")
+@limiter.limit("10/minute")
+async def api_search(request: Request, q: str = Query("", max_length=200)):
+    """YouTube search with the profile's filters (same as the web /search).
+
+    Each result carries `status`: approved, pending, denied, or "" when the
+    profile never requested it. `error` is "fetch_failed" when a pasted link
+    could not be read.
+    """
+    q = q.strip()
+    if not q:
+        return {"videos": [], "error": ""}
+    results, fetch_failed = await run_search(request, q)
+    cs = get_child_store(request)
+    videos = []
+    for r in results:
+        if not VIDEO_ID_RE.match(r.get("video_id") or ""):
+            continue
+        known = cs.get_video(r["video_id"])
+        videos.append(_status_card(r, known["status"] if known else ""))
+    return {"videos": videos, "error": "fetch_failed" if fetch_failed else ""}
+
+
+class RequestBody(BaseModel):
+    video_id: str = Field(min_length=1, max_length=100)
+
+
+@router.post("/requests")
+@limiter.limit("10/minute")
+async def api_request(request: Request, body: RequestBody):
+    """Ask for a video. Same rules as the web form: allowlisted channels
+    auto-approve, blocked channels auto-deny, anything else notifies the parent.
+
+    200 {"status": approved|pending|denied, "video": card}
+    400 invalid, 502 fetch_failed (YouTube could not be read).
+    """
+    outcome, video_id, _ = await submit_request(request, body.video_id)
+    if outcome == "invalid":
+        return JSONResponse({"error": "invalid"}, status_code=400)
+    if outcome == "fetch_failed":
+        return JSONResponse({"error": "fetch_failed"}, status_code=502)
+    video = get_child_store(request).get_video(video_id)
+    if not video:
+        return JSONResponse({"status": "pending", "video": None})
+    localize_titles(request, [video])
+    return {"status": video["status"], "video": _card(video)}
+
+
+@router.get("/requests")
+@limiter.limit("60/minute")
+async def api_requests(request: Request):
+    """The profile's requests, newest first: pending, denied, and approved
+    videos that were asked for (not those approved through a whole channel)."""
+    cs = get_child_store(request)
+    rows = [
+        *cs.get_pending(),
+        *cs.get_by_status("denied"),
+        *cs.get_requested_approved(limit=_REQUESTS_MAX),
+    ]
+    rows.sort(key=lambda v: v.get("requested_at") or "", reverse=True)
+    rows = localize_titles(request, [dict(v) for v in rows[:_REQUESTS_MAX]])
+    return {"requests": [
+        {**_status_card(v, v["status"]), "requested_at": v.get("requested_at") or ""}
+        for v in rows
+    ]}
 
 
 # --- Playback -----------------------------------------------------------------

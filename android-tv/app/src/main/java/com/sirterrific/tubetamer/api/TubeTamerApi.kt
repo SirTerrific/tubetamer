@@ -93,6 +93,29 @@ class TubeTamerApi(
         ) { json.decodeFromString(HeartbeatResponse.serializer(), it) }
     }
 
+    /** YouTube search with the profile's filters. Each result carries its request status. */
+    suspend fun search(baseUrl: String, token: String, query: String): ApiResult<SearchResponse> {
+        val url = baseUrl.toHttpUrl().newBuilder().addPathSegments("api/v1/search")
+            .addQueryParameter("q", query).build()
+        val req = Request.Builder().url(url).header("Accept", "application/json")
+            .header("Authorization", "Bearer $token").get().build()
+        return execute(req) { json.decodeFromString(SearchResponse.serializer(), it) }
+    }
+
+    /** Ask for a video. 400 invalid and 502 fetch_failed come back as [ApiResult.HttpError]. */
+    suspend fun requestVideo(baseUrl: String, token: String, videoId: String): ApiResult<RequestResponse> {
+        val text = json.encodeToString(RequestBody.serializer(), RequestBody(videoId))
+        return execute(request(baseUrl, "api/v1/requests", token).post(text.toRequestBody(JSON_TYPE)).build()) {
+            json.decodeFromString(RequestResponse.serializer(), it)
+        }
+    }
+
+    /** The profile's requests, newest first. */
+    suspend fun requests(baseUrl: String, token: String): ApiResult<RequestsResponse> =
+        execute(request(baseUrl, "api/v1/requests", token).get().build()) {
+            json.decodeFromString(RequestsResponse.serializer(), it)
+        }
+
     private suspend fun <T> execute(
         request: Request,
         bodyOn: Set<Int> = emptySet(),
