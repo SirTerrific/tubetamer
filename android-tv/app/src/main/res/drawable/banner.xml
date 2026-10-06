@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Launcher banner, 320x180 dp. Placeholder: dark background and a red play badge. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="320dp"
+    android:height="180dp"
+    android:viewportWidth="320"
+    android:viewportHeight="180">
+    <path android:fillColor="#121212" android:pathData="M0,0h320v180h-320z" />
+    <path android:fillColor="#E53935" android:pathData="M110,60h100a16,16 0 0 1 16,16v28a16,16 0 0 1 -16,16h-100a16,16 0 0 1 -16,-16v-28a16,16 0 0 1 16,-16z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M148,76l32,14l-32,14z" />
+</vector>

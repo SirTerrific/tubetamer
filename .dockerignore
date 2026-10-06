@@ -15,3 +15,5 @@ __pycache__
 deploy.sh
 docker-compose*.yml
 LICENSE
+android-tv/
+tasks/

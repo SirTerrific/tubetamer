@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">TubeTamer</string>
+    <string name="home_title">TubeTamer</string>
+    <string name="home_subtitle">Approved videos, streamed from your server.</string>
+</resources>

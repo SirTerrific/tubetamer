@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="tt_background">#121212</color>
+    <color name="tt_accent">#E53935</color>
+    <style name="Theme.TubeTamer" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/tt_background</item>
+        <item name="android:statusBarColor">@color/tt_background</item>
+        <item name="android:navigationBarColor">@color/tt_background</item>
+    </style>
+</resources>
