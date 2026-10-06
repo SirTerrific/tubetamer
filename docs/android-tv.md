@@ -155,6 +155,29 @@ cd android-tv
 The server side of the TV API is covered by the Python suite (`pytest`):
 `tests/test_api_v1*.py`, `tests/test_bot_devices.py`, `tests/test_tv_apk.py`.
 
+## Screenshots
+
+Taken on the Android TV emulator (1080p) with demo data; the interface follows the server language (French here).
+
+| | |
+|---|---|
+| ![Launcher banner](screenshots/android-tv/00-launcher.jpg) | ![Server address](screenshots/android-tv/01-server-setup.jpg) |
+| Launcher banner | Server address, above the TV keyboard |
+| ![Who's watching](screenshots/android-tv/02-profiles.jpg) | ![PIN pad](screenshots/android-tv/03-pin.jpg) |
+| Profile picker | PIN pad for the remote |
+| ![Home](screenshots/android-tv/04-home.jpg) | ![Rows and channels](screenshots/android-tv/05-home-channels.jpg) |
+| Home: resume row, categories | Entertainment row and channels |
+| ![Channel](screenshots/android-tv/06-channel.jpg) | ![Search](screenshots/android-tv/08b-search-statuses.jpg) |
+| Channel page | Search results with request status |
+| ![Ask for a video](screenshots/android-tv/09-request-confirm.jpg) | ![My requests](screenshots/android-tv/10-my-requests.jpg) |
+| Asking for a video | My requests |
+| ![Player](screenshots/android-tv/11-player.jpg) | ![Preparing](screenshots/android-tv/12-preparing.jpg) |
+| Player with the remaining-time badge | Server still downloading |
+| ![Time is up](screenshots/android-tv/13-time-up.jpg) | ![720p](screenshots/android-tv/14-compact-720p.jpg) |
+| Daily limit reached | Small screen: icon-only header, fewer cards |
+
+The layout adapts to the screen: card size and grid columns follow the width (from about 2 cards per row on small screens to 6 on wide ones, with the next card peeking in so rows look scrollable), the header keeps only icons below 840 dp, and the PIN pad shrinks on short screens.
+
 ## Manual test checklist
 
 Run on the TV (or the Android TV emulator) before a release:

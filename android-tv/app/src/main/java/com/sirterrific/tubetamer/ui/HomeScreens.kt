@@ -1,7 +1,5 @@
 package com.sirterrific.tubetamer.ui
 
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -16,12 +14,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.items
@@ -30,13 +29,16 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -44,11 +46,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.tv.material3.Button
 import androidx.tv.material3.Card
 import androidx.tv.material3.CardDefaults
+import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
-import androidx.tv.material3.OutlinedButton
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
 import com.sirterrific.tubetamer.R
@@ -61,7 +62,6 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 /** Start loading the next page when focus is this close to the end of a row. */
 private const val PREFETCH_DISTANCE = 4
-private val CARD_WIDTH = 200.dp
 
 @Composable
 fun HomeScreen(profile: Profile, onSwitchProfile: () -> Unit, onExpired: () -> Unit) {
@@ -72,6 +72,7 @@ fun HomeScreen(profile: Profile, onSwitchProfile: () -> Unit, onExpired: () -> U
     val expired by vm.expired.collectAsStateWithLifecycle()
     LaunchedEffect(expired) { if (expired) onExpired() }
     val baseUrl = container.credentials.get()?.baseUrl.orEmpty()
+    val l = LocalTvLayout.current
     // Survives the channel screen and the player so Back lands where the child was.
     val nav = remember(profile.id) { HomeNav() }
     var playing by remember(profile.id) { mutableStateOf<VideoCard?>(null) }
@@ -97,7 +98,7 @@ fun HomeScreen(profile: Profile, onSwitchProfile: () -> Unit, onExpired: () -> U
     if (page != HomePage.HOME) {
         // Back to the home rows, refreshed: a request may have been approved meanwhile.
         BackHandler { page = HomePage.HOME; vm.refresh() }
-        Box(Modifier.fillMaxSize().padding(ScreenPadding)) {
+        Box(Modifier.fillMaxSize().padding(l.screenPadding)) {
             if (page == HomePage.SEARCH) SearchScreen(search, baseUrl, onPlay)
             else RequestsScreen(search, baseUrl, onPlay)
         }
@@ -107,13 +108,13 @@ fun HomeScreen(profile: Profile, onSwitchProfile: () -> Unit, onExpired: () -> U
     val open = channel
     if (open != null) {
         BackHandler { vm.closeChannel() }
-        Box(Modifier.fillMaxSize().padding(ScreenPadding)) {
+        Box(Modifier.fillMaxSize().padding(l.screenPadding)) {
             ChannelScreen(open, nav, baseUrl, onPlay, onNearEnd = vm::loadMoreChannel)
         }
         return
     }
 
-    Column(Modifier.fillMaxSize().padding(ScreenPadding)) {
+    Column(Modifier.fillMaxSize().padding(horizontal = l.padH).padding(top = l.padV)) {
         val header: @Composable () -> Unit = {
             HomeHeader(
                 profile, onSwitchProfile,
@@ -124,20 +125,25 @@ fun HomeScreen(profile: Profile, onSwitchProfile: () -> Unit, onExpired: () -> U
         when (val s = home) {
             HomeState.Loading -> {
                 header()
-                Centered { Text(stringResource(R.string.loading)) }
+                SkeletonRows()
             }
             is HomeState.Failed -> {
                 header()
                 Centered {
+                    StateMessage(TtIcons.Wifi, stringResource(R.string.offline_title), tint = TtColors.Error)
                     ErrorLine(s.error)
-                    Spacer(Modifier.height(16.dp))
-                    Button(onClick = vm::refresh) { Text(stringResource(R.string.retry)) }
+                    Spacer(Modifier.height(20.dp))
+                    TtButton(stringResource(R.string.retry), vm::refresh, icon = TtIcons.Retry, primary = true)
                 }
             }
             is HomeState.Ready ->
                 if (s.rows.isEmpty() && s.channels.isEmpty()) {
                     header()
-                    Centered { Text(stringResource(R.string.home_empty), color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                    Centered {
+                        StateMessage(TtIcons.Channel, stringResource(R.string.home_empty))
+                        Spacer(Modifier.height(20.dp))
+                        TtButton(stringResource(R.string.search), { page = HomePage.SEARCH }, icon = TtIcons.Search, primary = true)
+                    }
                 } else {
                     HomeRows(s, nav, baseUrl, header, onPlay, vm::loadMore) { ch ->
                         nav.resetChannel()
@@ -150,20 +156,28 @@ fun HomeScreen(profile: Profile, onSwitchProfile: () -> Unit, onExpired: () -> U
 
 @Composable
 private fun HomeHeader(profile: Profile, onSwitchProfile: () -> Unit, onSearch: () -> Unit, onRequests: () -> Unit) {
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Avatar(profile, 44)
-        Spacer(Modifier.width(16.dp))
+    val compact = LocalTvLayout.current.compact
+    Row(
+        Modifier.fillMaxWidth().padding(bottom = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        AppLogo(size = 40.dp, showName = !compact)
+        Spacer(Modifier.width(24.dp))
+        Avatar(profile, 40)
+        Spacer(Modifier.width(12.dp))
         Text(
             stringResource(R.string.home_hello, profile.displayName),
-            style = MaterialTheme.typography.headlineSmall,
-            color = MaterialTheme.colorScheme.onBackground,
+            style = MaterialTheme.typography.titleLarge,
+            color = TtColors.Text,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),
         )
-        Button(onClick = onSearch) { Text(stringResource(R.string.search)) }
-        Spacer(Modifier.width(12.dp))
-        OutlinedButton(onClick = onRequests) { Text(stringResource(R.string.my_requests)) }
-        Spacer(Modifier.width(12.dp))
-        OutlinedButton(onClick = onSwitchProfile) { Text(stringResource(R.string.switch_profile)) }
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            TtButton(stringResource(R.string.search), onSearch, icon = TtIcons.Search, primary = true, iconOnly = compact)
+            TtButton(stringResource(R.string.my_requests), onRequests, icon = TtIcons.Requests, iconOnly = compact)
+            TtButton(stringResource(R.string.switch_profile), onSwitchProfile, icon = TtIcons.SwitchProfile, iconOnly = compact)
+        }
     }
 }
 
@@ -177,6 +191,7 @@ private fun HomeRows(
     onNearEnd: (String) -> Unit,
     onChannel: (ChannelInfo) -> Unit,
 ) {
+    val l = LocalTvLayout.current
     val target = remember { FocusRequester() }
     val firstKey = s.rows.firstOrNull()?.videos?.firstOrNull()?.let { videoKey(s.rows.first().id, it) }
         ?: s.channels.firstOrNull()?.let { channelKey(it) }
@@ -187,40 +202,42 @@ private fun HomeRows(
             .onFocusChanged { if (it.isFocused) nav.lastFocused = key }
     LazyColumn(
         state = nav.list,
-        verticalArrangement = Arrangement.spacedBy(28.dp),
-        contentPadding = PaddingValues(bottom = 32.dp),
+        verticalArrangement = Arrangement.spacedBy(18.dp),
+        contentPadding = PaddingValues(bottom = l.padV),
     ) {
         // Header scrolls away with the rows so a focused row never sits under it.
         item(key = "header") { header() }
         items(s.rows, key = { it.id }) { row ->
+            val (icon, tint) = rowIcon(row.id)
             Column {
-                SectionTitle(rowTitle(row.id))
+                SectionTitle(rowTitle(row.id), icon = icon, tint = tint)
                 LazyRow(
                     state = nav.row(row.id),
-                    horizontalArrangement = Arrangement.spacedBy(20.dp),
-                    // Room for the focused card's scale-up, which the row would clip.
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(l.gap),
+                    // Room for the focused card's scale-up and glow, which the row would clip.
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 14.dp),
                 ) {
                     itemsIndexed(row.videos, key = { _, v -> v.videoId }) { i, v ->
                         VideoCardView(
                             v, baseUrl,
                             onClick = { onPlay(v) },
-                            modifier = Modifier.tracked(videoKey(row.id, v)).width(CARD_WIDTH).onFocusChanged {
+                            modifier = Modifier.tracked(videoKey(row.id, v)).width(l.cardWidth).onFocusChanged {
                                 if (it.isFocused && i >= row.videos.size - PREFETCH_DISTANCE) onNearEnd(row.id)
                             },
                         )
                     }
+                    if (row.loadingMore) item { SkeletonCard(l.cardWidth) }
                 }
             }
         }
         if (s.channels.isNotEmpty()) {
             item(key = "channels") {
                 Column {
-                    SectionTitle(stringResource(R.string.row_channels))
+                    SectionTitle(stringResource(R.string.row_channels), icon = TtIcons.Channel)
                     LazyRow(
                         state = nav.row("channels"),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(l.gap),
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 14.dp),
                     ) {
                         items(s.channels, key = { it.id }) { ch ->
                             ChannelChip(ch, onClick = { onChannel(ch) }, modifier = Modifier.tracked(channelKey(ch)))
@@ -260,33 +277,33 @@ private fun ChannelScreen(
     onPlay: (VideoCard) -> Unit,
     onNearEnd: () -> Unit,
 ) {
+    val l = LocalTvLayout.current
     Column(Modifier.fillMaxSize()) {
-        Text(
-            state.channel.name,
-            style = MaterialTheme.typography.headlineMedium,
-            color = MaterialTheme.colorScheme.onBackground,
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconDisc(TtIcons.Channel)
+            Spacer(Modifier.width(18.dp))
+            Column {
+                Text(state.channel.name, style = MaterialTheme.typography.headlineMedium, color = TtColors.Text, maxLines = 1)
+                state.row?.let {
+                    Text(stringResource(R.string.channel_videos, it.total), color = TtColors.Muted)
+                }
+            }
+        }
+        Spacer(Modifier.height(12.dp))
         val row = state.row
         when {
             state.error != null -> Centered { ErrorLine(state.error) }
-            row == null -> Centered { Text(stringResource(R.string.loading)) }
-            row.videos.isEmpty() -> Centered {
-                Text(stringResource(R.string.channel_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
+            row == null -> SkeletonRows(rows = 2)
+            row.videos.isEmpty() -> Centered { StateMessage(TtIcons.Channel, stringResource(R.string.channel_empty)) }
             else -> {
-                Text(
-                    stringResource(R.string.channel_videos, row.total),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Spacer(Modifier.height(12.dp))
                 val target = remember { FocusRequester() }
                 val focusId = nav.channelFocus ?: row.videos.first().videoId
                 LaunchedEffect(Unit) { runCatching { target.requestFocus() } }
                 LazyVerticalGrid(
                     state = nav.channelGrid,
-                    columns = GridCells.Adaptive(CARD_WIDTH),
-                    horizontalArrangement = Arrangement.spacedBy(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(20.dp),
+                    columns = GridCells.Fixed(l.gridColumns),
+                    horizontalArrangement = Arrangement.spacedBy(l.gap),
+                    verticalArrangement = Arrangement.spacedBy(l.gap),
                     contentPadding = PaddingValues(8.dp),
                 ) {
                     itemsIndexed(row.videos, key = { _, v -> v.videoId }) { i, v ->
@@ -306,6 +323,10 @@ private fun ChannelScreen(
     }
 }
 
+/**
+ * A video tile: thumbnail with duration and progress bar, title, channel.
+ * [badge] (search and requests) is the label of the video's request status.
+ */
 @Composable
 internal fun VideoCardView(
     v: VideoCard,
@@ -314,8 +335,21 @@ internal fun VideoCardView(
     modifier: Modifier = Modifier,
     badge: String? = null,
 ) {
-    Card(onClick = onClick, modifier = modifier, scale = CardDefaults.scale(focusedScale = 1.06f)) {
-        Box(Modifier.fillMaxWidth().aspectRatio(16f / 9f).background(Color(0xFF2A2A2A))) {
+    Card(
+        onClick = onClick,
+        modifier = modifier,
+        shape = TtCard.shape,
+        colors = TtCard.colors(),
+        border = TtCard.border(),
+        glow = TtCard.glow(),
+        scale = CardDefaults.scale(focusedScale = 1.06f),
+    ) {
+        Box(Modifier.fillMaxWidth().aspectRatio(16f / 9f).background(TtColors.CardHover)) {
+            // Shows until the thumbnail arrives (or when the server has none).
+            Icon(
+                TtIcons.Play, contentDescription = null, tint = TtColors.Dim,
+                modifier = Modifier.align(Alignment.Center).size(36.dp),
+            )
             AsyncImage(
                 model = resolve(baseUrl, v.thumbnail),
                 contentDescription = null,
@@ -329,29 +363,18 @@ internal fun VideoCardView(
                     color = Color.White,
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
-                        .padding(6.dp)
+                        .padding(8.dp)
                         .background(Color(0xCC000000), RoundedCornerShape(4.dp))
                         .padding(horizontal = 6.dp, vertical = 2.dp),
                 )
             }
             if (badge != null) {
-                Text(
-                    badge,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = Color.White,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .padding(6.dp)
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.9f), RoundedCornerShape(4.dp))
-                        .padding(horizontal = 6.dp, vertical = 2.dp),
-                )
+                StatusBadge(v.status, badge, Modifier.align(Alignment.TopStart).padding(8.dp))
             }
             val progress = progressFraction(v.progressSeconds, v.duration)
             if (progress > 0f) {
                 Box(Modifier.align(Alignment.BottomStart).fillMaxWidth().height(4.dp).background(Color(0x66FFFFFF))) {
-                    Box(Modifier.fillMaxHeight().fillMaxWidth(progress).background(MaterialTheme.colorScheme.primary))
+                    Box(Modifier.fillMaxHeight().fillMaxWidth(progress).background(TtColors.Accent))
                 }
             }
         }
@@ -359,48 +382,66 @@ internal fun VideoCardView(
             Text(
                 v.title,
                 style = MaterialTheme.typography.titleSmall,
+                color = TtColors.Text,
                 maxLines = 2,
                 minLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
             Spacer(Modifier.height(4.dp))
-            Text(
-                v.channelName,
-                style = MaterialTheme.typography.bodySmall,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                CategoryDot(v.category)
+                Text(
+                    v.channelName,
+                    style = MaterialTheme.typography.bodySmall,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    color = TtColors.Muted,
+                )
+            }
         }
     }
+}
+
+/** Small green (edu) or orange (fun) dot, the web app's category colors. */
+@Composable
+private fun CategoryDot(category: String) {
+    val c = when (category) {
+        RowId.EDU -> TtColors.Edu
+        RowId.FUN -> TtColors.Fun
+        else -> return
+    }
+    Box(Modifier.size(8.dp).background(c, RoundedCornerShape(4.dp)))
+    Spacer(Modifier.width(6.dp))
 }
 
 @Composable
 private fun ChannelChip(ch: ChannelInfo, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Card(onClick = onClick, modifier = modifier.width(220.dp)) {
-        Column(Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
-            Text(ch.name, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+    val l = LocalTvLayout.current
+    Card(
+        onClick = onClick,
+        modifier = modifier.width(l.cardWidth),
+        shape = TtCard.shape,
+        colors = TtCard.colors(),
+        border = TtCard.border(),
+        glow = TtCard.glow(),
+        scale = CardDefaults.scale(focusedScale = 1.06f),
+    ) {
+        Row(Modifier.padding(horizontal = 14.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                Modifier.size(40.dp).background(TtColors.Accent.copy(alpha = 0.16f), RoundedCornerShape(20.dp)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(ch.name.take(1).uppercase(), style = MaterialTheme.typography.titleMedium, color = TtColors.Accent)
+            }
+            Spacer(Modifier.width(12.dp))
+            Column {
+                Text(ch.name, style = MaterialTheme.typography.titleSmall, color = TtColors.Text, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                if (ch.videoCount > 0) {
+                    Text(stringResource(R.string.channel_videos, ch.videoCount), style = MaterialTheme.typography.bodySmall, color = TtColors.Muted)
+                }
+            }
         }
     }
-}
-
-@Composable
-internal fun SectionTitle(text: String) {
-    Text(
-        text,
-        style = MaterialTheme.typography.titleLarge,
-        color = MaterialTheme.colorScheme.onBackground,
-        modifier = Modifier.padding(start = 8.dp),
-    )
-}
-
-@Composable
-internal fun Centered(content: @Composable () -> Unit) {
-    Column(
-        Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) { content() }
 }
 
 @Composable
@@ -413,6 +454,14 @@ private fun rowTitle(id: String): String = stringResource(
         else -> R.string.row_other
     },
 )
+
+private fun rowIcon(id: String): Pair<ImageVector, Color> = when (id) {
+    RowId.ACTIVE -> TtIcons.Play to TtColors.Accent
+    RowId.EDU -> TtIcons.Book to TtColors.EduText
+    RowId.FUN -> TtIcons.Star to TtColors.FunText
+    RowId.SHORTS -> TtIcons.Bolt to TtColors.Muted
+    else -> TtIcons.Channel to TtColors.Muted
+}
 
 /** Server paths like /thumb/abc resolve against the base URL (which may carry a sub-path). */
 internal fun resolve(baseUrl: String, path: String): String? {

@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="tt_background">#121212</color>
-    <color name="tt_accent">#E53935</color>
+    <!-- Same palette as the web app (web/static/style.css :root). -->
+    <color name="tt_background">#0F1828</color>
+    <color name="tt_icon_background">#182442</color>
+    <color name="tt_accent">#C9A84C</color>
     <style name="Theme.TubeTamer" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowBackground">@color/tt_background</item>
         <item name="android:statusBarColor">@color/tt_background</item>

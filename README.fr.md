@@ -106,6 +106,9 @@ Toutes les fonctionnalités d'origine (profils multi-enfants, approbations Teleg
 - **Thème sombre** : reposant pour les yeux, pensé pour les tablettes
 - **Application Android TV** : une application TubeTamer native pour la télé (testée sur NVIDIA Shield) : profil et PIN, rangées et chaînes, recherche et demandes, lecture plein écran depuis votre serveur avec les mêmes limites de temps. Distincte de l'application YouTube, installée sans ADB. Voir le [guide Android TV](docs/android-tv.md)
 
+  <img src="docs/screenshots/android-tv/04-home.jpg" width="49%" alt="TubeTamer sur Android TV : accueil"> <img src="docs/screenshots/android-tv/08b-search-statuses.jpg" width="49%" alt="TubeTamer sur Android TV : recherche">
+
+
 ### Pour les parents
 - **Approbation par Telegram** : approuver ou refuser de n'importe où, en un geste
 - **Téléchargement local** : le serveur télécharge les vidéos approuvées avec yt-dlp, la tablette lit depuis votre serveur
@@ -191,7 +194,7 @@ La documentation détaillée est rédigée en anglais.
 
 - **[Guide d'installation](docs/setup.md)** : de la création du bot Telegram au verrouillage de l'appareil
 - [Référence de configuration](docs/configuration.md) : options de config.yaml, variables d'environnement, valeurs par défaut
-- [Application Android TV](docs/android-tv.md) : compilation, installation sur la télé sans ADB, premier démarrage, dépannage
+- [Application Android TV](docs/android-tv.md) : compilation, installation sur la télé sans ADB, premier démarrage, dépannage, captures d'écran
 - [Guide des langues](i18n/locales/README.md) : fonctionnement des traductions et ajout d'une langue
 - [Commandes Telegram](docs/telegram-commands.md) : liste complète des commandes du bot parent
 - [Dépannage](docs/troubleshooting.md) : problèmes courants et solutions

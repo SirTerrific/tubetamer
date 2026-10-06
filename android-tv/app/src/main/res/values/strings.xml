@@ -66,4 +66,5 @@
     <string name="request_send">Ask</string>
     <string name="cancel">Cancel</string>
     <string name="requests_empty">No requests yet.</string>
+    <string name="pin_delete">Delete</string>
 </resources>

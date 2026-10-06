@@ -64,4 +64,5 @@
     <string name="request_send">Demander</string>
     <string name="cancel">Annuler</string>
     <string name="requests_empty">Aucune demande pour l\'instant.</string>
+    <string name="pin_delete">Effacer</string>
 </resources>

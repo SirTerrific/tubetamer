@@ -104,6 +104,9 @@ All the original features (multi-child profiles, Telegram approvals, time limits
 - **Dark theme** — easy on the eyes, designed for tablets
 - **Android TV app** — a native TubeTamer app for the TV (tested on NVIDIA Shield): profile + PIN, rows and channels, search and requests, full-screen playback from your server with the same time limits. Separate from the YouTube app, installed without ADB. See the [Android TV guide](docs/android-tv.md)
 
+  <img src="docs/screenshots/android-tv/04-home.jpg" width="49%" alt="TubeTamer on Android TV: home"> <img src="docs/screenshots/android-tv/08b-search-statuses.jpg" width="49%" alt="TubeTamer on Android TV: search">
+
+
 ### For Parents
 - **Telegram approval** — approve/deny from anywhere with one tap
 - **Local video download** — server downloads approved videos using yt-dlp; tablet plays from your server
@@ -186,7 +189,7 @@ Block `youtube.com` and `googlevideo.com` in your DNS resolver (Pi-hole, AdGuard
 
 - **[Setup Guide](docs/setup.md)** — full walkthrough from Telegram bot creation to device lockdown
 - [Configuration Reference](docs/configuration.md) — config.yaml options, environment variables, defaults
-- [Android TV App](docs/android-tv.md) — build, install on the TV without ADB, first start, troubleshooting
+- [Android TV App](docs/android-tv.md) — build, install on the TV without ADB, first start, troubleshooting, screenshots
 - [Locale Guide](i18n/locales/README.md) — how translations work and how to add a new language
 - [Telegram Commands](docs/telegram-commands.md) — full command list for the parent bot
 - [Troubleshooting](docs/troubleshooting.md) — common issues and fixes

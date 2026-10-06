@@ -2,6 +2,7 @@ package com.sirterrific.tubetamer.ui
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.performSemanticsAction
@@ -35,7 +36,7 @@ class ScreensUiTest {
         }
         rule.onNodeWithText(str(R.string.pin_title, "Alice")).assertIsDisplayed()
         listOf("1", "2", "3", "4").forEach { rule.onNodeWithText(it).press() }
-        rule.onNodeWithText(str(R.string.ok)).press()
+        rule.onNodeWithContentDescription(str(R.string.ok)).press()
         assertEquals("1234", submitted)
     }
 

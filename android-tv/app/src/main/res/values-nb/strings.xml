@@ -39,4 +39,5 @@
     <string name="request_send">Spør</string>
     <string name="cancel">Avbryt</string>
     <string name="requests_empty">Ingen forespørsler ennå.</string>
+    <string name="pin_delete">Slett</string>
 </resources>
