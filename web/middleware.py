@@ -11,7 +11,20 @@ logger = logging.getLogger(__name__)
 
 # API paths safe to access without PIN auth
 _API_AUTH_EXEMPT = ("/api/status/", "/api/yt-iframe-api.js", "/api/yt-widget-api.js")
-_ROOT_AUTH_EXEMPT = ("/manifest.webmanifest", "/service-worker.js")
+_ROOT_AUTH_EXEMPT = (
+    "/manifest.webmanifest", "/service-worker.js",
+    # Native clients: discovery, profile picker and login happen before a token exists.
+    "/api/v1/info", "/api/v1/profiles", "/api/v1/auth/login",
+)
+
+
+def bearer_token(request: Request) -> str:
+    """Return the token from an `Authorization: Bearer <token>` header, or ''."""
+    header = request.headers.get("authorization", "")
+    scheme, _, value = header.partition(" ")
+    if scheme.lower() != "bearer":
+        return ""
+    return value.strip()
 
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
@@ -55,12 +68,19 @@ class PinAuthMiddleware(BaseHTTPMiddleware):
         if request.url.path.startswith(_API_AUTH_EXEMPT):
             return await call_next(request)
 
+        vs = getattr(request.app.state, "video_store", None)
+
+        # Native clients: a Bearer token replaces the cookie session. Never fall
+        # back to the cookie when a token is sent, so a revoked token fails cleanly.
+        token = bearer_token(request)
+        if token:
+            return await self._dispatch_bearer(request, call_next, vs, token)
+
         # Profile-based auth: check if child_id is in session
         if request.session.get("child_id"):
             return await call_next(request)
 
         # Auto-login: if only one profile and it has no PIN, set session directly
-        vs = getattr(request.app.state, "video_store", None)
         profiles = []
         if vs:
             profiles = vs.get_profiles()
@@ -82,3 +102,28 @@ class PinAuthMiddleware(BaseHTTPMiddleware):
         if request.url.path.startswith("/api/"):
             return JSONResponse({"error": "unauthorized"}, status_code=401)
         return RedirectResponse(url="/login", status_code=303)
+
+    @staticmethod
+    async def _dispatch_bearer(request: Request, call_next, vs, token: str) -> Response:
+        profile = vs.resolve_device_token(token) if vs else None
+        if not profile:
+            return JSONResponse({"error": "invalid_token"}, status_code=401)
+
+        # Routes read the profile from request.session. Give this request a
+        # throwaway session holding the token's profile (same class as the real
+        # one, e.g. Starlette's Session), then put the untouched original back
+        # before the response goes out so SessionMiddleware never issues a cookie.
+        original = request.scope.get("session")
+        session_cls = type(original) if isinstance(original, dict) else dict
+        request.scope["session"] = session_cls({
+            "child_id": profile["id"],
+            "child_name": profile["display_name"],
+            "avatar_icon": profile.get("avatar_icon") or "",
+            "avatar_color": profile.get("avatar_color") or "",
+        })
+        request.state.device_token = token
+        request.state.auth_via_token = True
+        try:
+            return await call_next(request)
+        finally:
+            request.scope["session"] = original

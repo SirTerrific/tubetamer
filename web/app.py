@@ -21,6 +21,7 @@ from web.routers.pwa import router as pwa_router
 from web.routers.search import router as search_router
 from web.routers.watch import router as watch_router
 from web.routers.stream import router as stream_router
+from web.routers.api_v1 import router as api_v1_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -45,6 +46,7 @@ app.include_router(pwa_router)
 app.include_router(search_router)
 app.include_router(watch_router)
 app.include_router(stream_router)
+app.include_router(api_v1_router)
 
 
 @app.exception_handler(RateLimitExceeded)

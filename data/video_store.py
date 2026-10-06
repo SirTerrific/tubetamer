@@ -4,7 +4,9 @@ Tracks video requests, approval status, view history, watch time, and channel li
 Supports per-child profiles with isolated data.
 """
 
+import hashlib
 import logging
+import secrets
 import sqlite3
 import threading
 from pathlib import Path
@@ -150,6 +152,23 @@ class VideoStore:
                 updated_at TEXT NOT NULL DEFAULT (datetime('now')),
                 PRIMARY KEY (video_id, lang)
             )
+        """)
+        # Bearer tokens for native clients (Android TV). Only the SHA-256 of the
+        # token is stored; the plain token is returned once, at login.
+        self.conn.execute("""
+            CREATE TABLE IF NOT EXISTS device_tokens (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                token_hash TEXT NOT NULL UNIQUE,
+                profile_id TEXT NOT NULL,
+                device_name TEXT NOT NULL DEFAULT '',
+                created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                expires_at TEXT NOT NULL,
+                last_used_at TEXT,
+                revoked_at TEXT
+            )
+        """)
+        self.conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_device_tokens_profile ON device_tokens(profile_id)
         """)
         self.conn.commit()
 
@@ -383,6 +402,7 @@ class VideoStore:
             self.conn.execute("DELETE FROM watch_log WHERE profile_id = ?", (profile_id,))
             self.conn.execute("DELETE FROM channels WHERE profile_id = ?", (profile_id,))
             self.conn.execute("DELETE FROM search_log WHERE profile_id = ?", (profile_id,))
+            self.conn.execute("DELETE FROM device_tokens WHERE profile_id = ?", (profile_id,))
             # Delete prefixed settings
             self.conn.execute(
                 "DELETE FROM settings WHERE key LIKE ?",
@@ -390,6 +410,99 @@ class VideoStore:
             )
             self.conn.commit()
             return True
+
+    # --- Device tokens (native clients) ---
+
+    @staticmethod
+    def _hash_token(token: str) -> str:
+        return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+    def create_device_token(self, profile_id: str, device_name: str = "",
+                            ttl_days: int = 365) -> tuple[str, str]:
+        """Issue a bearer token for a profile. Returns (token, expires_at UTC).
+
+        The plain token is never stored, only its SHA-256.
+        """
+        token = secrets.token_urlsafe(32)
+        with self._lock:
+            self.conn.execute(
+                "INSERT INTO device_tokens (token_hash, profile_id, device_name, expires_at) "
+                "VALUES (?, ?, ?, datetime('now', ?))",
+                (self._hash_token(token), profile_id, device_name[:100], f"+{int(ttl_days)} days"),
+            )
+            row = self.conn.execute(
+                "SELECT expires_at FROM device_tokens WHERE token_hash = ?",
+                (self._hash_token(token),),
+            ).fetchone()
+            self.conn.commit()
+        return token, row["expires_at"]
+
+    def resolve_device_token(self, token: str) -> Optional[dict]:
+        """Return the profile behind a valid token, or None.
+
+        Valid means: known, not revoked, not expired, profile still exists.
+        Refreshes last_used_at at most once per hour to avoid a write per request.
+        """
+        if not token:
+            return None
+        token_hash = self._hash_token(token)
+        with self._lock:
+            row = self.conn.execute(
+                "SELECT t.id AS token_id, t.last_used_at, "
+                "       (t.last_used_at IS NULL OR t.last_used_at < datetime('now', '-1 hour')) AS stale, "
+                "       p.id, p.display_name, p.avatar_icon, p.avatar_color "
+                "FROM device_tokens t JOIN profiles p ON p.id = t.profile_id "
+                "WHERE t.token_hash = ? AND t.revoked_at IS NULL AND t.expires_at > datetime('now')",
+                (token_hash,),
+            ).fetchone()
+            if not row:
+                return None
+            if row["stale"]:
+                self.conn.execute(
+                    "UPDATE device_tokens SET last_used_at = datetime('now') WHERE id = ?",
+                    (row["token_id"],),
+                )
+                self.conn.commit()
+            return {
+                "id": row["id"],
+                "display_name": row["display_name"],
+                "avatar_icon": row["avatar_icon"],
+                "avatar_color": row["avatar_color"],
+            }
+
+    def revoke_device_token(self, token: str) -> bool:
+        """Revoke a token by its plain value. Returns True if a live token was revoked."""
+        with self._lock:
+            cursor = self.conn.execute(
+                "UPDATE device_tokens SET revoked_at = datetime('now') "
+                "WHERE token_hash = ? AND revoked_at IS NULL",
+                (self._hash_token(token),),
+            )
+            self.conn.commit()
+            return cursor.rowcount > 0
+
+    def revoke_device_token_by_id(self, token_id: int) -> bool:
+        """Revoke a token by row id (parent-side revocation)."""
+        with self._lock:
+            cursor = self.conn.execute(
+                "UPDATE device_tokens SET revoked_at = datetime('now') "
+                "WHERE id = ? AND revoked_at IS NULL",
+                (token_id,),
+            )
+            self.conn.commit()
+            return cursor.rowcount > 0
+
+    def list_device_tokens(self, profile_id: Optional[str] = None) -> list[dict]:
+        """Live (not revoked, not expired) tokens, newest first. Never returns hashes."""
+        sql = ("SELECT id, profile_id, device_name, created_at, expires_at, last_used_at "
+               "FROM device_tokens WHERE revoked_at IS NULL AND expires_at > datetime('now')")
+        params: tuple = ()
+        if profile_id is not None:
+            sql += " AND profile_id = ?"
+            params = (profile_id,)
+        sql += " ORDER BY created_at DESC, id DESC"
+        with self._lock:
+            return [dict(r) for r in self.conn.execute(sql, params).fetchall()]
 
     def find_video_approved_for_others(self, video_id: str, exclude_profile: str) -> Optional[dict]:
         """Check if a video is approved under a different profile.
