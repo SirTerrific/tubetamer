@@ -76,7 +76,7 @@ The Android TV app (`android-tv/`) talks to these JSON routes. Video cards carry
 |---|---|---|
 | `GET /api/v1/info` | none | App name, version, `api_version`, local playback flag, default locale |
 | `GET /api/v1/profiles` | none | Profiles for the picker, with `has_pin` but never the PIN |
-| `POST /api/v1/auth/login` | none, 5/hour | Profile id + PIN for a 90-day bearer token, stored only as a SHA-256 hash |
+| `POST /api/v1/auth/login` | none, 5/hour | Profile id + PIN for a one-year bearer token, stored only as a SHA-256 hash |
 | `POST /api/v1/auth/logout` | bearer | Revokes the token |
 | `GET /api/v1/me` | bearer | Profile behind the token |
 | `GET /api/v1/home?limit=` | bearer | First page of each non-empty row (`active`, `edu`, `fun`, `shorts` when enabled) and the allowed channels |

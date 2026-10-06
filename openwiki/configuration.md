@@ -19,7 +19,7 @@ TubeTamer reads its settings from a YAML file or, if there is none, from `BRG_*`
 2. With no path given: `config.yaml`, then `config.yml`, in the working directory.
 3. If neither file exists: `Config.from_env()`, which builds the whole config from `BRG_*` variables.
 
-YAML and env-only modes are separate. When a YAML file is loaded, a `BRG_*` variable only has an effect if the YAML refers to it as `${VAR}`. The exception is `BRG_BASE_URL`, which `WebConfig.__post_init__` reads whenever `web.base_url` is empty.
+YAML and env-only modes are separate. When a YAML file is loaded, a `BRG_*` variable only has an effect if the YAML refers to it as `${VAR}`. The exceptions are `BRG_BASE_URL` and `BRG_TV_APK`, which `WebConfig.__post_init__` reads whenever `web.base_url` or `web.tv_apk` is empty.
 
 After loading, `load_config` normalizes `app.locale` and `app.time_format` through `i18n`. It logs a warning if `telegram.admin_chat_id` is empty ("bot commands will be unauthorized") or is not numeric.
 
@@ -54,6 +54,7 @@ Several of these values are only defaults for the first run. At runtime, the par
 | `BRG_PIN` | `web.pin` | empty |
 | `BRG_SESSION_SECRET` | `web.session_secret` | empty (generated) |
 | `BRG_BASE_URL` | `web.base_url` | empty |
+| `BRG_TV_APK` | `web.tv_apk` | `db/tubetamer.apk` |
 | `BRG_BOT_TOKEN` | `telegram.bot_token` | empty |
 | `BRG_ADMIN_CHAT_ID` | `telegram.admin_chat_id` | empty |
 | `BRG_YOUTUBE_MAX_RESULTS` | `youtube.search_max_results` | `50` |

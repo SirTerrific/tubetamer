@@ -13,6 +13,8 @@ logger = logging.getLogger(__name__)
 _API_AUTH_EXEMPT = ("/api/status/", "/api/yt-iframe-api.js", "/api/yt-widget-api.js")
 _ROOT_AUTH_EXEMPT = (
     "/manifest.webmanifest", "/service-worker.js",
+    # Android TV app download (Downloader on the TV has no session).
+    "/app/tubetamer.apk",
     # Native clients: discovery, profile picker and login happen before a token exists.
     "/api/v1/info", "/api/v1/profiles", "/api/v1/auth/login",
 )

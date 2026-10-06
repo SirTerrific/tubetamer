@@ -59,10 +59,13 @@ class WebConfig:
     pin: str = ""  # empty = no auth required
     session_secret: str = ""  # auto-generated if not set
     base_url: str = ""  # e.g. http://10.0.0.1:8080 — used for links in Telegram messages
+    tv_apk: str = ""  # Android TV app served at /app/tubetamer.apk (default db/tubetamer.apk)
 
     def __post_init__(self):
         if not self.base_url:
             self.base_url = os.environ.get("BRG_BASE_URL", "")
+        if not self.tv_apk:
+            self.tv_apk = os.environ.get("BRG_TV_APK", "") or "db/tubetamer.apk"
 
 
 @dataclass
@@ -166,6 +169,7 @@ class Config:
                 pin=os.environ.get("BRG_PIN", ""),
                 session_secret=os.environ.get("BRG_SESSION_SECRET", ""),
                 base_url=os.environ.get("BRG_BASE_URL", ""),
+                tv_apk=os.environ.get("BRG_TV_APK", ""),
             ),
             telegram=TelegramConfig(
                 bot_token=os.environ.get("BRG_BOT_TOKEN", ""),

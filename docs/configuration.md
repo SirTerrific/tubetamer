@@ -58,7 +58,7 @@ local_playback:
 
 ### Android TV app
 
-The TV app needs no extra setting, but it only plays videos the server has downloaded: turn on `local_playback.enabled`, otherwise the TV shows "Local playback is off on the server". Each TV signs in with the child's profile and PIN and gets its own token; list or revoke TVs with `/devices` in Telegram.
+The TV app needs no extra setting, but it only plays videos the server has downloaded: turn on `local_playback.enabled`, otherwise the TV shows "Local playback is off on the server". Each TV signs in with the child's profile and PIN and gets its own token; list or revoke TVs with `/devices` in Telegram. To install the app from the server, put the APK at `web.tv_apk` (default `db/tubetamer.apk`); it is then downloadable at `/app/tubetamer.apk`. See [Android TV app](android-tv.md).
 
 The app talks to the server over plain HTTP, like the web app. Anyone on the same network could read a TV's token, so keep TubeTamer on your home network. If you expose it outside, put it behind an HTTPS reverse proxy and enter the `https://` address in the TV app.
 
@@ -133,6 +133,7 @@ If **no `config.yaml` exists**, everything falls back to environment variables. 
 | `BRG_WEB_PORT` | Web server port | `8080` |
 | `BRG_PIN` | Web UI access PIN (empty = no auth) | — |
 | `BRG_SESSION_SECRET` | Session signing secret | auto-generated |
+| `BRG_TV_APK` | Android TV app file served at `/app/tubetamer.apk` | `db/tubetamer.apk` |
 | `BRG_POLL_INTERVAL` | Pending page poll interval (ms) | `3000` |
 | `BRG_LOCALE` | Default UI/bot language (`en`, `fr` or `nb`) | `en` |
 | `BRG_TIME_FORMAT` | Time display format (`locale`, `12h`, `24h`) | `locale` |

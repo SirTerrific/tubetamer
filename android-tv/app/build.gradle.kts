@@ -40,7 +40,10 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            signingConfigs.findByName("release")?.let { signingConfig = it }
+            signingConfig = signingConfigs.findByName("release")
+                // Local check of the minified build only (gradlew assembleRelease -PdebugSignedRelease).
+                // Never distribute it: updates must be signed with the release key.
+                ?: signingConfigs.getByName("debug").takeIf { project.hasProperty("debugSignedRelease") }
         }
     }
 

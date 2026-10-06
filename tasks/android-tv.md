@@ -51,7 +51,7 @@ Objectif : une API JSON stable sous `/api/v1/`, sans toucher aux routes HTML exi
 - [x] **A5. `POST /api/v1/requests`** : demander une vidéo (déclenche la notification Telegram). Réutiliser la logique de `POST /request`.
 - [x] **A6. `GET /api/v1/requests`** : demandes du profil avec leur statut (pending, approved, denied).
 - [x] **A7. Chaînes :** liste des chaînes autorisées et vidéos d'une chaîne (équivalent des pages chaîne du catalogue web).
-- [ ] **A8. `GET /api/v1/videos/{id}`** : métadonnées, statut de téléchargement, URL de flux, sous-titres disponibles, position de reprise.
+- [x] **A8. `GET /api/v1/videos/{id}`** : métadonnées, statut de téléchargement, URL de flux, sous-titres disponibles, position de reprise. Couvert par `POST /api/v1/videos/{id}/play` (même contenu), pas de route séparée.
 - [x] **A9. Statut du temps restant :** `GET /api/v1/time` → temps restant par catégorie, fenêtre horaire, raison d'un blocage. L'app l'affiche et se bloque proprement.
 - [x] **A10. Flux :** vérifier que `/api/stream/{id}` accepte le Bearer et reste compatible Range (206, `Accept-Ranges`, `Content-Range`) avec ExoPlayer. Ne pas casser le comportement navigateur.
 - [x] **A11. Heartbeat :** accepter le Bearer sur `/api/watch-heartbeat`. Réponse claire quand le budget est épuisé (l'app arrête la lecture).
@@ -79,9 +79,9 @@ Pile : Kotlin, Jetpack Compose for TV (`androidx.tv`), Media3/ExoPlayer, Retrofi
 - [x] **B8. Heartbeat et temps restant.** Envoyer le heartbeat toutes les ~30 s pendant la lecture. À la réponse « budget épuisé » ou « hors horaire » : arrêter la lecture et afficher l'écran correspondant. Afficher le temps restant avant la fin du budget.
 - [x] **B9. Écrans d'état :** hors horaires, limite atteinte, vidéo refusée, serveur injoignable (avec réessai), jeton expiré ou révoqué (retour au choix du profil).
 - [x] **B10. Localisation :** anglais, français, norvégien, alignés sur la langue du profil ou du serveur.
-- [ ] **B11. Thème sombre**, polices lisibles à 3 m, zones de focus visibles.
+- [x] **B11. Thème sombre**, polices lisibles à 3 m, zones de focus visibles.
 - [ ] **B12. Robustesse mémoire :** profil mémoire (Android Studio Profiler) sur 1 h de lecture et 20 vidéos de suite. Pas de croissance continue. Tester sur une TV bas de gamme (1 Go de RAM) si possible.
-- [ ] **B13. Distribution sans ADB.** APK signé (clé `release` hors dépôt, `*.jks` et `keystore.properties` dans `.gitignore`). Installation sur la Shield, au choix :
+- [x] **B13. Distribution sans ADB.** APK signé (clé `release` hors dépôt, `*.jks` et `keystore.properties` dans `.gitignore`). Installation sur la Shield, au choix :
   1. **Depuis le serveur TubeTamer (recommandé) :** le serveur sert l'APK sur une URL fixe (ex. `/app/tubetamer.apk`, sans authentification, l'APK ne contient aucun secret). Sur la Shield, installer l'app **Downloader** (Play Store), saisir l'URL du serveur, autoriser « Installer des apps inconnues » pour Downloader, puis ouvrir l'APK.
   2. **Clé USB :** copier l'APK, brancher la clé sur la Shield, l'ouvrir avec un gestionnaire de fichiers.
   3. **« Send Files to TV » :** envoi direct du PC ou du téléphone vers la Shield.
@@ -113,7 +113,7 @@ Conséquences pour le projet :
 
 ## Partie C : documentation et livraison
 
-- [ ] **C1.** `docs/android-tv.md` : installation de l'APK, configuration du serveur, dépannage.
+- [x] **C1.** `docs/android-tv.md` : installation de l'APK, configuration du serveur, dépannage.
 - [ ] **C2.** Mise à jour de `README.md` et `README.fr.md` (section Android TV) et du `CHANGELOG.md`.
 - [ ] **C3.** Release avec bump de version (suivre la procédure de `build-test-release`).
 
