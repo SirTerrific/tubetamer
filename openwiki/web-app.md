@@ -27,6 +27,7 @@ The web app is what the child sees on a tablet or computer: a catalog of approve
 - A session with `child_id` passes.
 - If there is exactly one profile and it has no PIN, the middleware signs the session in as that profile automatically. With no profiles, or no legacy PIN configured, requests pass through.
 - Otherwise `/api/` paths get `401 {"error": "unauthorized"}` and other paths a 303 redirect to `/login`.
+- A request with `Authorization: Bearer <token>` (the Android TV app) is checked against the `device_tokens` table instead of the cookie. A valid token runs the request as its profile in a throwaway session, so no cookie is read or set; an invalid, revoked or expired token gets a 401 and never falls back to the cookie. `/api/v1/info`, `/api/v1/profiles` and `/api/v1/auth/login` need no authentication.
 
 Sessions use Starlette's `SessionMiddleware` (signed cookie, 24-hour `max_age`, `same_site="strict"`). The secret is generated and stored on first run unless configured, see [Configuration](configuration.md).
 
@@ -43,6 +44,7 @@ Sessions use Starlette's `SessionMiddleware` (signed cookie, 24-hour `max_age`, 
 | `stream.py` | `/api/stream/{id}`, `/api/download-status/{id}`, `/api/subs/{id}/{lang}` | Local playback: the downloaded file, download progress and subtitles |
 | `ytproxy.py` | `/api/yt-iframe-api.js`, `/api/yt-widget-api.js`, `/thumb/{id}[/{variant}]` | YouTube player scripts and thumbnails served by the server |
 | `pwa.py` | `/manifest.webmanifest`, `/service-worker.js` | PWA files served from the root path |
+| `api_v1.py` | `/api/v1/...` | JSON API for native clients, see below |
 
 ### Search and requests
 
@@ -65,6 +67,22 @@ With local playback on, approved videos are downloaded by yt-dlp to disk (see [Y
 ### Thumbnail proxy
 
 The child's device may not reach YouTube. `/thumb/{id}` fetches `i.ytimg.com/vi/{id}/{variant}.jpg` once, stores it under `db/thumbs` (configurable through `thumb_dir`) and serves it from disk with a one-week immutable cache header. `maxresdefault` falls back to `hqdefault`. A missing variant leaves a `.404` marker so YouTube is not asked again. Writes use a temporary file and an atomic replace.
+
+### Native client API (`/api/v1`)
+
+The Android TV app (`android-tv/`) talks to these JSON routes. Video cards carry only `video_id`, `title`, `channel_name`, `channel_id`, `duration`, `category`, `is_short`, `progress_seconds` and a `thumbnail` path (`/thumb/{id}`, fetched with the same bearer).
+
+| Route | Auth | Purpose |
+|---|---|---|
+| `GET /api/v1/info` | none | App name, version, `api_version`, local playback flag, default locale |
+| `GET /api/v1/profiles` | none | Profiles for the picker, with `has_pin` but never the PIN |
+| `POST /api/v1/auth/login` | none, 5/hour | Profile id + PIN for a 90-day bearer token, stored only as a SHA-256 hash |
+| `POST /api/v1/auth/logout` | bearer | Revokes the token |
+| `GET /api/v1/me` | bearer | Profile behind the token |
+| `GET /api/v1/home?limit=` | bearer | First page of each non-empty row (`active`, `edu`, `fun`, `shorts` when enabled) and the allowed channels |
+| `GET /api/v1/catalog?row=&channel=&offset=&limit=` | bearer | Next pages of a row, or of one channel with `row=all&channel=<id>` |
+
+Rows reuse the web builders (`build_active_row`, `build_catalog`, `build_shorts_catalog`), so denied videos, word filters and the Shorts setting apply exactly as on the web home page.
 
 ## Channel and catalog cache (`web/cache.py`)
 

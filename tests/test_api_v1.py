@@ -208,3 +208,87 @@ class TestStoreTokens:
         assert store.list_device_tokens()[0]["last_used_at"] is None
         assert store.resolve_device_token(token)["id"] == "default"
         assert store.list_device_tokens()[0]["last_used_at"] is not None
+
+
+def _seed_catalog(store, app_state):
+    """Two allowed channels (edu + fun) in the channel cache, one approved Short."""
+    from web.cache import get_profile_cache
+    store.add_channel("Sci", "allowed", channel_id="UCsci", category="edu")
+    store.add_channel("Toys", "allowed", channel_id="UCtoys", category="fun")
+    cache = get_profile_cache(app_state, "default")
+    cache["channels"] = {
+        "UCsci": [{"video_id": f"scivid{i:05d}", "title": f"Sci {i}", "channel_name": "Sci",
+                   "channel_id": "UCsci", "duration": 300} for i in range(30)],
+        "UCtoys": [{"video_id": "toysvid0001", "title": "Toys 1", "channel_name": "Toys",
+                    "channel_id": "UCtoys", "duration": 120, "is_short": False}],
+    }
+    cache["id_to_name"] = {"UCsci": "Sci", "UCtoys": "Toys"}
+    cache["updated_at"] = 1.0
+    cs = ChildStore(store, "default")
+    cs.add_video("activevid01", "Active One", "Toys", channel_id="UCtoys", duration=200)
+    cs.update_status("activevid01", "approved")
+    cs.add_video("shortvid001", "A Short", "Toys", channel_id="UCtoys", duration=30, is_short=True)
+    cs.update_status("shortvid001", "approved")
+
+
+class TestHome:
+    def test_requires_auth(self, client):
+        assert client.get("/api/v1/home").status_code == 401
+
+    def test_rows_and_channels(self, client, store):
+        _seed_catalog(store, client.app.state)
+        token = _token(client)
+        body = client.get("/api/v1/home?limit=10", headers=_auth(token)).json()
+        rows = {r["id"]: r for r in body["rows"]}
+        assert [r["id"] for r in body["rows"]] == ["active", "edu", "fun"]
+        assert body["shorts_enabled"] is False
+        assert rows["active"]["videos"][0]["video_id"] == "activevid01"
+        assert rows["edu"]["total"] == 30 and len(rows["edu"]["videos"]) == 10
+        assert rows["edu"]["has_more"] is True
+        assert all(v["category"] == "edu" for v in rows["edu"]["videos"])
+        assert {v["video_id"] for v in rows["fun"]["videos"]} >= {"toysvid0001", "activevid01"}
+        card = rows["edu"]["videos"][0]
+        assert set(card) == {"video_id", "title", "channel_name", "channel_id", "duration",
+                             "category", "is_short", "progress_seconds", "thumbnail"}
+        assert card["thumbnail"] == f"/thumb/{card['video_id']}"
+        assert [c["name"] for c in body["channels"]] == ["Sci", "Toys"]
+
+    def test_shorts_row_when_enabled(self, client, store):
+        _seed_catalog(store, client.app.state)
+        ChildStore(store, "default").set_setting("shorts_enabled", "true")
+        token = _token(client)
+        body = client.get("/api/v1/home", headers=_auth(token)).json()
+        assert body["shorts_enabled"] is True
+        shorts = next(r for r in body["rows"] if r["id"] == "shorts")
+        assert shorts["videos"][0]["is_short"] is True
+
+    def test_other_profile_sees_its_own_home(self, client, store):
+        _seed_catalog(store, client.app.state)
+        token = _token(client, "bob", "5678")
+        body = client.get("/api/v1/home", headers=_auth(token)).json()
+        assert body["rows"] == []
+        assert body["channels"] == []
+
+
+class TestCatalogV1:
+    def test_pagination(self, client, store):
+        _seed_catalog(store, client.app.state)
+        token = _token(client)
+        page = client.get("/api/v1/catalog?row=edu&offset=20&limit=10", headers=_auth(token)).json()
+        assert len(page["videos"]) == 10 and page["has_more"] is False and page["total"] == 30
+
+    def test_channel_filter(self, client, store):
+        _seed_catalog(store, client.app.state)
+        token = _token(client)
+        page = client.get("/api/v1/catalog?channel=UCtoys", headers=_auth(token)).json()
+        assert {v["channel_id"] for v in page["videos"]} == {"UCtoys"}
+
+    def test_shorts_hidden_when_disabled(self, client, store):
+        _seed_catalog(store, client.app.state)
+        token = _token(client)
+        page = client.get("/api/v1/catalog?row=shorts", headers=_auth(token)).json()
+        assert page == {"videos": [], "total": 0, "has_more": False}
+
+    def test_bad_row(self, client):
+        token = _token(client)
+        assert client.get("/api/v1/catalog?row=nope", headers=_auth(token)).status_code == 422
