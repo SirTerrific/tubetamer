@@ -17,6 +17,8 @@ data class Session(
     val serverUrl: String? = null,
     val token: String? = null,
     val profile: Profile? = null,
+    /** UI language reported by the server ("en", "fr", "nb"...); null until first contact. */
+    val locale: String? = null,
 )
 
 class SessionStore(context: Context, private val cipher: TokenCipher) {
@@ -28,6 +30,7 @@ class SessionStore(context: Context, private val cipher: TokenCipher) {
             serverUrl = p[SERVER_URL],
             token = p[TOKEN]?.let(cipher::decrypt),
             profile = p[PROFILE]?.let { runCatching { json.decodeFromString(Profile.serializer(), it) }.getOrNull() },
+            locale = p[LOCALE],
         )
     }
 
@@ -51,6 +54,10 @@ class SessionStore(context: Context, private val cipher: TokenCipher) {
         }
     }
 
+    suspend fun setLocale(locale: String) {
+        store.edit { it[LOCALE] = locale }
+    }
+
     suspend fun signOut() {
         store.edit {
             it.remove(TOKEN)
@@ -62,5 +69,6 @@ class SessionStore(context: Context, private val cipher: TokenCipher) {
         val SERVER_URL = stringPreferencesKey("server_url")
         val TOKEN = stringPreferencesKey("token_enc")
         val PROFILE = stringPreferencesKey("profile_json")
+        val LOCALE = stringPreferencesKey("locale")
     }
 }

@@ -78,7 +78,7 @@ Pile : Kotlin, Jetpack Compose for TV (`androidx.tv`), Media3/ExoPlayer, Retrofi
   - Gérer : vidéo pas encore téléchargée (écran d'attente, polling `download-status`), erreur réseau, 404/403.
 - [x] **B8. Heartbeat et temps restant.** Envoyer le heartbeat toutes les ~30 s pendant la lecture. À la réponse « budget épuisé » ou « hors horaire » : arrêter la lecture et afficher l'écran correspondant. Afficher le temps restant avant la fin du budget.
 - [x] **B9. Écrans d'état :** hors horaires, limite atteinte, vidéo refusée, serveur injoignable (avec réessai), jeton expiré ou révoqué (retour au choix du profil).
-- [ ] **B10. Localisation :** anglais, français, norvégien, alignés sur la langue du profil ou du serveur.
+- [x] **B10. Localisation :** anglais, français, norvégien, alignés sur la langue du profil ou du serveur.
 - [ ] **B11. Thème sombre**, polices lisibles à 3 m, zones de focus visibles.
 - [ ] **B12. Robustesse mémoire :** profil mémoire (Android Studio Profiler) sur 1 h de lecture et 20 vidéos de suite. Pas de croissance continue. Tester sur une TV bas de gamme (1 Go de RAM) si possible.
 - [ ] **B13. Distribution sans ADB.** APK signé (clé `release` hors dépôt, `*.jks` et `keystore.properties` dans `.gitignore`). Installation sur la Shield, au choix :

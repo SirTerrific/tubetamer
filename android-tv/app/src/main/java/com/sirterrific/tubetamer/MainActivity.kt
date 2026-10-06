@@ -8,6 +8,7 @@ import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sirterrific.tubetamer.ui.AppRoot
 import com.sirterrific.tubetamer.ui.AppViewModel
+import com.sirterrific.tubetamer.ui.ServerLanguage
 import com.sirterrific.tubetamer.ui.TubeTamerTheme
 
 class MainActivity : ComponentActivity() {
@@ -18,9 +19,12 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            TubeTamerTheme {
-                val screen by vm.screen.collectAsStateWithLifecycle()
-                AppRoot(vm, screen)
+            val locale by vm.locale.collectAsStateWithLifecycle()
+            ServerLanguage(locale) {
+                TubeTamerTheme {
+                    val screen by vm.screen.collectAsStateWithLifecycle()
+                    AppRoot(vm, screen)
+                }
             }
         }
     }

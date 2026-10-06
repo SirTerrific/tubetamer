@@ -44,6 +44,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -169,9 +170,12 @@ fun RequestsScreen(vm: SearchViewModel, baseUrl: String, onPlay: (VideoCard) -> 
 @Composable
 private fun SearchBar(text: String, onText: (String) -> Unit, onSubmit: (String) -> Unit, focus: FocusRequester) {
     val context = LocalContext.current
-    val voiceIntent = remember {
+    // Same language as the menus (the server's), not necessarily the TV's.
+    val language = LocalConfiguration.current.locales[0].toLanguageTag()
+    val voiceIntent = remember(language) {
         Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
             .putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            .putExtra(RecognizerIntent.EXTRA_LANGUAGE, language)
     }
     // Hidden when the device has no speech recognizer (the on-screen keyboard may still offer one).
     val canVoice = remember { voiceIntent.resolveActivity(context.packageManager) != null }

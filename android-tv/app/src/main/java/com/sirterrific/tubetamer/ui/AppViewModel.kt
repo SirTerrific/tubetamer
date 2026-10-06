@@ -34,6 +34,10 @@ class AppViewModel(private val c: AppContainer) : ViewModel() {
     private val _screen = MutableStateFlow<Screen>(Screen.Loading)
     val screen: StateFlow<Screen> = _screen.asStateFlow()
 
+    /** Server UI language, applied to the whole app (see [ServerLanguage]). */
+    private val _locale = MutableStateFlow<String?>(null)
+    val locale: StateFlow<String?> = _locale.asStateFlow()
+
     init {
         start()
     }
@@ -42,11 +46,14 @@ class AppViewModel(private val c: AppContainer) : ViewModel() {
         _screen.value = Screen.Loading
         viewModelScope.launch {
             val s = c.sessions.current()
+            _locale.value = s.locale
             val url = s.serverUrl
             if (url == null) {
                 _screen.value = Screen.ServerSetup()
                 return@launch
             }
+            // The parent may have changed the server language since last launch.
+            launch { refreshLocale(url) }
             if (s.token == null) {
                 loadProfiles(url)
                 return@launch
@@ -83,7 +90,8 @@ class AppViewModel(private val c: AppContainer) : ViewModel() {
         }
         _screen.value = Screen.ServerSetup(input, busy = true)
         viewModelScope.launch {
-            val error = when (val info = c.api.info(url)) {
+            val info = c.api.info(url)
+            val error = when (info) {
                 is ApiResult.Ok -> when {
                     info.value.app.lowercase() != "tubetamer" -> UiError.NOT_TUBETAMER
                     info.value.apiVersion < SUPPORTED_API_VERSION -> UiError.TOO_OLD
@@ -97,6 +105,7 @@ class AppViewModel(private val c: AppContainer) : ViewModel() {
                 _screen.value = Screen.ServerSetup(input, error)
             } else {
                 c.sessions.setServer(url)
+                if (info is ApiResult.Ok) saveLocale(info.value.locale)
                 loadProfiles(url)
             }
         }
@@ -152,6 +161,17 @@ class AppViewModel(private val c: AppContainer) : ViewModel() {
             c.sessions.signOut()
             c.sessions.current().serverUrl?.let { loadProfiles(it) } ?: run { _screen.value = Screen.ServerSetup() }
         }
+    }
+
+    private suspend fun refreshLocale(url: String) {
+        val info = c.api.info(url)
+        if (info is ApiResult.Ok) saveLocale(info.value.locale)
+    }
+
+    private suspend fun saveLocale(locale: String) {
+        if (locale.isBlank() || locale == _locale.value) return
+        c.sessions.setLocale(locale)
+        _locale.value = locale
     }
 
     private suspend fun loadProfiles(url: String) {
