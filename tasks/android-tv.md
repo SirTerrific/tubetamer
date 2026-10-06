@@ -109,7 +109,7 @@ Conséquences pour le projet :
 - Compiler avec `compileSdk` 35 (plateforme présente). Build : `gradlew.bat assembleDebug` puis `assembleRelease`. APK dans `app/build/outputs/apk/`.
 - Prévoir l'installation de l'image système « Android TV » (API 34) via le SDK Manager pour tester sans la Shield.
 - Les tests D-pad et la mémoire se valident sur la Shield réelle, installée sans ADB (voir B13).
-- [ ] **B14. Tests :** tests unitaires (clients API, modèles), tests UI Compose basiques, scénario manuel complet décrit dans `docs/android-tv.md`.
+- [x] **B14. Tests :** tests unitaires (clients API, modèles), tests UI Compose basiques, scénario manuel complet décrit dans `docs/android-tv.md`.
 
 ## Partie C : documentation et livraison
 

@@ -144,6 +144,17 @@ revoked with `/devices` or expired (one year after sign-in). Pick the profile an
 **"App not installed"** when updating: the new APK is signed with a different
 key. Uninstall TubeTamer from the TV, then install again.
 
+## Automated tests
+
+```bash
+cd android-tv
+./gradlew testDebugUnitTest            # API client, models, helpers (no device)
+./gradlew connectedDebugAndroidTest    # Compose UI tests, needs the emulator or a TV over ADB
+```
+
+The server side of the TV API is covered by the Python suite (`pytest`):
+`tests/test_api_v1*.py`, `tests/test_bot_devices.py`, `tests/test_tv_apk.py`.
+
 ## Manual test checklist
 
 Run on the TV (or the Android TV emulator) before a release:

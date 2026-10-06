@@ -103,7 +103,7 @@ internal fun ErrorLine(e: UiError?) {
 }
 
 @Composable
-private fun ServerSetupScreen(state: Screen.ServerSetup, onConnect: (String) -> Unit) {
+internal fun ServerSetupScreen(state: Screen.ServerSetup, onConnect: (String) -> Unit) {
     var text by rememberSaveable { mutableStateOf(state.current) }
     var focused by remember { mutableStateOf(false) }
     val focus = remember { FocusRequester() }
@@ -225,7 +225,7 @@ private fun parseColor(hex: String): Color =
 private const val PIN_MAX = 8
 
 @Composable
-private fun PinScreen(state: Screen.Pin, onSubmit: (String) -> Unit) {
+internal fun PinScreen(state: Screen.Pin, onSubmit: (String) -> Unit) {
     var pin by remember(state.profile.id, state.error) { mutableStateOf("") }
     val focus = remember { FocusRequester() }
     LaunchedEffect(state.error, state.busy) { if (!state.busy) focus.requestFocus() }
