@@ -1,6 +1,7 @@
 package com.sirterrific.tubetamer.ui
 
 import android.content.res.Configuration
+import android.view.ContextThemeWrapper
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
@@ -40,7 +41,9 @@ fun ServerLanguage(serverLocale: String?, content: @Composable () -> Unit) {
     val baseConfig = LocalConfiguration.current
     val (context, config) = remember(base, baseConfig, lang) {
         val c = Configuration(baseConfig).apply { setLocale(Locale.forLanguageTag(lang)) }
-        base.createConfigurationContext(c) to c
+        // A wrapper, not createConfigurationContext(): the Activity must stay reachable
+        // through the context chain (activity results, back dispatcher, window).
+        ContextThemeWrapper(base, 0).apply { applyOverrideConfiguration(c) } to c
     }
     CompositionLocalProvider(LocalContext provides context, LocalConfiguration provides config) {
         content()
