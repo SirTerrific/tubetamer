@@ -56,6 +56,12 @@ local_playback:
   retention_days: 1              # auto-delete video files after N days (0 = keep forever)
 ```
 
+### Android TV app
+
+The TV app needs no extra setting, but it only plays videos the server has downloaded: turn on `local_playback.enabled`, otherwise the TV shows "Local playback is off on the server". Each TV signs in with the child's profile and PIN and gets its own token; list or revoke TVs with `/devices` in Telegram.
+
+The app talks to the server over plain HTTP, like the web app. Anyone on the same network could read a TV's token, so keep TubeTamer on your home network. If you expose it outside, put it behind an HTTPS reverse proxy and enter the `https://` address in the TV app.
+
 ### Language and Time Format
 
 Language and time display are configured under the `app:` section:

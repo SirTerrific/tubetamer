@@ -81,8 +81,16 @@ The Android TV app (`android-tv/`) talks to these JSON routes. Video cards carry
 | `GET /api/v1/me` | bearer | Profile behind the token |
 | `GET /api/v1/home?limit=` | bearer | First page of each non-empty row (`active`, `edu`, `fun`, `shorts` when enabled) and the allowed channels |
 | `GET /api/v1/catalog?row=&channel=&offset=&limit=` | bearer | Next pages of a row, or of one channel with `row=all&channel=<id>` |
+| `GET /api/v1/search?q=` | bearer, 10/min | YouTube search through `run_search` (word filters, blocked channels, Shorts setting). Each result adds `status`: `approved`, `pending`, `denied` or `""` |
+| `POST /api/v1/requests` | bearer, 10/min | Ask for a video through `submit_request`: allowlisted channel auto-approves (and queues the download), blocked channel auto-denies, otherwise the parent is notified. 400 `invalid`, 502 `fetch_failed` |
+| `GET /api/v1/requests` | bearer | The profile's pending, denied and individually approved videos, newest first (max 50) |
+| `GET /api/v1/time` | bearer | Category or daily budgets, schedule window and next start time |
+| `POST /api/v1/videos/{id}/play` | bearer | 200 `ready` with stream and subtitle paths, `resume_seconds`, `remaining_sec`; 202 `pending`/`downloading` (poll `/api/download-status/{id}`); 403 `not_approved`, `time_up`, `outside_schedule`; 404; 409 `local_playback_disabled` |
+| `POST /api/v1/heartbeat` | bearer | Watch time (`seconds`, max 60) and position, same accounting as `/api/watch-heartbeat`. 409 `not_watching` when `play` was not called for this token |
 
-Rows reuse the web builders (`build_active_row`, `build_catalog`, `build_shorts_catalog`), so denied videos, word filters and the Shorts setting apply exactly as on the web home page.
+Rows reuse the web builders (`build_active_row`, `build_catalog`, `build_shorts_catalog`), so denied videos, word filters and the Shorts setting apply exactly as on the web home page. Search and requests share `run_search` and `submit_request` with the web `/search` and `/request` routes. `/api/stream/{id}`, `/api/subs/{id}/{lang}` and `/api/download-status/{id}` accept the same bearer.
+
+Security: tokens are only ever compared as SHA-256 hashes and are never logged; every route reads data through the token's `ChildStore`, so one child never sees another's videos, requests or watch time. The parent lists and revokes TVs with `/devices` in Telegram. Traffic is plain HTTP like the web app, so the token can be read by anyone on the same network: keep TubeTamer on the home LAN, or put it behind an HTTPS reverse proxy before exposing it.
 
 ## Channel and catalog cache (`web/cache.py`)
 

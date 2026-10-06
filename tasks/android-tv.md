@@ -57,8 +57,8 @@ Objectif : une API JSON stable sous `/api/v1/`, sans toucher aux routes HTML exi
 - [x] **A11. Heartbeat :** accepter le Bearer sur `/api/watch-heartbeat`. Réponse claire quand le budget est épuisé (l'app arrête la lecture).
 - [x] **A12. Miniatures :** servies par le serveur (`/thumb/...`). Vérifier l'accès avec le Bearer.
 - [x] **A13. Parent :** commande Telegram (ou option) pour lister et révoquer les appareils connectés.
-- [ ] **A14. Tests pytest** pour chaque endpoint v1 : auth, mauvais PIN, jeton révoqué, profil isolé, limites de temps. Mettre à jour `docs/` et les pages OpenWiki concernées.
-- [ ] **A15. Sécurité :** les jetons ne sont jamais journalisés. Les endpoints v1 respectent le profil du jeton (un enfant ne lit jamais les données d'un autre). Message clair sur l'usage en réseau local (HTTP en clair).
+- [x] **A14. Tests pytest** pour chaque endpoint v1 : auth, mauvais PIN, jeton révoqué, profil isolé, limites de temps. Mettre à jour `docs/` et les pages OpenWiki concernées.
+- [x] **A15. Sécurité :** les jetons ne sont jamais journalisés. Les endpoints v1 respectent le profil du jeton (un enfant ne lit jamais les données d'un autre). Message clair sur l'usage en réseau local (HTTP en clair).
 
 ## Partie B : application Android TV
 
