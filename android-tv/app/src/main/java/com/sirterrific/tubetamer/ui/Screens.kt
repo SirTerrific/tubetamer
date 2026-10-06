@@ -68,7 +68,7 @@ fun AppRoot(vm: AppViewModel, screen: Screen) {
                 BackHandler(enabled = !screen.busy) { vm.backToProfiles() }
                 PinScreen(screen, onSubmit = { vm.submitPin(screen.profile, it) })
             }
-            is Screen.Home -> HomeScreen(screen.profile, vm::signOut)
+            is Screen.Home -> HomeScreen(screen.profile, onSwitchProfile = vm::signOut, onExpired = vm::sessionExpired)
         }
     }
 }
@@ -92,7 +92,7 @@ private fun Title(text: String) {
 }
 
 @Composable
-private fun ErrorLine(e: UiError?) {
+internal fun ErrorLine(e: UiError?) {
     if (e != null) {
         Spacer(Modifier.height(12.dp))
         Text(errorText(e), color = MaterialTheme.colorScheme.error, textAlign = TextAlign.Center)
@@ -201,7 +201,7 @@ private fun ProfilesScreen(profiles: List<Profile>, onPick: (Profile) -> Unit, o
 }
 
 @Composable
-private fun Avatar(p: Profile, sizeDp: Int) {
+internal fun Avatar(p: Profile, sizeDp: Int) {
     Box(
         Modifier
             .size(sizeDp.dp)
@@ -276,19 +276,3 @@ private fun PinScreen(state: Screen.Pin, onSubmit: (String) -> Unit) {
 private const val DEL = "del"
 private const val OK = "ok"
 
-@Composable
-private fun HomeScreen(profile: Profile, onSignOut: () -> Unit) {
-    val focus = remember { FocusRequester() }
-    LaunchedEffect(Unit) { focus.requestFocus() }
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Avatar(profile, 72)
-        Spacer(Modifier.height(12.dp))
-        Title(stringResource(R.string.home_hello, profile.displayName))
-        Spacer(Modifier.height(8.dp))
-        Text(stringResource(R.string.home_subtitle), color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Spacer(Modifier.height(32.dp))
-        OutlinedButton(onClick = onSignOut, modifier = Modifier.focusRequester(focus)) {
-            Text(stringResource(R.string.switch_profile))
-        }
-    }
-}

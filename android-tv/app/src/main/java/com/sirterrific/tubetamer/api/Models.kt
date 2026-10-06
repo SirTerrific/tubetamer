@@ -46,3 +46,55 @@ data class MeResponse(val profile: Profile)
 
 @Serializable
 internal data class ErrorBody(val error: String = "")
+
+/** One video as the TV shows it. [thumbnail] is a server path, resolve it against the base URL. */
+@Serializable
+data class VideoCard(
+    @SerialName("video_id") val videoId: String,
+    val title: String = "",
+    @SerialName("channel_name") val channelName: String = "",
+    @SerialName("channel_id") val channelId: String = "",
+    val duration: Int = 0,
+    val category: String = "fun",
+    @SerialName("is_short") val isShort: Boolean = false,
+    @SerialName("progress_seconds") val progressSeconds: Int = 0,
+    val thumbnail: String = "",
+)
+
+/** Row ids sent by the server, in display order. Unknown ids are shown with a generic title. */
+object RowId {
+    const val ACTIVE = "active"
+    const val EDU = "edu"
+    const val FUN = "fun"
+    const val SHORTS = "shorts"
+    const val ALL = "all"
+}
+
+@Serializable
+data class HomeRow(
+    val id: String,
+    val videos: List<VideoCard> = emptyList(),
+    val total: Int = 0,
+    @SerialName("has_more") val hasMore: Boolean = false,
+)
+
+@Serializable
+data class ChannelInfo(
+    val id: String,
+    val name: String,
+    @SerialName("video_count") val videoCount: Int = 0,
+)
+
+@Serializable
+data class HomeResponse(
+    val rows: List<HomeRow> = emptyList(),
+    val channels: List<ChannelInfo> = emptyList(),
+    @SerialName("shorts_enabled") val shortsEnabled: Boolean = false,
+)
+
+@Serializable
+data class CatalogPage(
+    val videos: List<VideoCard> = emptyList(),
+    val total: Int = 0,
+    @SerialName("has_more") val hasMore: Boolean = false,
+)

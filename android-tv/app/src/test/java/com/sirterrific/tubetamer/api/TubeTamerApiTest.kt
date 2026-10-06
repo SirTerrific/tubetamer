@@ -82,4 +82,35 @@ class TubeTamerApiTest {
         api.profiles(server.url("/tubetamer/").toString())
         assertEquals("/tubetamer/api/v1/profiles", server.takeRequest().url.encodedPath)
     }
+
+    @Test fun homeParsesRowsAndSendsBearer() = runBlocking {
+        reply(200, """{"rows":[{"id":"edu","videos":[{"video_id":"abc12345678","title":"T","duration":61,
+            "category":"edu","is_short":false,"progress_seconds":30,"thumbnail":"/thumb/abc12345678"}],
+            "total":30,"has_more":true}],"channels":[{"id":"UCx","name":"Sci","video_count":3}],"shorts_enabled":false}""")
+        val r = (api.home(base, "secret") as ApiResult.Ok).value
+        val row = r.rows.single()
+        assertEquals("edu", row.id)
+        assertTrue(row.hasMore)
+        assertEquals(30, row.videos.single().progressSeconds)
+        assertEquals("Sci", r.channels.single().name)
+        val req = server.takeRequest()
+        assertEquals("Bearer secret", req.headers["Authorization"])
+        assertEquals("/api/v1/home", req.url.encodedPath)
+    }
+
+    @Test fun catalogBuildsQuery() = runBlocking {
+        reply(200, """{"videos":[],"total":0,"has_more":false}""")
+        api.catalog(server.url("/tubetamer/").toString(), "t", RowId.ALL, offset = 24, channel = "UC a&b")
+        val url = server.takeRequest().url
+        assertEquals("/tubetamer/api/v1/catalog", url.encodedPath)
+        assertEquals("all", url.queryParameter("row"))
+        assertEquals("24", url.queryParameter("offset"))
+        assertEquals("UC a&b", url.queryParameter("channel"))
+    }
+
+    @Test fun expiredTokenIs401() = runBlocking {
+        reply(401, """{"error":"unauthorized"}""")
+        val r = api.home(base, "old") as ApiResult.HttpError
+        assertEquals(401, r.code)
+    }
 }

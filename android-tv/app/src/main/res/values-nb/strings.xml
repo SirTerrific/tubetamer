@@ -1,4 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="home_subtitle">Godkjente videoer, strømmet fra serveren din.</string>
+
+    <string name="row_active">Dine videoer</string>
+    <string name="row_edu">Lærerikt</string>
+    <string name="row_fun">Underholdning</string>
+    <string name="row_shorts">Shorts</string>
+    <string name="row_other">Videoer</string>
+    <string name="row_channels">Kanaler</string>
+    <string name="home_empty">Ingen videoer ennå. Be en forelder om å godkjenne noen.</string>
+    <string name="channel_videos">%1$d videoer</string>
+    <string name="channel_empty">Ingen videoer for denne kanalen ennå.</string>
 </resources>

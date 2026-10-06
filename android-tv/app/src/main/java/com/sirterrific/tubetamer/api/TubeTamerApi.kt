@@ -39,6 +39,32 @@ class TubeTamerApi(
     suspend fun me(baseUrl: String, token: String): ApiResult<MeResponse> =
         execute(request(baseUrl, "api/v1/me", token).get().build()) { json.decodeFromString(MeResponse.serializer(), it) }
 
+    suspend fun home(baseUrl: String, token: String, limit: Int = PAGE_SIZE): ApiResult<HomeResponse> =
+        execute(request(baseUrl, "api/v1/home?limit=$limit", token).get().build()) {
+            json.decodeFromString(HomeResponse.serializer(), it)
+        }
+
+    /** Next page of a home row, or of one channel when [channel] is set (with row [RowId.ALL]). */
+    suspend fun catalog(
+        baseUrl: String,
+        token: String,
+        row: String,
+        offset: Int,
+        channel: String = "",
+        limit: Int = PAGE_SIZE,
+    ): ApiResult<CatalogPage> {
+        val url = baseUrl.toHttpUrl().newBuilder()
+            .addPathSegments("api/v1/catalog")
+            .addQueryParameter("row", row)
+            .addQueryParameter("offset", offset.toString())
+            .addQueryParameter("limit", limit.toString())
+            .apply { if (channel.isNotEmpty()) addQueryParameter("channel", channel) }
+            .build()
+        val req = Request.Builder().url(url).header("Accept", "application/json")
+            .header("Authorization", "Bearer $token").get().build()
+        return execute(req) { json.decodeFromString(CatalogPage.serializer(), it) }
+    }
+
     private fun request(baseUrl: String, path: String, token: String?): Request.Builder {
         val url = baseUrl.toHttpUrl().resolve(path) ?: throw IllegalArgumentException("Bad path $path")
         return Request.Builder().url(url).header("Accept", "application/json").apply {
@@ -75,6 +101,7 @@ class TubeTamerApi(
             explicitNulls = false
             coerceInputValues = true
         }
+        const val PAGE_SIZE = 24
         private val JSON_TYPE = "application/json".toMediaType()
         private const val EMPTY_JSON = "{}"
     }

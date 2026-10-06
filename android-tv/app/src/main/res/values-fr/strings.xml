@@ -26,4 +26,14 @@
     <string name="err_wrong_pin">Code PIN incorrect.</string>
     <string name="err_too_many_tries">Trop d\'essais. Attendez une minute et réessayez.</string>
     <string name="err_server">Le serveur a renvoyé une erreur. Réessayez.</string>
+
+    <string name="row_active">Tes vidéos</string>
+    <string name="row_edu">Éducatif</string>
+    <string name="row_fun">Divertissement</string>
+    <string name="row_shorts">Shorts</string>
+    <string name="row_other">Vidéos</string>
+    <string name="row_channels">Chaînes</string>
+    <string name="home_empty">Aucune vidéo pour l\'instant. Demande à un parent d\'en approuver.</string>
+    <string name="channel_videos">%1$d vidéos</string>
+    <string name="channel_empty">Aucune vidéo pour cette chaîne pour l\'instant.</string>
 </resources>

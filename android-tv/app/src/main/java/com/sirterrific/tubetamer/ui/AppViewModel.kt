@@ -52,7 +52,10 @@ class AppViewModel(private val c: AppContainer) : ViewModel() {
                 return@launch
             }
             when (val me = c.api.me(url, s.token)) {
-                is ApiResult.Ok -> _screen.value = Screen.Home(me.value.profile)
+                is ApiResult.Ok -> {
+                    c.credentials.set(url, s.token)
+                    _screen.value = Screen.Home(me.value.profile)
+                }
                 is ApiResult.HttpError ->
                     if (me.code == 401) {
                         c.sessions.signOut()
@@ -111,7 +114,10 @@ class AppViewModel(private val c: AppContainer) : ViewModel() {
         _screen.value = Screen.Pin(profile, busy = true)
         viewModelScope.launch {
             when (val r = c.auth.signIn(profile, pin)) {
-                is ApiResult.Ok -> _screen.value = Screen.Home(r.value.profile)
+                is ApiResult.Ok -> {
+                    c.sessions.current().serverUrl?.let { c.credentials.set(it, r.value.token) }
+                    _screen.value = Screen.Home(r.value.profile)
+                }
                 is ApiResult.HttpError -> _screen.value = Screen.Pin(
                     profile,
                     when (r.code) {
@@ -132,8 +138,18 @@ class AppViewModel(private val c: AppContainer) : ViewModel() {
 
     fun signOut() {
         _screen.value = Screen.Loading
+        c.credentials.clear()
         viewModelScope.launch {
             c.auth.signOut()
+            c.sessions.current().serverUrl?.let { loadProfiles(it) } ?: run { _screen.value = Screen.ServerSetup() }
+        }
+    }
+
+    /** The server rejected our token (revoked by the parent, or expired): back to the picker. */
+    fun sessionExpired() {
+        c.credentials.clear()
+        viewModelScope.launch {
+            c.sessions.signOut()
             c.sessions.current().serverUrl?.let { loadProfiles(it) } ?: run { _screen.value = Screen.ServerSetup() }
         }
     }

@@ -28,4 +28,14 @@
     <string name="err_wrong_pin">Wrong PIN.</string>
     <string name="err_too_many_tries">Too many tries. Wait a minute and try again.</string>
     <string name="err_server">The server returned an error. Try again.</string>
+
+    <string name="row_active">Your videos</string>
+    <string name="row_edu">Educational</string>
+    <string name="row_fun">Entertainment</string>
+    <string name="row_shorts">Shorts</string>
+    <string name="row_other">Videos</string>
+    <string name="row_channels">Channels</string>
+    <string name="home_empty">No videos yet. Ask a parent to approve some.</string>
+    <string name="channel_videos">%1$d videos</string>
+    <string name="channel_empty">No videos for this channel yet.</string>
 </resources>
