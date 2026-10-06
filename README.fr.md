@@ -104,6 +104,7 @@ Toutes les fonctionnalités d'origine (profils multi-enfants, approbations Teleg
 - **YouTube Shorts** : une rangée dédiée aux Shorts avec miniatures verticales et lecteur 9:16
 - **Aperçu des miniatures** : survol ou défilement pour faire défiler plusieurs miniatures avant de demander
 - **Thème sombre** : reposant pour les yeux, pensé pour les tablettes
+- **Application Android TV** : une application TubeTamer native pour la télé (testée sur NVIDIA Shield) : profil et PIN, rangées et chaînes, recherche et demandes, lecture plein écran depuis votre serveur avec les mêmes limites de temps. Distincte de l'application YouTube, installée sans ADB. Voir le [guide Android TV](docs/android-tv.md)
 
 ### Pour les parents
 - **Approbation par Telegram** : approuver ou refuser de n'importe où, en un geste
@@ -124,6 +125,7 @@ Toutes les fonctionnalités d'origine (profils multi-enfants, approbations Teleg
 - **Chaînes de départ** : liste de chaînes adaptées aux enfants (éducatives et amusantes) à importer au premier démarrage
 - **Notifications de mise à jour** : alerte Telegram automatique quand une nouvelle version est disponible sur GitHub
 - **Verrouillage par PIN** : un code PIN optionnel pour que seul votre enfant accède à l'interface web depuis le bon appareil
+- **Télés connectées** : `/devices` liste les télés connectées à l'application TV et révoque n'importe laquelle en un geste
 
 ### Confidentialité et sécurité
 - **100 % auto-hébergé** : fonctionne entièrement sur votre propre matériel, dans votre réseau local. Pas de service cloud, pas de compte tiers, pas d'abonnement
@@ -189,6 +191,7 @@ La documentation détaillée est rédigée en anglais.
 
 - **[Guide d'installation](docs/setup.md)** : de la création du bot Telegram au verrouillage de l'appareil
 - [Référence de configuration](docs/configuration.md) : options de config.yaml, variables d'environnement, valeurs par défaut
+- [Application Android TV](docs/android-tv.md) : compilation, installation sur la télé sans ADB, premier démarrage, dépannage
 - [Guide des langues](i18n/locales/README.md) : fonctionnement des traductions et ajout d'une langue
 - [Commandes Telegram](docs/telegram-commands.md) : liste complète des commandes du bot parent
 - [Dépannage](docs/troubleshooting.md) : problèmes courants et solutions

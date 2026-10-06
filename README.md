@@ -102,6 +102,7 @@ All the original features (multi-child profiles, Telegram approvals, time limits
 - **YouTube Shorts** — dedicated Shorts row with portrait thumbnails and a 9:16 player
 - **Thumbnail previews** — hover or scroll to cycle through multiple thumbnails before requesting
 - **Dark theme** — easy on the eyes, designed for tablets
+- **Android TV app** — a native TubeTamer app for the TV (tested on NVIDIA Shield): profile + PIN, rows and channels, search and requests, full-screen playback from your server with the same time limits. Separate from the YouTube app, installed without ADB. See the [Android TV guide](docs/android-tv.md)
 
 ### For Parents
 - **Telegram approval** — approve/deny from anywhere with one tap
@@ -122,6 +123,7 @@ All the original features (multi-child profiles, Telegram approvals, time limits
 - **Starter channels** — curated list of kid-friendly channels (edu + fun) to import on first boot
 - **Update notifications** — automatic Telegram alert when a new version is available on GitHub
 - **PIN lock** — optional PIN gate so only your kid can access the web UI on the right device
+- **Connected TVs** — `/devices` lists the TVs signed in to the TV app and revokes any of them with one tap
 
 ### Privacy & Security
 - **100% self-hosted** — runs entirely on your own hardware inside your home network. No cloud service, no third-party accounts, no subscriptions
@@ -184,6 +186,7 @@ Block `youtube.com` and `googlevideo.com` in your DNS resolver (Pi-hole, AdGuard
 
 - **[Setup Guide](docs/setup.md)** — full walkthrough from Telegram bot creation to device lockdown
 - [Configuration Reference](docs/configuration.md) — config.yaml options, environment variables, defaults
+- [Android TV App](docs/android-tv.md) — build, install on the TV without ADB, first start, troubleshooting
 - [Locale Guide](i18n/locales/README.md) — how translations work and how to add a new language
 - [Telegram Commands](docs/telegram-commands.md) — full command list for the parent bot
 - [Troubleshooting](docs/troubleshooting.md) — common issues and fixes

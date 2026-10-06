@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+**Added**
+- Android TV app (`android-tv/`): native Kotlin/Compose app for TV boxes such as the NVIDIA Shield. The child picks a profile, types the PIN with the remote, browses the rows and channels, searches, asks for videos and follows "My requests". Videos play full screen from the server (Media3), with subtitles, resume position, the remaining-time badge and the same budget and schedule rules as the web app. Menus follow the server language. See [docs/android-tv.md](docs/android-tv.md)
+- JSON API for native clients under `/api/v1` (login with profile + PIN for a bearer token, home rows, catalog pages, search, requests, play, heartbeat, time). Tokens are stored as SHA-256 hashes, never logged, and scoped to their profile; `/api/stream`, `/api/subs` and `/api/download-status` accept them too
+- `/devices` Telegram command: lists signed-in TVs and revokes them with a button
+- `/app/tubetamer.apk` serves the TV app from `web.tv_apk` (`BRG_TV_APK`, default `db/tubetamer.apk`) without a session, for installing it on the TV with Downloader
+
+**Changed**
+- Search and video requests run through shared helpers used by both the web routes and the TV API; web behaviour is unchanged
+
 ## v1.3.3 - 2026-10-03
 
 **Fixed**

@@ -114,7 +114,7 @@ Conséquences pour le projet :
 ## Partie C : documentation et livraison
 
 - [x] **C1.** `docs/android-tv.md` : installation de l'APK, configuration du serveur, dépannage.
-- [ ] **C2.** Mise à jour de `README.md` et `README.fr.md` (section Android TV) et du `CHANGELOG.md`.
+- [x] **C2.** Mise à jour de `README.md` et `README.fr.md` (section Android TV) et du `CHANGELOG.md`.
 - [ ] **C3.** Release avec bump de version (suivre la procédure de `build-test-release`).
 
 ## Hors périmètre (à ne pas faire)
