@@ -39,13 +39,13 @@ Appareil cible : **NVIDIA Shield** (Android TV, 2017 ou 2019). Identifiant de pa
 
 Objectif : une API JSON stable sous `/api/v1/`, sans toucher aux routes HTML existantes.
 
-- [ ] **A1. Auth par jeton pour clients natifs.**
+- [x] **A1. Auth par jeton pour clients natifs.**
   - `POST /api/v1/auth/login` : `{profile_id, pin}` → `{token, expires_at, profile}`.
   - Jeton aléatoire stocké **haché** en base (nouvelle table `device_tokens` : profil, appareil, créé le, dernier usage, révoqué).
   - Middleware : accepter `Authorization: Bearer <jeton>` en plus du cookie. Pas de CSRF pour le Bearer (pas de cookie, pas de risque CSRF).
   - Rate limiting sur le login (anti force brute du PIN), comme le reste de l'app (slowapi).
   - `POST /api/v1/auth/logout` : révoque le jeton.
-- [ ] **A2. `GET /api/v1/profiles`** : liste des profils (id, nom, avatar), sans PIN. Utilisable avant authentification.
+- [x] **A2. `GET /api/v1/profiles`** : liste des profils (id, nom, avatar), sans PIN. Utilisable avant authentification.
 - [ ] **A3. `GET /api/v1/home`** : rangées de l'accueil (récents, par catégorie, chaînes, Shorts si activés), avec URLs de miniatures, durée, statut de téléchargement.
 - [ ] **A4. `GET /api/v1/search?q=`** : JSON. Réutiliser la logique de `web/routers/search.py` (filtres de mots, chaînes bloquées, Shorts, historique de recherche) en la factorisant, pas en la dupliquant.
 - [ ] **A5. `POST /api/v1/requests`** : demander une vidéo (déclenche la notification Telegram). Réutiliser la logique de `POST /request`.
@@ -64,9 +64,9 @@ Objectif : une API JSON stable sous `/api/v1/`, sans toucher aux routes HTML exi
 
 Pile : Kotlin, Jetpack Compose for TV (`androidx.tv`), Media3/ExoPlayer, Retrofit ou Ktor + kotlinx.serialization, Coil (images), Hilt (injection). Cible : NVIDIA Shield (Android TV 11, API 30). `minSdk` 26, `targetSdk` 34 ou plus récent. La Shield décode le H.264 en matériel, donc les MP4 du serveur (360p à 1080p) se lisent sans transcodage.
 
-- [ ] **B1. Projet.** Nouveau dossier `android-tv/` dans le dépôt (ou dépôt séparé, à décider). Manifest Leanback : `android.software.leanback`, `LEANBACK_LAUNCHER`, bannière 320x180, `touchscreen` non requis.
-- [ ] **B2. Configuration serveur.** Écran de premier lancement : saisie de l'adresse du serveur (ex. `http://192.168.x.x:8080`), test de connexion. Enregistrée en local. Autoriser le HTTP en clair uniquement vers le réseau local (`network_security_config`).
-- [ ] **B3. Choix du profil + PIN.** Grille de profils avec avatars, pavé PIN adapté à la télécommande (D-pad). Jeton stocké dans `EncryptedSharedPreferences` ou DataStore chiffré. Déconnexion simple.
+- [x] **B1. Projet.** Nouveau dossier `android-tv/` dans le dépôt (ou dépôt séparé, à décider). Manifest Leanback : `android.software.leanback`, `LEANBACK_LAUNCHER`, bannière 320x180, `touchscreen` non requis.
+- [x] **B2. Configuration serveur.** Écran de premier lancement : saisie de l'adresse du serveur (ex. `http://192.168.x.x:8080`), test de connexion. Enregistrée en local. Autoriser le HTTP en clair uniquement vers le réseau local (`network_security_config`).
+- [x] **B3. Choix du profil + PIN.** Grille de profils avec avatars, pavé PIN adapté à la télécommande (D-pad). Jeton stocké dans DataStore, chiffré par une clé AES-GCM du Keystore Android (EncryptedSharedPreferences est déprécié). Déconnexion simple, qui révoque le jeton côté serveur.
 - [ ] **B4. Accueil.** Rangées horizontales (catalogue par catégorie, chaînes, Shorts si activés, reprise de lecture), focus et navigation D-pad soignés, miniatures via Coil avec cache mémoire/disque **borné**.
 - [ ] **B5. Recherche.** Champ avec clavier à l'écran et saisie vocale. Résultats avec bouton **Demander**. Écran de confirmation, puis état « en attente d'approbation » avec polling de `/api/v1/requests`.
 - [ ] **B6. Mes demandes.** Liste avec statuts, mise à jour automatique.

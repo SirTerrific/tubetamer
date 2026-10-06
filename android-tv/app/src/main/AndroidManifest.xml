@@ -8,6 +8,7 @@
     <uses-feature android:name="android.software.leanback" android:required="true" />
 
     <application
+        android:name=".TubeTamerApp"
         android:allowBackup="false"
         android:banner="@drawable/banner"
         android:icon="@mipmap/ic_launcher"

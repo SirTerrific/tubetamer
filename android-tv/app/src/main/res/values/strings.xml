@@ -3,4 +3,29 @@
     <string name="app_name" translatable="false">TubeTamer</string>
     <string name="home_title">TubeTamer</string>
     <string name="home_subtitle">Approved videos, streamed from your server.</string>
+    <string name="home_hello">Hi %1$s!</string>
+    <string name="loading">Loading…</string>
+    <string name="ok">OK</string>
+    <string name="retry">Retry</string>
+    <string name="change_server">Change server</string>
+    <string name="switch_profile">Switch profile</string>
+
+    <string name="setup_title">Connect to your TubeTamer server</string>
+    <string name="setup_hint">Enter the address shown in your browser when you open TubeTamer, for example 192.168.1.10:8080</string>
+    <string name="setup_placeholder">192.168.1.10:8080</string>
+    <string name="setup_connect">Connect</string>
+    <string name="setup_checking">Checking…</string>
+
+    <string name="offline_title">Can\'t reach the server</string>
+    <string name="profiles_title">Who\'s watching?</string>
+    <string name="profiles_empty">No profiles yet. Create one from the Telegram bot.</string>
+    <string name="pin_title">PIN for %1$s</string>
+
+    <string name="err_bad_address">That address doesn\'t look right.</string>
+    <string name="err_unreachable">No answer from the server. Check the address and that the server is running.</string>
+    <string name="err_not_tubetamer">This address is not a TubeTamer server.</string>
+    <string name="err_too_old">This TubeTamer server is too old for the TV app. Update it first.</string>
+    <string name="err_wrong_pin">Wrong PIN.</string>
+    <string name="err_too_many_tries">Too many tries. Wait a minute and try again.</string>
+    <string name="err_server">The server returned an error. Try again.</string>
 </resources>

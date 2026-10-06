@@ -1,4 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="home_subtitle">Vidéos approuvées, diffusées depuis votre serveur.</string>
+    <string name="home_hello">Salut %1$s !</string>
+    <string name="loading">Chargement…</string>
+    <string name="ok">OK</string>
+    <string name="retry">Réessayer</string>
+    <string name="change_server">Changer de serveur</string>
+    <string name="switch_profile">Changer de profil</string>
+
+    <string name="setup_title">Connexion à votre serveur TubeTamer</string>
+    <string name="setup_hint">Saisissez l\'adresse affichée dans votre navigateur quand vous ouvrez TubeTamer, par exemple 192.168.1.10:8080</string>
+    <string name="setup_placeholder">192.168.1.10:8080</string>
+    <string name="setup_connect">Se connecter</string>
+    <string name="setup_checking">Vérification…</string>
+
+    <string name="offline_title">Serveur injoignable</string>
+    <string name="profiles_title">Qui regarde ?</string>
+    <string name="profiles_empty">Aucun profil. Créez-en un depuis le bot Telegram.</string>
+    <string name="pin_title">Code PIN de %1$s</string>
+
+    <string name="err_bad_address">Cette adresse ne semble pas valide.</string>
+    <string name="err_unreachable">Le serveur ne répond pas. Vérifiez l\'adresse et que le serveur est démarré.</string>
+    <string name="err_not_tubetamer">Cette adresse n\'est pas un serveur TubeTamer.</string>
+    <string name="err_too_old">Ce serveur TubeTamer est trop ancien pour l\'app TV. Mettez-le à jour.</string>
+    <string name="err_wrong_pin">Code PIN incorrect.</string>
+    <string name="err_too_many_tries">Trop d\'essais. Attendez une minute et réessayez.</string>
+    <string name="err_server">Le serveur a renvoyé une erreur. Réessayez.</string>
 </resources>
