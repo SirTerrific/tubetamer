@@ -20,6 +20,38 @@ from i18n import category_label
 router = APIRouter()
 
 
+async def get_or_auto_approve(request: Request, cs, video_id: str) -> dict | None:
+    """The profile's video row; a video not in the DB yet is auto-approved when
+    its channel is allowlisted (catalog videos come from the channel cache)."""
+    video = cs.get_video(video_id)
+    if video:
+        return video
+    state = request.app.state
+    metadata = await get_extractor(request).extract_metadata(video_id)
+    if not metadata:
+        return None
+    if not cs.is_channel_allowed(metadata['channel_name'],
+                                 channel_id=metadata.get('channel_id') or ""):
+        return None
+    cs.add_video(
+        video_id=metadata['video_id'],
+        title=metadata['title'],
+        channel_name=metadata['channel_name'],
+        thumbnail_url=metadata.get('thumbnail_url'),
+        duration=metadata.get('duration'),
+        channel_id=metadata.get('channel_id'),
+        is_short=metadata.get('is_short', False),
+        yt_view_count=metadata.get('view_count'),
+    )
+    cs.update_status(video_id, "approved")
+    invalidate_catalog_cache(state)
+    # Trigger local download if enabled
+    dl_cb = getattr(state, "download_on_approve", None)
+    if dl_cb:
+        await dl_cb(video_id, cs.profile_id)
+    return cs.get_video(video_id)
+
+
 @router.get("/pending/{video_id}", response_class=HTMLResponse)
 async def pending_video(request: Request, video_id: str):
     """Waiting screen with polling."""
@@ -56,34 +88,7 @@ async def watch_video(request: Request, video_id: str):
     state = request.app.state
     wl_cfg = state.wl_config
     cs = get_child_store(request)
-    video = cs.get_video(video_id)
-
-    if not video:
-        # Video not in DB -- auto-approve if channel is allowlisted
-        extractor = get_extractor(request)
-        metadata = await extractor.extract_metadata(video_id)
-        if not metadata:
-            return RedirectResponse(url="/", status_code=303)
-        if not cs.is_channel_allowed(metadata['channel_name'],
-                                     channel_id=metadata.get('channel_id') or ""):
-            return RedirectResponse(url="/", status_code=303)
-        cs.add_video(
-            video_id=metadata['video_id'],
-            title=metadata['title'],
-            channel_name=metadata['channel_name'],
-            thumbnail_url=metadata.get('thumbnail_url'),
-            duration=metadata.get('duration'),
-            channel_id=metadata.get('channel_id'),
-            is_short=metadata.get('is_short', False),
-            yt_view_count=metadata.get('view_count'),
-        )
-        cs.update_status(video_id, "approved")
-        invalidate_catalog_cache(state)
-        # Trigger local download if enabled
-        dl_cb = getattr(state, "download_on_approve", None)
-        if dl_cb:
-            await dl_cb(video_id, cs.profile_id)
-        video = cs.get_video(video_id)
+    video = await get_or_auto_approve(request, cs, video_id)
 
     if not video or video["status"] != "approved":
         return RedirectResponse(url="/", status_code=303)
@@ -209,18 +214,26 @@ async def watch_heartbeat(request: Request, body: HeartbeatRequest):
     if request.session.get("watching") != vid:
         return JSONResponse({"error": "not_watching"}, status_code=400)
 
+    body_, status = await process_heartbeat(request, vid, seconds, body.position_seconds)
+    return JSONResponse(body_, status_code=status)
+
+
+async def process_heartbeat(request: Request, vid: str, seconds: int,
+                            position_seconds: int | None) -> tuple[dict, int]:
+    """Shared heartbeat logic (web and native clients), once the caller has
+    checked that `vid` is the video being watched. Returns (body, status)."""
     # Verify the video exists and is approved before accepting heartbeat
     state = request.app.state
     wl_cfg = state.wl_config
     cs = get_child_store(request)
     video = cs.get_video(vid)
     if not video or video["status"] != "approved":
-        return JSONResponse({"error": "not_approved"}, status_code=400)
+        return {"error": "not_approved"}, 400
 
     # Check schedule window
     schedule_info = get_schedule_info(store=cs, wl_cfg=wl_cfg)
     if schedule_info and not schedule_info["allowed"]:
-        return JSONResponse({"error": "outside_schedule"}, status_code=403)
+        return {"error": "outside_schedule"}, 403
 
     # Clamp seconds to 0 if heartbeat arrives faster than expected interval
     now = time.monotonic()
@@ -241,8 +254,8 @@ async def watch_heartbeat(request: Request, body: HeartbeatRequest):
 
     if seconds > 0:
         cs.record_watch_seconds(vid, seconds)
-    if body.position_seconds is not None:
-        cs.update_playback_position(vid, body.position_seconds)
+    if position_seconds is not None:
+        cs.update_playback_position(vid, position_seconds)
 
     # Per-category time limit check
     video_cat = resolve_video_category(video, store=cs) if video else "fun"
@@ -261,4 +274,4 @@ async def watch_heartbeat(request: Request, body: HeartbeatRequest):
         if time_info and time_info["exceeded"] and time_limit_cb:
             await time_limit_cb(time_info["used_min"], time_info["limit_min"], "", profile_id)
 
-    return JSONResponse({"remaining": remaining})
+    return {"remaining": remaining}, 200

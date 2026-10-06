@@ -108,6 +108,56 @@ class TubeTamerApiTest {
         assertEquals("UC a&b", url.queryParameter("channel"))
     }
 
+    @Test fun playReadyParses() = runBlocking {
+        reply(200, """{"status":"ready","video":{"video_id":"abc12345678","title":"T","duration":120},"stream":"/api/stream/abc12345678","subtitles":[{"lang":"en","label":"English","url":"/api/subs/abc12345678/en"}],"resume_seconds":42,"remaining_sec":600}""")
+        val p = (api.play(base, "tok", "abc12345678") as ApiResult.Ok).value
+        assertEquals("ready", p.status)
+        assertEquals(42, p.resumeSeconds)
+        assertEquals("en", p.subtitles.single().lang)
+        val req = server.takeRequest()
+        assertEquals("POST", req.method)
+        assertEquals("/api/v1/videos/abc12345678/play", req.url.encodedPath)
+        assertEquals("Bearer tok", req.headers["Authorization"])
+    }
+
+    @Test fun playDownloadingIsOk() = runBlocking {
+        reply(202, """{"status":"downloading"}""")
+        assertEquals("downloading", (api.play(base, "t", "abc12345678") as ApiResult.Ok).value.status)
+    }
+
+    @Test fun playBlockedBodyIsOk() = runBlocking {
+        reply(403, """{"error":"time_up","category":"fun","next_start":"8:00","available":[{"category":"edu","remaining_min":12.5}]}""")
+        val p = (api.play(base, "t", "abc12345678") as ApiResult.Ok).value
+        assertEquals("time_up", p.error)
+        assertEquals("8:00", p.nextStart)
+        assertEquals("edu", p.available.single().category)
+    }
+
+    @Test fun playExpiredTokenStays401() = runBlocking {
+        reply(401, """{"error":"invalid_token"}""")
+        assertEquals(401, (api.play(base, "t", "abc12345678") as ApiResult.HttpError).code)
+    }
+
+    @Test fun heartbeatSendsBody() = runBlocking {
+        reply(200, """{"remaining":0,"time_up":true}""")
+        val h = (api.heartbeat(base, "t", HeartbeatRequest("abc12345678", 30, 75)) as ApiResult.Ok).value
+        assertTrue(h.timeUp)
+        val body = server.takeRequest().body!!.utf8()
+        assertTrue(body.contains("\"position_seconds\":75"))
+        assertTrue(body.contains("\"seconds\":30"))
+    }
+
+    @Test fun heartbeatOutsideSchedule() = runBlocking {
+        reply(403, """{"error":"outside_schedule"}""")
+        assertEquals("outside_schedule", (api.heartbeat(base, "t", HeartbeatRequest("abc12345678", 30, 0)) as ApiResult.Ok).value.error)
+    }
+
+    @Test fun heartbeatNotWatchingIsHttpError() = runBlocking {
+        reply(409, """{"error":"not_watching"}""")
+        val r = api.heartbeat(base, "t", HeartbeatRequest("abc12345678", 30, 0)) as ApiResult.HttpError
+        assertEquals("not_watching", r.error)
+    }
+
     @Test fun expiredTokenIs401() = runBlocking {
         reply(401, """{"error":"unauthorized"}""")
         val r = api.home(base, "old") as ApiResult.HttpError

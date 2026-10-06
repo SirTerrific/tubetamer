@@ -98,3 +98,48 @@ data class CatalogPage(
     val total: Int = 0,
     @SerialName("has_more") val hasMore: Boolean = false,
 )
+
+@Serializable
+data class SubtitleTrack(val lang: String, val label: String = "", val url: String)
+
+/**
+ * Answer to `POST /api/v1/videos/{id}/play`. One shape for every outcome:
+ * [status] "ready" (200), "pending"/"downloading" (202), or [error] on 403/404/409
+ * ("not_approved", "time_up", "outside_schedule", "not_found", "local_playback_disabled").
+ */
+@Serializable
+data class PlayResponse(
+    val status: String = "",
+    val error: String = "",
+    val video: VideoCard? = null,
+    val stream: String = "",
+    val subtitles: List<SubtitleTrack> = emptyList(),
+    @SerialName("resume_seconds") val resumeSeconds: Int = 0,
+    @SerialName("remaining_sec") val remainingSec: Int = -1,
+    @SerialName("unlock_time") val unlockTime: String = "",
+    @SerialName("next_start") val nextStart: String? = null,
+    val category: String = "",
+    /** On time_up: other categories that still have time today. */
+    val available: List<AvailableCategory> = emptyList(),
+)
+
+@Serializable
+data class AvailableCategory(val category: String, @SerialName("remaining_min") val remainingMin: Double = 0.0)
+
+@Serializable
+data class DownloadStatus(val status: String = "", val percent: Double = 0.0)
+
+@Serializable
+data class HeartbeatRequest(
+    @SerialName("video_id") val videoId: String,
+    val seconds: Int,
+    @SerialName("position_seconds") val positionSeconds: Int,
+)
+
+/** [remaining] is -1 when no limit applies. [error] is set on 403 ("outside_schedule"). */
+@Serializable
+data class HeartbeatResponse(
+    val remaining: Int = -1,
+    @SerialName("time_up") val timeUp: Boolean = false,
+    val error: String = "",
+)

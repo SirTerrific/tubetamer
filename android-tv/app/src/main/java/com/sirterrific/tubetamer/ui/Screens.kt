@@ -50,13 +50,16 @@ import androidx.tv.material3.Text
 import com.sirterrific.tubetamer.R
 import com.sirterrific.tubetamer.api.Profile
 
+internal val ScreenPadding = PaddingValues(horizontal = 58.dp, vertical = 32.dp)
+
 @Composable
 fun AppRoot(vm: AppViewModel, screen: Screen) {
     Box(
         Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(horizontal = 58.dp, vertical = 32.dp),
+            // Home pads itself, so the player can use the whole screen.
+            .then(if (screen is Screen.Home) Modifier else Modifier.padding(ScreenPadding)),
         contentAlignment = Alignment.Center,
     ) {
         when (screen) {

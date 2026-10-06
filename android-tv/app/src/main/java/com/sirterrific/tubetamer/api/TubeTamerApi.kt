@@ -72,12 +72,37 @@ class TubeTamerApi(
         }
     }
 
-    private suspend fun <T> execute(request: Request, decode: (String) -> T): ApiResult<T> =
+    /** Start watching. 202, 403, 404 and 409 carry a [PlayResponse] too, so they come back as [ApiResult.Ok]. */
+    suspend fun play(baseUrl: String, token: String, videoId: String): ApiResult<PlayResponse> =
+        execute(
+            request(baseUrl, "api/v1/videos/$videoId/play", token).post(EMPTY_JSON.toRequestBody(JSON_TYPE)).build(),
+            bodyOn = setOf(403, 404, 409),
+        ) { json.decodeFromString(PlayResponse.serializer(), it) }
+
+    suspend fun downloadStatus(baseUrl: String, token: String, videoId: String): ApiResult<DownloadStatus> =
+        execute(request(baseUrl, "api/download-status/$videoId", token).get().build()) {
+            json.decodeFromString(DownloadStatus.serializer(), it)
+        }
+
+    /** Watch time report. A 403 (outside the schedule) comes back as Ok with [HeartbeatResponse.error]. */
+    suspend fun heartbeat(baseUrl: String, token: String, body: HeartbeatRequest): ApiResult<HeartbeatResponse> {
+        val text = json.encodeToString(HeartbeatRequest.serializer(), body)
+        return execute(
+            request(baseUrl, "api/v1/heartbeat", token).post(text.toRequestBody(JSON_TYPE)).build(),
+            bodyOn = setOf(403),
+        ) { json.decodeFromString(HeartbeatResponse.serializer(), it) }
+    }
+
+    private suspend fun <T> execute(
+        request: Request,
+        bodyOn: Set<Int> = emptySet(),
+        decode: (String) -> T,
+    ): ApiResult<T> =
         withContext(Dispatchers.IO) {
             try {
                 http.newCall(request).execute().use { resp ->
                     val text = resp.body.string()
-                    if (resp.isSuccessful) {
+                    if (resp.isSuccessful || resp.code in bodyOn) {
                         ApiResult.Ok(decode(text))
                     } else {
                         ApiResult.HttpError(resp.code, errorCode(text))

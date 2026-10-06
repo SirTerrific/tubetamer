@@ -52,9 +52,9 @@ Objectif : une API JSON stable sous `/api/v1/`, sans toucher aux routes HTML exi
 - [ ] **A6. `GET /api/v1/requests`** : demandes du profil avec leur statut (pending, approved, denied).
 - [x] **A7. Chaînes :** liste des chaînes autorisées et vidéos d'une chaîne (équivalent des pages chaîne du catalogue web).
 - [ ] **A8. `GET /api/v1/videos/{id}`** : métadonnées, statut de téléchargement, URL de flux, sous-titres disponibles, position de reprise.
-- [ ] **A9. Statut du temps restant :** `GET /api/v1/time` → temps restant par catégorie, fenêtre horaire, raison d'un blocage. L'app l'affiche et se bloque proprement.
-- [ ] **A10. Flux :** vérifier que `/api/stream/{id}` accepte le Bearer et reste compatible Range (206, `Accept-Ranges`, `Content-Range`) avec ExoPlayer. Ne pas casser le comportement navigateur.
-- [ ] **A11. Heartbeat :** accepter le Bearer sur `/api/watch-heartbeat`. Réponse claire quand le budget est épuisé (l'app arrête la lecture).
+- [x] **A9. Statut du temps restant :** `GET /api/v1/time` → temps restant par catégorie, fenêtre horaire, raison d'un blocage. L'app l'affiche et se bloque proprement.
+- [x] **A10. Flux :** vérifier que `/api/stream/{id}` accepte le Bearer et reste compatible Range (206, `Accept-Ranges`, `Content-Range`) avec ExoPlayer. Ne pas casser le comportement navigateur.
+- [x] **A11. Heartbeat :** accepter le Bearer sur `/api/watch-heartbeat`. Réponse claire quand le budget est épuisé (l'app arrête la lecture).
 - [x] **A12. Miniatures :** servies par le serveur (`/thumb/...`). Vérifier l'accès avec le Bearer.
 - [ ] **A13. Parent :** commande Telegram (ou option) pour lister et révoquer les appareils connectés.
 - [ ] **A14. Tests pytest** pour chaque endpoint v1 : auth, mauvais PIN, jeton révoqué, profil isolé, limites de temps. Mettre à jour `docs/` et les pages OpenWiki concernées.
@@ -70,14 +70,14 @@ Pile : Kotlin, Jetpack Compose for TV (`androidx.tv`), Media3/ExoPlayer, Retrofi
 - [x] **B4. Accueil.** Rangées horizontales (catalogue par catégorie, chaînes, Shorts si activés, reprise de lecture), focus et navigation D-pad soignés, miniatures via Coil avec cache mémoire/disque **borné**.
 - [ ] **B5. Recherche.** Champ avec clavier à l'écran et saisie vocale. Résultats avec bouton **Demander**. Écran de confirmation, puis état « en attente d'approbation » avec polling de `/api/v1/requests`.
 - [ ] **B6. Mes demandes.** Liste avec statuts, mise à jour automatique.
-- [ ] **B7. Lecteur.**
+- [x] **B7. Lecteur.**
   - ExoPlayer avec `ProgressiveMediaSource` sur l'URL de flux et l'en-tête `Authorization`.
   - `DefaultLoadControl` : buffer borné (ex. 15 à 30 s), pas de cache vidéo sur disque.
   - Contrôles télécommande : lecture/pause, ±10 s, barre de progression, sous-titres (WebVTT via `/api/subs`), reprise à la dernière position.
   - Libérer le lecteur à la sortie de l'écran (`onStop`/`DisposableEffect`), pas de fuite.
   - Gérer : vidéo pas encore téléchargée (écran d'attente, polling `download-status`), erreur réseau, 404/403.
-- [ ] **B8. Heartbeat et temps restant.** Envoyer le heartbeat toutes les ~30 s pendant la lecture. À la réponse « budget épuisé » ou « hors horaire » : arrêter la lecture et afficher l'écran correspondant. Afficher le temps restant avant la fin du budget.
-- [ ] **B9. Écrans d'état :** hors horaires, limite atteinte, vidéo refusée, serveur injoignable (avec réessai), jeton expiré ou révoqué (retour au choix du profil).
+- [x] **B8. Heartbeat et temps restant.** Envoyer le heartbeat toutes les ~30 s pendant la lecture. À la réponse « budget épuisé » ou « hors horaire » : arrêter la lecture et afficher l'écran correspondant. Afficher le temps restant avant la fin du budget.
+- [x] **B9. Écrans d'état :** hors horaires, limite atteinte, vidéo refusée, serveur injoignable (avec réessai), jeton expiré ou révoqué (retour au choix du profil).
 - [ ] **B10. Localisation :** anglais, français, norvégien, alignés sur la langue du profil ou du serveur.
 - [ ] **B11. Thème sombre**, polices lisibles à 3 m, zones de focus visibles.
 - [ ] **B12. Robustesse mémoire :** profil mémoire (Android Studio Profiler) sur 1 h de lecture et 20 vidéos de suite. Pas de croissance continue. Tester sur une TV bas de gamme (1 Go de RAM) si possible.

@@ -5,6 +5,7 @@ Every other v1 call sends `Authorization: Bearer <token>`; PinAuthMiddleware
 resolves it to the profile. Browser routes and cookie sessions are unchanged.
 """
 
+import hashlib
 import hmac
 
 from fastapi import APIRouter, Query, Request
@@ -14,8 +15,12 @@ from pydantic import BaseModel, Field
 from version import __version__
 from web.cache import build_active_row, build_catalog, build_shorts_catalog, get_profile_cache
 from web.deps import get_child_store
-from web.helpers import localize_titles, shorts_enabled
+from web.helpers import (
+    VIDEO_ID_RE, HeartbeatRequest, get_category_time_info, get_next_start_time,
+    get_schedule_info, get_time_limit_info, localize_titles, resolve_video_category, shorts_enabled,
+)
 from web.middleware import bearer_token
+from web.routers.watch import get_or_auto_approve, process_heartbeat
 from web.shared import limiter
 
 router = APIRouter(prefix="/api/v1")
@@ -199,3 +204,149 @@ async def api_v1_catalog(
     if row == "shorts" and not shorts_enabled(request, get_child_store(request)):
         return {"videos": [], "total": 0, "has_more": False}
     return _page(request, _row_videos(request, row, channel), offset, limit)
+
+
+# --- Playback -----------------------------------------------------------------
+
+def _watch_key(request: Request) -> str | None:
+    """Per-token key for the video being watched (bearer calls have no lasting session)."""
+    token = getattr(request.state, "device_token", None)
+    return "t:" + hashlib.sha256(token.encode()).hexdigest() if token else None
+
+
+def _set_watching(request: Request, video_id: str) -> None:
+    key = _watch_key(request)
+    if key is None:
+        request.session["watching"] = video_id
+        return
+    state = request.app.state
+    if not hasattr(state, "native_watching"):
+        state.native_watching = {}
+    state.native_watching[key] = video_id
+
+
+def _get_watching(request: Request) -> str | None:
+    key = _watch_key(request)
+    if key is None:
+        return request.session.get("watching")
+    return getattr(request.app.state, "native_watching", {}).get(key)
+
+
+def _time_status(cs, wl_cfg) -> dict:
+    """Budgets and schedule for the profile, as the TV shows them."""
+    cat_info = get_category_time_info(store=cs, wl_cfg=wl_cfg)
+    return {
+        "categories": cat_info["categories"] if cat_info else None,
+        "daily": None if cat_info else get_time_limit_info(store=cs, wl_cfg=wl_cfg),
+        "schedule": get_schedule_info(store=cs, wl_cfg=wl_cfg),
+        "next_start": get_next_start_time(store=cs, wl_cfg=wl_cfg),
+    }
+
+
+def _gate(cs, wl_cfg, video: dict) -> tuple[dict | None, int]:
+    """(block, remaining_sec) for playing `video` now. Same rules as /watch:
+    category budget (or global budget), then the schedule window.
+    remaining_sec is -1 when no limit applies."""
+    cat = resolve_video_category(video, store=cs)
+    ts = _time_status(cs, wl_cfg)
+    remaining = -1
+    if ts["categories"]:
+        budget = ts["categories"].get(cat, {})
+        if budget.get("exceeded"):
+            available = [
+                {"category": c, "remaining_min": info["remaining_min"]}
+                for c, info in ts["categories"].items() if c != cat and not info["exceeded"]
+            ]
+            return {"error": "time_up", "category": cat, "next_start": ts["next_start"],
+                    "available": available}, 0
+        if budget.get("limit_min", 0) > 0:
+            remaining = budget["remaining_sec"]
+    elif ts["daily"]:
+        if ts["daily"]["exceeded"]:
+            return {"error": "time_up", "category": "", "next_start": ts["next_start"],
+                    "available": []}, 0
+        remaining = ts["daily"]["remaining_sec"]
+    sched = ts["schedule"]
+    if sched and not sched["allowed"]:
+        return {"error": "outside_schedule", "unlock_time": sched["unlock_time"],
+                "start": sched["start"], "end": sched["end"]}, remaining
+    return None, remaining
+
+
+@router.get("/time")
+@limiter.limit("30/minute")
+async def api_time(request: Request):
+    """Remaining budgets and the schedule window for the current profile."""
+    return _time_status(get_child_store(request), request.app.state.wl_config)
+
+
+@router.post("/videos/{video_id}/play")
+@limiter.limit("30/minute")
+async def api_play(request: Request, video_id: str):
+    """Start watching a video.
+
+    200 {"status": "ready", stream, subtitles, resume_seconds, remaining_sec}
+    202 {"status": "pending"|"downloading"}: download queued; poll
+        /api/download-status/{id}, then call this again.
+    403 not_approved | time_up | outside_schedule, 404 not_found,
+    409 local_playback_disabled (the TV only plays files from the server).
+    """
+    if not VIDEO_ID_RE.match(video_id):
+        return JSONResponse({"error": "not_found"}, status_code=404)
+    state = request.app.state
+    cs = get_child_store(request)
+    video = await get_or_auto_approve(request, cs, video_id)
+    if not video:
+        return JSONResponse({"error": "not_found"}, status_code=404)
+    if video["status"] != "approved":
+        return JSONResponse({"error": "not_approved", "status": video["status"]}, status_code=403)
+
+    block, remaining = _gate(cs, state.wl_config, video)
+    if block:
+        return JSONResponse(block, status_code=403)
+
+    if not getattr(state, "local_playback_enabled", False):
+        return JSONResponse({"error": "local_playback_disabled"}, status_code=409)
+    downloader = getattr(state, "video_downloader", None)
+    if not downloader or not downloader.is_downloaded(video_id):
+        raw = cs.get_download_status(video_id)
+        dl_cb = getattr(state, "download_on_approve", None)
+        if dl_cb and raw not in ("downloading", "ready"):
+            await dl_cb(video_id, cs.profile_id)
+        return JSONResponse({"status": "downloading" if raw == "downloading" else "pending"},
+                            status_code=202)
+
+    cs.record_view(video_id)
+    _set_watching(request, video_id)
+    localize_titles(request, [video])
+    return {
+        "status": "ready",
+        "video": _card(video),
+        "stream": f"/api/stream/{video_id}",
+        "subtitles": [
+            {"lang": s["lang"], "label": s["label"], "url": s["url"]}
+            for s in downloader.subtitle_files(video_id)
+        ],
+        "resume_seconds": int(video.get("resume_seconds") or 0),
+        "remaining_sec": remaining,
+    }
+
+
+@router.post("/heartbeat")
+@limiter.limit("30/minute")
+async def api_heartbeat(request: Request, body: HeartbeatRequest):
+    """Watch time report from a native player, ~every 30 s while playing.
+
+    Same accounting as /api/watch-heartbeat. `time_up` is true once the budget
+    covering this video is used up: the client stops playback.
+    """
+    vid = body.video_id
+    if not VIDEO_ID_RE.match(vid):
+        return JSONResponse({"error": "invalid"}, status_code=400)
+    if _get_watching(request) != vid:
+        return JSONResponse({"error": "not_watching"}, status_code=409)
+    seconds = min(max(body.seconds, 0), 60)
+    resp, status = await process_heartbeat(request, vid, seconds, body.position_seconds)
+    if status == 200:
+        resp["time_up"] = resp["remaining"] == 0
+    return JSONResponse(resp, status_code=status)

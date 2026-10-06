@@ -35,6 +35,7 @@ from web.routers.catalog import router as catalog_router
 from web.routers.ytproxy import router as ytproxy_router
 from web.routers.profile import router as profile_router
 from web.routers.api_v1 import router as api_v1_router
+from web.routers.stream import router as stream_router
 from youtube.extractor import YouTubeExtractor
 
 
@@ -117,6 +118,7 @@ def _create_test_app(store: VideoStore, pin: str = "1234") -> FastAPI:
     test_app.include_router(ytproxy_router)
     test_app.include_router(profile_router)
     test_app.include_router(api_v1_router)
+    test_app.include_router(stream_router)
 
     # State
     state = test_app.state

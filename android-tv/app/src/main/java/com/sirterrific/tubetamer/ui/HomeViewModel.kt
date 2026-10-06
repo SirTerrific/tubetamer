@@ -108,6 +108,13 @@ class HomeViewModel(private val c: AppContainer) : ViewModel() {
         _channel.value = null
     }
 
+    /** Keeps progress bars right after watching, without reloading the rows. */
+    fun updateProgress(videoId: String, seconds: Int) {
+        fun VideoRow.fix() = copy(videos = videos.map { if (it.videoId == videoId) it.copy(progressSeconds = seconds) else it })
+        _home.update { s -> if (s is HomeState.Ready) s.copy(rows = s.rows.map { it.fix() }) else s }
+        _channel.update { s -> s?.copy(row = s.row?.fix()) }
+    }
+
     private fun updateRow(rowId: String, f: (VideoRow) -> VideoRow) {
         _home.update { s ->
             if (s is HomeState.Ready) s.copy(rows = s.rows.map { if (it.id == rowId) f(it) else it }) else s

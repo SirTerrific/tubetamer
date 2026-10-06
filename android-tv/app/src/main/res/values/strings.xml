@@ -38,4 +38,18 @@
     <string name="home_empty">No videos yet. Ask a parent to approve some.</string>
     <string name="channel_videos">%1$d videos</string>
     <string name="channel_empty">No videos for this channel yet.</string>
+    <string name="back">Back</string>
+    <string name="player_preparing">Preparing the video…</string>
+    <string name="player_preparing_pct">Preparing the video… %1$d%%</string>
+    <string name="player_error">Playback failed</string>
+    <string name="time_left">%1$d min left</string>
+    <string name="block_time_up">Time is up for today</string>
+    <string name="block_time_up_next">Back tomorrow at %1$s</string>
+    <string name="block_time_other">You can still watch other kinds of videos.</string>
+    <string name="block_outside">It is not video time right now</string>
+    <string name="block_outside_unlock">Available again %1$s</string>
+    <string name="block_not_approved">This video is not approved</string>
+    <string name="block_no_local">Local playback is off on the server. Ask a parent to turn it on.</string>
+    <string name="block_not_found">Video not found</string>
+    <string name="block_download_failed">The video could not be downloaded</string>
 </resources>

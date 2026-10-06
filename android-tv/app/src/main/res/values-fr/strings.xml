@@ -36,4 +36,18 @@
     <string name="home_empty">Aucune vidéo pour l\'instant. Demande à un parent d\'en approuver.</string>
     <string name="channel_videos">%1$d vidéos</string>
     <string name="channel_empty">Aucune vidéo pour cette chaîne pour l\'instant.</string>
+    <string name="back">Retour</string>
+    <string name="player_preparing">Préparation de la vidéo…</string>
+    <string name="player_preparing_pct">Préparation de la vidéo… %1$d %%</string>
+    <string name="player_error">La lecture a échoué</string>
+    <string name="time_left">Encore %1$d min</string>
+    <string name="block_time_up">Le temps est écoulé pour aujourd\'hui</string>
+    <string name="block_time_up_next">Retour demain à %1$s</string>
+    <string name="block_time_other">Tu peux encore regarder d\'autres types de vidéos.</string>
+    <string name="block_outside">Ce n\'est pas l\'heure des vidéos</string>
+    <string name="block_outside_unlock">De nouveau disponible %1$s</string>
+    <string name="block_not_approved">Cette vidéo n\'est pas approuvée</string>
+    <string name="block_no_local">La lecture locale est désactivée sur le serveur. Demande à un parent de l\'activer.</string>
+    <string name="block_not_found">Vidéo introuvable</string>
+    <string name="block_download_failed">La vidéo n\'a pas pu être téléchargée</string>
 </resources>

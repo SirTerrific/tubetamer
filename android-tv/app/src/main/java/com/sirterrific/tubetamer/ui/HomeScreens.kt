@@ -1,5 +1,7 @@
 package com.sirterrific.tubetamer.ui
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -17,6 +19,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -69,19 +72,34 @@ fun HomeScreen(profile: Profile, onSwitchProfile: () -> Unit, onExpired: () -> U
     val expired by vm.expired.collectAsStateWithLifecycle()
     LaunchedEffect(expired) { if (expired) onExpired() }
     val baseUrl = container.credentials.get()?.baseUrl.orEmpty()
-    // Playback arrives with the player (B7); cards are focusable and clickable already.
-    val onPlay: (VideoCard) -> Unit = { }
-    // Survives the channel screen (and later the player) so Back lands where the child was.
+    // Survives the channel screen and the player so Back lands where the child was.
     val nav = remember(profile.id) { HomeNav() }
+    var playing by remember(profile.id) { mutableStateOf<VideoCard?>(null) }
+    val onPlay: (VideoCard) -> Unit = { playing = it }
+
+    val now = playing
+    if (now != null) {
+        PlayerScreen(
+            now,
+            onExit = { pos ->
+                if (pos != null) vm.updateProgress(now.videoId, pos)
+                playing = null
+            },
+            onExpired = onExpired,
+        )
+        return
+    }
 
     val open = channel
     if (open != null) {
         BackHandler { vm.closeChannel() }
-        ChannelScreen(open, baseUrl, onPlay, onNearEnd = vm::loadMoreChannel)
+        Box(Modifier.fillMaxSize().padding(ScreenPadding)) {
+            ChannelScreen(open, nav, baseUrl, onPlay, onNearEnd = vm::loadMoreChannel)
+        }
         return
     }
 
-    Column(Modifier.fillMaxSize()) {
+    Column(Modifier.fillMaxSize().padding(ScreenPadding)) {
         val header: @Composable () -> Unit = { HomeHeader(profile, onSwitchProfile) }
         when (val s = home) {
             HomeState.Loading -> {
@@ -101,7 +119,10 @@ fun HomeScreen(profile: Profile, onSwitchProfile: () -> Unit, onExpired: () -> U
                     header()
                     Centered { Text(stringResource(R.string.home_empty), color = MaterialTheme.colorScheme.onSurfaceVariant) }
                 } else {
-                    HomeRows(s, nav, baseUrl, header, onPlay, vm::loadMore, vm::openChannel)
+                    HomeRows(s, nav, baseUrl, header, onPlay, vm::loadMore) { ch ->
+                        nav.resetChannel()
+                        vm.openChannel(ch)
+                    }
                 }
         }
     }
@@ -193,6 +214,15 @@ private class HomeNav {
     private val rows = mutableMapOf<String, LazyListState>()
     fun row(id: String): LazyListState = rows.getOrPut(id) { LazyListState() }
     var lastFocused: String? = null
+
+    var channelGrid = LazyGridState()
+        private set
+    var channelFocus: String? = null
+
+    fun resetChannel() {
+        channelGrid = LazyGridState()
+        channelFocus = null
+    }
 }
 
 private fun videoKey(rowId: String, v: VideoCard) = "v:$rowId/${v.videoId}"
@@ -201,6 +231,7 @@ private fun channelKey(ch: ChannelInfo) = "ch:${ch.id}"
 @Composable
 private fun ChannelScreen(
     state: ChannelState,
+    nav: HomeNav,
     baseUrl: String,
     onPlay: (VideoCard) -> Unit,
     onNearEnd: () -> Unit,
@@ -224,16 +255,19 @@ private fun ChannelScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Spacer(Modifier.height(12.dp))
-                val first = remember { FocusRequester() }
-                LaunchedEffect(Unit) { runCatching { first.requestFocus() } }
+                val target = remember { FocusRequester() }
+                val focusId = nav.channelFocus ?: row.videos.first().videoId
+                LaunchedEffect(Unit) { runCatching { target.requestFocus() } }
                 LazyVerticalGrid(
+                    state = nav.channelGrid,
                     columns = GridCells.Adaptive(CARD_WIDTH),
                     horizontalArrangement = Arrangement.spacedBy(20.dp),
                     verticalArrangement = Arrangement.spacedBy(20.dp),
                     contentPadding = PaddingValues(8.dp),
                 ) {
                     itemsIndexed(row.videos, key = { _, v -> v.videoId }) { i, v ->
-                        val mod = if (i == 0) Modifier.focusRequester(first) else Modifier
+                        val mod = (if (v.videoId == focusId) Modifier.focusRequester(target) else Modifier)
+                            .onFocusChanged { if (it.isFocused) nav.channelFocus = v.videoId }
                         VideoCardView(
                             v, baseUrl,
                             onClick = { onPlay(v) },

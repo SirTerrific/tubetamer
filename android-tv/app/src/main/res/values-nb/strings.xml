@@ -11,4 +11,18 @@
     <string name="home_empty">Ingen videoer ennå. Be en forelder om å godkjenne noen.</string>
     <string name="channel_videos">%1$d videoer</string>
     <string name="channel_empty">Ingen videoer for denne kanalen ennå.</string>
+    <string name="back">Tilbake</string>
+    <string name="player_preparing">Klargjør videoen …</string>
+    <string name="player_preparing_pct">Klargjør videoen … %1$d %%</string>
+    <string name="player_error">Avspillingen mislyktes</string>
+    <string name="time_left">%1$d min igjen</string>
+    <string name="block_time_up">Tiden er ute for i dag</string>
+    <string name="block_time_up_next">Tilbake i morgen kl. %1$s</string>
+    <string name="block_time_other">Du kan fortsatt se andre typer videoer.</string>
+    <string name="block_outside">Det er ikke videotid nå</string>
+    <string name="block_outside_unlock">Tilgjengelig igjen %1$s</string>
+    <string name="block_not_approved">Denne videoen er ikke godkjent</string>
+    <string name="block_no_local">Lokal avspilling er slått av på serveren. Be en forelder slå den på.</string>
+    <string name="block_not_found">Fant ikke videoen</string>
+    <string name="block_download_failed">Videoen kunne ikke lastes ned</string>
 </resources>
