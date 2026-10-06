@@ -254,6 +254,7 @@ class TubeTamerBot(SetupMixin, ApprovalMixin, ChannelMixin, TimeLimitMixin, Comm
         self._app.add_handler(CommandHandler("shorts", self._cmd_shorts))
         self._app.add_handler(CommandHandler("autoload", self._cmd_autoload))
         self._app.add_handler(CommandHandler("child", self._cmd_child))
+        self._app.add_handler(CommandHandler("devices", self._cmd_devices))
         self._app.add_handler(CommandHandler("setup", self._cmd_setup))
         self._app.add_handler(MessageHandler(
             filters.Regex(r'^/revoke_[a-zA-Z0-9_]{11}$'), self._cmd_revoke,
@@ -394,6 +395,7 @@ class TubeTamerBot(SetupMixin, ApprovalMixin, ChannelMixin, TimeLimitMixin, Comm
         CallbackRoute("child_del",       "_cb_child_delete_confirm", min_parts=2, answer=""),
         CallbackRoute("autoapprove",     "_cb_auto_approve",        min_parts=3, answer="Auto-approved!"),
         CallbackRoute("resend",          "_cb_resend",              min_parts=3, answer=None),
+        CallbackRoute("dev_revoke",      "_cb_device_revoke",       min_parts=2, answer=None, int_parts=frozenset({1})),
 
         # Pagination (int conversion on page/day indices)
         CallbackRoute("approved_page",   "_cb_approved_page",       min_parts=3, answer=None, int_parts=frozenset({2})),

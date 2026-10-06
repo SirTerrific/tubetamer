@@ -222,7 +222,8 @@ class CommandsMixin:
                 "**Profiles:**\n"
                 "`/child` - List child profiles\n"
                 "`/child add <name> [pin]`\n"
-                "`/child remove|rename|pin <name>`\n\n"
+                "`/child remove|rename|pin <name>`\n"
+                "`/devices` - Connected TV devices\n\n"
                 "**Setup:**\n"
                 "`/setup` - Interactive setup hub\n\n",
                 app_name=self.tr("App Name"),
@@ -576,6 +577,45 @@ class CommandsMixin:
             await update.effective_message.reply_text(latest)
         except FileNotFoundError:
             await update.effective_message.reply_text(self.tr("Changelog not available."))
+
+    # --- Connected devices (Android TV app) ---
+
+    def _render_devices(self) -> tuple[str, Optional[InlineKeyboardMarkup]]:
+        """Signed-in TV devices, one revoke button each. Tokens themselves are never shown."""
+        devices = self.video_store.list_device_tokens()
+        if not devices:
+            return _md(self.tr("No connected devices.")), None
+        names = {p["id"]: p["display_name"] for p in self.video_store.get_profiles()}
+        lines = [f"**{self.tr('Connected devices')}**", ""]
+        buttons = []
+        for d in devices:
+            device = d.get("device_name") or self.tr("Unnamed device")
+            child = names.get(d["profile_id"], d["profile_id"])
+            last = (d.get("last_used_at") or d.get("created_at") or "")[:16]
+            lines.append(self.tr("• {device} — {child} (last used {when})",
+                                 device=device, child=child, when=last))
+            buttons.append([InlineKeyboardButton(
+                self.tr("Revoke {device} ({child})", device=device[:30], child=child[:20]),
+                callback_data=f"dev_revoke:{d['id']}",
+            )])
+        lines += ["", self.tr("A revoked device must sign in again with the child's PIN.")]
+        return _md("\n".join(lines)), InlineKeyboardMarkup(buttons)
+
+    async def _cmd_devices(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """List devices signed in to the TV app, with revoke buttons."""
+        if not await self._require_admin(update):
+            return
+        text, markup = self._render_devices()
+        await update.effective_message.reply_text(text, parse_mode=MD2, reply_markup=markup)
+
+    async def _cb_device_revoke(self, query, token_id: int) -> None:
+        """Revoke one device token, then refresh the list in place."""
+        if self.video_store.revoke_device_token_by_id(token_id):
+            _answer_bg(query, self.tr("Device revoked."))
+        else:
+            _answer_bg(query, self.tr("Already revoked."))
+        text, markup = self._render_devices()
+        await _edit_msg(query, text, markup)
 
     # --- Activity report ---
 

@@ -145,6 +145,12 @@ Manage child profiles. Each profile has its own PIN, watch history, and time bud
 | `/child rename <name> <new>` | Rename a child profile |
 | `/child pin <name> [pin]` | Set a child profile's PIN — omit the PIN to clear it |
 
+## Devices
+
+| Command | What It Does |
+|---------|-------------|
+| `/devices` | List TVs signed in to the Android TV app (device name, child, last use), with a **Revoke** button for each. A revoked TV goes back to the profile picker and needs the child's PIN again. |
+
 ## Other
 
 | Command | What It Does |
