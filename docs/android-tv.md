@@ -1,5 +1,7 @@
 # Android TV app
 
+**English** · [Français](android-tv.fr.md)
+
 The TubeTamer TV app lets a child watch approved videos on an Android TV box
 (tested target: NVIDIA Shield) with their own profile and PIN. It is a separate
 app called **TubeTamer**: it does not replace or touch the YouTube app.
