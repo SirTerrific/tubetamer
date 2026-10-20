@@ -45,5 +45,5 @@ database:
 watch_limits:
   daily_limit_minutes: 120
   timezone: "America/New_York"
-""".format(db_path=str(tmp_path / "cfg_test.db")))
+""".format(db_path=(tmp_path / "cfg_test.db").as_posix()))  # "\" would be a YAML escape on Windows
     return cfg
