@@ -8,9 +8,16 @@
 - TV app look matches the web app: night-blue background with the doodle pattern, gold accent and focus ring, hat logo, launcher icon and TV banner, line icons, category colors, status badges, loading placeholders. Layout adapts to screen size (card width, grid columns, icon-only header, smaller PIN pad). Screenshots in docs/android-tv.md
 - `/devices` Telegram command: lists signed-in TVs and revokes them with a button
 - `/app/tubetamer.apk` serves the TV app from `web.tv_apk` (`BRG_TV_APK`, default `db/tubetamer.apk`) without a session, for installing it on the TV with Downloader
+- `telegram.api_url` / `BRG_TELEGRAM_API_URL` routes Telegram traffic through a custom Bot API server or relay. It must be an `http(s)` URL with a host (checked at startup); plain `http` logs a warning because the bot token travels in the request path. The startup log prints only the API host, never credentials embedded in the URL. Ported from BrainRotGuard v1.33.0
 
 **Changed**
 - Search and video requests run through shared helpers used by both the web routes and the TV API; web behaviour is unchanged
+
+**Fixed**
+- **Security: the YouTube player iframe now has a `sandbox` attribute** (`allow-scripts allow-same-origin allow-presentation`, no `allow-popups` or `allow-top-navigation`) so YouTube's in-player links (title, channel watermark, "Watch on YouTube") cannot take the child out of TubeTamer into a full browser YouTube session. `allow-same-origin` stays because the signed-in Google session and the `enablejsapi` messages need it. Checked in a desktop browser: the player loads and plays. Not tested on iOS hardware, so on an iPad also enable Guided Access. Ported from BrainRotGuard v1.31.2
+- The player URL carries `playsinline=1`, so iPads keep playback inside the page instead of handing it to Apple's native fullscreen player, which bypasses the pause and end-of-video overlays. Ported from BrainRotGuard v1.31.2
+- **Security: the Telegram bot token was written to the logs.** `httpx`, used by python-telegram-bot, logged every Bot API call at INFO with the token in the URL. `httpx` and `httpcore` now log at WARNING unless `-v` is passed. Ported from BrainRotGuard v1.31.2
+- `HANDOFF.md` is git-ignored
 
 ## v1.3.3 - 2026-10-03
 

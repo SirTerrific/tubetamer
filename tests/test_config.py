@@ -3,7 +3,7 @@
 import os
 import pytest
 
-from config import AppConfig, Config, expand_env_vars, load_config, WebConfig
+from config import AppConfig, Config, TelegramConfig, expand_env_vars, load_config, WebConfig
 
 
 class TestExpandEnvVars:
@@ -273,3 +273,39 @@ class TestMetadataLang:
         for value in (None, "   "):
             configure_metadata_lang(value)
             assert "extractor_args" not in _ydl_opts()
+
+
+class TestTelegramApiUrl:
+    def test_defaults_empty(self, monkeypatch):
+        monkeypatch.delenv("BRG_TELEGRAM_API_URL", raising=False)
+        assert TelegramConfig().api_url == ""
+
+    def test_from_env_strips_trailing_slash(self, monkeypatch):
+        monkeypatch.setenv("BRG_TELEGRAM_API_URL", " https://relay.example.com/ ")
+        assert TelegramConfig().api_url == "https://relay.example.com"
+
+    @pytest.mark.parametrize("value", ["relay.example.com", "ftp://relay.example.com", "https://", 1234])
+    def test_rejects_non_http_urls(self, value):
+        with pytest.raises(ValueError):
+            TelegramConfig(api_url=value)
+
+    def test_plain_http_allowed_with_warning(self, caplog):
+        with caplog.at_level("WARNING"):
+            assert TelegramConfig(api_url="http://relay.local:8081").api_url == "http://relay.local:8081"
+        assert "unencrypted" in caplog.text
+
+    def test_explicit_value_wins_over_env(self, monkeypatch):
+        monkeypatch.setenv("BRG_TELEGRAM_API_URL", "https://env.example.com")
+        assert TelegramConfig(api_url="https://yaml.example.com").api_url == "https://yaml.example.com"
+
+    def test_yaml_without_api_url_still_reads_env(self, tmp_path, monkeypatch):
+        monkeypatch.setenv("BRG_TELEGRAM_API_URL", "https://env.example.com")
+        cfg_file = tmp_path / "c.yaml"
+        cfg_file.write_text("telegram:\n  bot_token: x\n  admin_chat_id: '1'\n", encoding="utf-8")
+        assert Config.from_yaml(str(cfg_file)).telegram.api_url == "https://env.example.com"
+
+    def test_yaml_value(self, tmp_path, monkeypatch):
+        monkeypatch.delenv("BRG_TELEGRAM_API_URL", raising=False)
+        cfg_file = tmp_path / "c.yaml"
+        cfg_file.write_text("telegram:\n  api_url: https://yaml.example.com/\n", encoding="utf-8")
+        assert Config.from_yaml(str(cfg_file)).telegram.api_url == "https://yaml.example.com"

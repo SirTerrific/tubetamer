@@ -626,6 +626,20 @@ class TestWatchPage:
         assert "brg-nav-history" in resp.text
         assert "previous.indexOf('/pending/')" in resp.text
 
+    def test_watch_embed_iframe_is_sandboxed(self, auth_client, store):
+        cs = ChildStore(store, "default")
+        cs.add_video(video_id="sandboxTe12", title="Sandbox", channel_name="Test Channel",
+                     thumbnail_url="https://i.ytimg.com/vi/sandboxTe12/hqdefault.jpg", duration=120)
+        cs.update_status("sandboxTe12", "approved")
+        text = auth_client.get("/watch/sandboxTe12").text
+        m = re.search(r"iframe\.setAttribute\('sandbox', '([^']*)'\)", text)
+        assert m, "player iframe must set a sandbox attribute"
+        flags = m.group(1).split()
+        assert {"allow-scripts", "allow-same-origin"} <= set(flags)
+        # popups / top navigation are what let YouTube's in-player links escape the app
+        assert not any(f in flags for f in ("allow-popups", "allow-top-navigation", "allow-popups-to-escape-sandbox"))
+        assert "&playsinline=1" in text
+
     def test_watch_pending_redirects(self, auth_client, store):
         cs = ChildStore(store, "default")
         cs.add_video(

@@ -318,6 +318,11 @@ async def main() -> None:
     if not args.verbose and not args.log_level:
         logging.getLogger().setLevel(getattr(logging, config.app.log_level.upper()))
 
+    # python-telegram-bot uses httpx, whose INFO lines carry the full bot token in the URL
+    if not args.verbose:
+        for name in ("httpx", "httpcore"):
+            logging.getLogger(name).setLevel(logging.WARNING)
+
     app = TubeTamer(config)
 
     loop = asyncio.get_event_loop()

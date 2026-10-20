@@ -383,10 +383,17 @@ if (!useLocalPlayer) {
     var placeholder = document.getElementById('ytplayer');
     var iframe = document.createElement('iframe');
     iframe.id = 'ytplayer';
+    // No allow-popups / allow-top-navigation: blocks YouTube's in-player links
+    // (title, channel watermark, "Watch on YouTube") from escaping to the browser.
+    // allow-same-origin is required: it keeps the signed-in YouTube session
+    // (avoids the bot check) and enablejsapi postMessage working.
+    iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-presentation');
     iframe.setAttribute('allow', 'autoplay; fullscreen; encrypted-media; picture-in-picture');
     iframe.setAttribute('allowfullscreen', '');
+    // playsinline=1 keeps iOS inside our DOM: without it iPad hands playback to
+    // Apple's native fullscreen player, bypassing our pause/end overlays.
     iframe.src = 'https://www.youtube.com/embed/' + videoId
-        + '?enablejsapi=1&autoplay=0&rel=0&modestbranding=1'
+        + '?enablejsapi=1&autoplay=0&rel=0&modestbranding=1&playsinline=1'
         + '&origin=' + encodeURIComponent(window.location.origin);
     placeholder.parentNode.replaceChild(iframe, placeholder);
 })();
