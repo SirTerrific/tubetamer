@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:bcb237615e0232f60be8f50448f4e64c44a1e9e9385c10a4b726521b5f49c82a",
+  "pageVersion": "sha256:054f7e81393d65713ec5efbbfa9dd6dcabac3438fdd23ff1104407e5f67bc96e",
   "claims": [
     {
       "id": "claim_c33e11daeb5444648222b97fe607aed6",
@@ -48,7 +48,7 @@
       "evidence": [
         {
           "resource": "repo://web/routers/profile.py",
-          "version": "repo-file-v1:sha256:1468b11ab6daf3d6a75ac36fe33eb301de0f75fec9ca766ae7fecd901a4720d0"
+          "version": "repo-file-v1:sha256:6b3b048acd5ec10fa19f25e9585fd79bbecf500ce744c7496c41640c4a4c33ee"
         }
       ]
     },
@@ -58,7 +58,7 @@
       "evidence": [
         {
           "resource": "repo://web/helpers.py",
-          "version": "repo-file-v1:sha256:41ca2157115d5dc6596450978208ac59950f13bdf20ca53aa4931b6b897bc821"
+          "version": "repo-file-v1:sha256:2d89ee6eefcedfb8ce16d7159c6d870bc97ad78a729ab2aeb92eedcf011a796e"
         }
       ]
     },
@@ -68,7 +68,7 @@
       "evidence": [
         {
           "resource": "repo://web/shared.py",
-          "version": "repo-file-v1:sha256:7bdcbc4f4e2ceac3b17d913f2feca8178f846d1407a306af4591075053420637"
+          "version": "repo-file-v1:sha256:f0ce5b8ea57bdbf99c13345f80752233a7ab7abd3f9c8047d490ac537ba2c353"
         }
       ]
     },
@@ -81,10 +81,24 @@
           "version": "repo-file-v1:sha256:aab93d29884764ca143c93b80811d84a7625380e40c2b1859e7583455945303b"
         }
       ]
+    },
+    {
+      "id": "claim_751387685c8849839553501977420a01",
+      "statement": "The Android TV app takes its UI language from the server's locale and maps it with the same rules as normalize_locale, supporting only en, fr and nb and otherwise keeping the device language.",
+      "evidence": [
+        {
+          "resource": "repo://android-tv/app/src/main/java/com/sirterrific/tubetamer/ui/Locale.kt#L12-L27",
+          "version": "repo-lines-v1:sha256:fab05537e1538fe33719f7d3b11d4f3e7fb7ca49bc996f15ef6744d2ad230134:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkyZTJkYjEyMjJhYWE2ZTc0YjEyMWQyZGQ0MmJhZWI0OTI1MGMxMzU3ZjQ2ZmNlOTA1NjgxMDE0YzdkZjM1OTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQxNTUwZTJkOGIyMzVmZTQyNTE1OTg4OTVlNzU0ZGRjZjI0MjNiNWM4YTUzYjk0MTBkZDhjNjczOGE4ZTM3NzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ4YTFhZjFjMmNlODhhYzJjZDdlNmQ0YWY5NDE3MDRlNDhkMGNjMzBhODUyM2VhZWY1MGZhM2Q2YzhkYTMxYjgifQ"
+        },
+        {
+          "resource": "repo://web/routers/api_v1.py#L89-L99",
+          "version": "repo-lines-v1:sha256:595365558283ec67f2de6a059614f20cd6638f4cbd0806b8400186d6b54ce37b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY4YTFmNGM1MDlmN2E0NTliMWY3OTI5MWQyMjU3ZDU1Y2IyOTk0MTIzZjI0OGQ2OWE3NmUxYmE2ZWMzZmJhMDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE0MTlhNmRjYzA0ZTIxM2EzYzdhNzdhNDU2YjAxZTc2ZDFlZjc4Y2QwMGJiZWMxZDhmODE0NThmZTkzZWRjNTYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU5MzdmYjA3OGMyODFhN2I5NDNhZTNhNzE2YmNjNjNjYjRlZWQ2ZGNiY2E3NTZkNTc2ODNiMWNlMjA4ODUzNjQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjAyZmIwZTMwOGM5ZjQ0MzQxZGFjM2U5NjdiNTY5OTJiMmRlMjFjZWYwMjE2MGJmMGY0YTdiN2FjYzE5NGViOWMifQ"
+        }
+      ]
     }
   ],
   "verification": {
-    "by": "openwiki/0.7.0",
-    "at": "2026-10-05T04:15:14.909Z"
+    "by": "openwiki/0.7.2",
+    "at": "2026-10-27T17:59:33.551Z"
   }
 }

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:9cb2ab5cd8f4dc40e3edb43925ab268d252da282bdbc8600d7510f19379f38d4",
+  "pageVersion": "sha256:cbb1f9e81f38005e9899320e358294b985bdbd00d5ca1addaf96fa86dc73d7e1",
   "claims": [
     {
       "id": "claim_a25367134e6a473db1c535692029b8f6",
@@ -8,7 +8,7 @@
       "evidence": [
         {
           "resource": "repo://config.py",
-          "version": "repo-file-v1:sha256:af3cb434831078dadeff86043a712f89e4370218fdd805f8abd6c4faae8863fd"
+          "version": "repo-file-v1:sha256:606f996d1b6dd54581fa60bb9a8a3fb0f4c7db8f2c457966fae0e3f30f4502e5"
         }
       ]
     },
@@ -18,7 +18,7 @@
       "evidence": [
         {
           "resource": "repo://config.py",
-          "version": "repo-file-v1:sha256:af3cb434831078dadeff86043a712f89e4370218fdd805f8abd6c4faae8863fd"
+          "version": "repo-file-v1:sha256:606f996d1b6dd54581fa60bb9a8a3fb0f4c7db8f2c457966fae0e3f30f4502e5"
         }
       ]
     },
@@ -28,7 +28,7 @@
       "evidence": [
         {
           "resource": "repo://config.py",
-          "version": "repo-file-v1:sha256:af3cb434831078dadeff86043a712f89e4370218fdd805f8abd6c4faae8863fd"
+          "version": "repo-file-v1:sha256:606f996d1b6dd54581fa60bb9a8a3fb0f4c7db8f2c457966fae0e3f30f4502e5"
         }
       ]
     },
@@ -38,7 +38,7 @@
       "evidence": [
         {
           "resource": "repo://config.py",
-          "version": "repo-file-v1:sha256:af3cb434831078dadeff86043a712f89e4370218fdd805f8abd6c4faae8863fd"
+          "version": "repo-file-v1:sha256:606f996d1b6dd54581fa60bb9a8a3fb0f4c7db8f2c457966fae0e3f30f4502e5"
         }
       ]
     },
@@ -48,7 +48,7 @@
       "evidence": [
         {
           "resource": "repo://config.py",
-          "version": "repo-file-v1:sha256:af3cb434831078dadeff86043a712f89e4370218fdd805f8abd6c4faae8863fd"
+          "version": "repo-file-v1:sha256:606f996d1b6dd54581fa60bb9a8a3fb0f4c7db8f2c457966fae0e3f30f4502e5"
         }
       ]
     },
@@ -58,13 +58,23 @@
       "evidence": [
         {
           "resource": "repo://main.py",
-          "version": "repo-file-v1:sha256:fb2e263a9c7c24c5b846e739be46b2c616dc696d8fd5484efe5e7c83027d1d0d"
+          "version": "repo-file-v1:sha256:1d73de1ff442c3706a522349c0d39b3ad53cb593965cef2b49463197eb40b684"
+        }
+      ]
+    },
+    {
+      "id": "claim_191500d544354498b434e33ba83fb075",
+      "statement": "load_config validates watch_limits.timezone at startup and, if it is not a valid ZoneInfo name, logs a warning and clears it so the app falls back to UTC.",
+      "evidence": [
+        {
+          "resource": "repo://config.py#L259-L267",
+          "version": "repo-lines-v1:sha256:41c4cce4ac891b392003861c459d24d1a70cc7418ef3dbb46bbd9e40e681e15c:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYjI0ZWFiNGEyNGVmNGViMGRjNGFiNDI3ZjBiMDc1MTliOGNkMGJhNDI4ZTI0M2Q1NGE0YTQ0Nzc5ZjY1MjkxZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYjFkMGMxNjU4ZDI1OGVjZWUwMDQ3ZjA5YzAyNGE2YmE2YTIwMDlkMjFhYThmZWI4OGJhZTZiNWZiN2VmY2FiMCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMzJhNGFlZGRhODg0ZWMwMDI4MmU3MzUyNWNmOWM1N2U1MzBiYWVkMDRmMmI2YmFiMzViYzVhNDVhMzRiN2ZkMSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjIsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNzQxMTMwYjJhYjY0ZGJhNjg2MTEzZGYxYzZiOTY3MGU3MWZhOTk5OTUxNmRkODc4NjEyMDIzY2MwZWQ0ZGNmYiJ9"
         }
       ]
     }
   ],
   "verification": {
-    "by": "openwiki/0.7.0",
-    "at": "2026-10-05T04:15:14.909Z"
+    "by": "openwiki/0.7.2",
+    "at": "2026-10-27T17:59:33.551Z"
   }
 }

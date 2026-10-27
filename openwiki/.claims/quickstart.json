@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:ee3a51c221d5653b9849f2b330c081f632f76ad8f7256c44c5e7f215523de839",
+  "pageVersion": "sha256:e69810c6687e1c963c7720813b03cf9eb22e22f75afde3c70a8d07329d219869",
   "claims": [
     {
       "id": "claim_6f86e5b5dc05479bb05cad559b346fec",
@@ -8,7 +8,7 @@
       "evidence": [
         {
           "resource": "repo://README.md",
-          "version": "repo-file-v1:sha256:fe9caf3fc83350251a86029f646c402132b6a3aa567087c83057d9bae11a613e"
+          "version": "repo-file-v1:sha256:8c4df2a800896a369848df68126d35578523be67982a6b4e4b7c1804cd49a511"
         }
       ]
     },
@@ -28,7 +28,7 @@
       "evidence": [
         {
           "resource": "repo://README.md",
-          "version": "repo-file-v1:sha256:fe9caf3fc83350251a86029f646c402132b6a3aa567087c83057d9bae11a613e"
+          "version": "repo-file-v1:sha256:8c4df2a800896a369848df68126d35578523be67982a6b4e4b7c1804cd49a511"
         }
       ]
     },
@@ -48,13 +48,23 @@
       "evidence": [
         {
           "resource": "repo://main.py",
-          "version": "repo-file-v1:sha256:fb2e263a9c7c24c5b846e739be46b2c616dc696d8fd5484efe5e7c83027d1d0d"
+          "version": "repo-file-v1:sha256:1d73de1ff442c3706a522349c0d39b3ad53cb593965cef2b49463197eb40b684"
+        }
+      ]
+    },
+    {
+      "id": "claim_75894c7ed6134ac39e075318f17e8af3",
+      "statement": "The README presents an Android TV app as a native TubeTamer client with profile and PIN login, rows, search and requests, and full-screen playback from the server with the same time limits.",
+      "evidence": [
+        {
+          "resource": "repo://README.md#L111-L111",
+          "version": "repo-lines-v1:sha256:e26e90ef6fe146e4ab1eca5e18f0ec097443a20bb36a186a4e682b801577b115:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZTI2ZTkwZWY2ZmUxNDZlNGFiMWVjYTVlMThmMGVjMDk3NDQzYTIwYmIzNmExODZhNGU2ODJiODAxNTc3YjExNSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTI2ZTkwZWY2ZmUxNDZlNGFiMWVjYTVlMThmMGVjMDk3NDQzYTIwYmIzNmExODZhNGU2ODJiODAxNTc3YjExNSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTg2N2VhNDQzNmQzNDY0MTUzZDI4MDk4MGEzNmRlY2E0ZDVlMWNkZjdlZGVlOWVlOTkzNmZlYmFiOWM0YjlhNSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZDJhZTA3Y2RhOTAxMTlkMDA3ZThjOWI4ZGYwZTdkNjZiYjEyZTQ5OGRkYjQzYTk3ZjFjYTFiYWU0MGZkODU0MyJ9"
         }
       ]
     }
   ],
   "verification": {
-    "by": "openwiki/0.7.0",
-    "at": "2026-10-05T04:15:14.909Z"
+    "by": "openwiki/0.7.2",
+    "at": "2026-10-27T17:59:33.551Z"
   }
 }

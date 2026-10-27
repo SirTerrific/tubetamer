@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:0f81a10c1db8d0585839d27850e9e98a470022ecf081c88684752b1c3bdd5440",
+  "claims": [
+    {
+      "id": "claim_5a0e90411bf84a27a2790021239a0cd4",
+      "statement": "The Android TV app stores its bearer token encrypted with an AES-256-GCM key held in the Android Keystore, and decryption returns null if the data is damaged or the key is gone.",
+      "evidence": [
+        {
+          "resource": "repo://android-tv/app/src/main/java/com/sirterrific/tubetamer/data/TokenCipher.kt#L16-L45",
+          "version": "repo-lines-v1:sha256:6fe97132f72f0776774b52577f001921445d9812b579c6095cd264e81388a71c:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJhZTliMmMwOGYzMTBiMzc3YjlhMDY0N2I5MTUwZmRlYjI1ZDIwODRhZTg2MWEyZGRlNGQ0NzMwZjViMjVlNDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFlNjQyODYwZjFmNTMyN2FjMDg2Zjc1ZDYxNzljMTBlNWM0YjYxNjBiZmI2MzE4ZGNkMDIyMWI3NzE2MDhkYzMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUxODZiZjVjZWQ2MjU2MzI3MWExZmU2ZjAxZjdmMzFmZDJiZjZkOTkzMWRiOWVlY2I2MDc4NTE0M2QyNzRmMWIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_8b449c610c67468488a62e87201cb3e3",
+      "statement": "Changing the server URL in SessionStore removes the stored token and profile, since a token from another server is invalid.",
+      "evidence": [
+        {
+          "resource": "repo://android-tv/app/src/main/java/com/sirterrific/tubetamer/data/SessionStore.kt#L39-L48",
+          "version": "repo-lines-v1:sha256:cc79fdd56a20dd89ac0c636703c066286b29bc140c94b9775c2cba722e36f07e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk4OTJhOWQ4ZGU1Mzc3MDY4MjBkY2I2NTkyNDAxZTgyYjc3ZTM4OTQyYTY0ODI1ODYyZjY4NzNjMjg5YzMzZWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA3YTQxZTRlM2JkYTAwZmY5MzgzN2M2NGUyMTk3MmUxZWVlODI4NzJjYTRlYTliYWMxYTA3NzllZjNiZWE3MTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJjODc1MmRjYTEwMmY0YTQ1ODBiZWE3OGFmZjI0YjlkNmUwZDM2OTJiMDRhOWNmZTc3ZTEzMTljNzFmZWY5NzYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_39418b8911d845aeafbccd3faaf7e8b7",
+      "statement": "The image loader attaches the bearer header only to requests whose host and port match the signed-in server.",
+      "evidence": [
+        {
+          "resource": "repo://android-tv/app/src/main/java/com/sirterrific/tubetamer/AppContainer.kt#L37-L46",
+          "version": "repo-lines-v1:sha256:8eae115c71155a21d797e6d935cc487a09d0bc4c1cb31f1b55be96add2a24ede:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFiMTQ4MmY5NDA0NDA1YmQ1N2RhMzRjOGEzMTA4YjY4NTQwY2Y0YjAwOThmYzcxMzRkNTIzMjY5NzRlZTEwZjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA0M2RiYjc0YzFmMjA5ZTE3YjliNmExMzBkMzRhYTA1YmU2Y2Y4MmY2ODdkMzQzN2RhMjhhMDVmN2EwZjZiNDMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJhNjA3ZWI4NGRhNDgzMDQ3YzY0OGUxZDI3YTJiY2ViYzJlYmI4YTk3OTNhMTI5ZTA1YzE0ZWNmMGYyYzhjNGIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_e792c4627fda43e98bb5422745391751",
+      "statement": "TubeTamerApi returns some non-2xx responses as Ok results when they carry a meaningful body: play accepts 403, 404 and 409, heartbeat accepts 403.",
+      "evidence": [
+        {
+          "resource": "repo://android-tv/app/src/main/java/com/sirterrific/tubetamer/api/TubeTamerApi.kt#L119-L141",
+          "version": "repo-lines-v1:sha256:8de7b0d82baabf6f8f154e14052606f4e50c62909ae8aed5f6e3ae9ad90fad4b:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRhNDhkOTUyNzc0M2RlZjAwYzIzODUzYjU0YTQxNzc1MzI4MDUxMGUyNzAwMGM1ZTM0NTk2YjRlNWQwZWM1Y2YiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjA0NDkxNDY5NzIyZTgzNjNhOTRlNDA0NDUzOGUwMTNhMmEyMTdlMzZiMWU1NjhiYTYwYWNiN2I0YzhmMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU0YTlkZjY0ZmZhNzU5ZDVmYjZkNDdkNmYwNGQ3YTc0MmZmOGZjYTlmYTRjYmJkNzA2ZmU5NmFhYzVjNmQ3MGUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRjNTBjMzdkYjRjZWE3NmY5OGFhMDQ4ZDMxZWVmNDgyM2I1NDdmMjU4NGVhOTE2MmQzOWYwNWRkNGMwYzAyMWQifQ"
+        },
+        {
+          "resource": "repo://android-tv/app/src/main/java/com/sirterrific/tubetamer/api/TubeTamerApi.kt#L75-L94",
+          "version": "repo-lines-v1:sha256:e648fa2807dfce3346ab1ba621323128b1271c7d5b6956f3656b22959d9e7dca:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFiNmNkZTNlMTAxZWJiOGU0NDhlOTIxYjFhNjg1ZjYxYjBhMDYyZWY1MTQxNjVlOGI1NDY1ODY0YjYxMGE0MTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk5OWJkZWZlZWFjYTYzNDBlMDI5MGRjODZlODg5Yzg5ZDVlMTg5YWE1YmE0NGI1ODViM2I3MDczNGY0YTYyZDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVkZjJiYmMyYzA2YTY4NjdmMzFiZGRkN2RkM2NiODRhNjUyMjU0M2I5MDM1YjllNjZlNzM1MDUxMGUwODA5YTcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_229aab3d06874e3cbe677803bab909f3",
+      "statement": "PlayerViewModel polls download status every 3 seconds while the server downloads a video, and stops waiting after four consecutive not_found answers.",
+      "evidence": [
+        {
+          "resource": "repo://android-tv/app/src/main/java/com/sirterrific/tubetamer/ui/PlayerViewModel.kt#L108-L134",
+          "version": "repo-lines-v1:sha256:414555945bf322e79c3cbef0cb4273dd60952a69b1f912c0f7d725658df99d00:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFlYzEzZmMzY2Y1NGY1MjUwYWRhNDY4NmZiNmRhOGEyNzUzMGYxODM3NWYzMDBlMmY3NGEzZDQyMGM3ZWM5YTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk5OWJkZWZlZWFjYTYzNDBlMDI5MGRjODZlODg5Yzg5ZDVlMTg5YWE1YmE0NGI1ODViM2I3MDczNGY0YTYyZDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM0OGZlZjQwMDY1OGZhYThkMjEyOTEzOTE3YjBjZDUyYTE3Y2UwNmYxZWNiMjQ2NjVhODczMGFkYzQ5OGRkNWIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_ed3edc8b3f834d63b3bf57a7a6a9ac32",
+      "statement": "The player reports watch time every 30 seconds of actual playback; on 409 it keeps the seconds and reopens the video, and on 429, 5xx or network errors it carries the seconds to the next report.",
+      "evidence": [
+        {
+          "resource": "repo://android-tv/app/src/main/java/com/sirterrific/tubetamer/ui/PlayerViewModel.kt#L136-L183",
+          "version": "repo-lines-v1:sha256:f084ae8d402220984aa570269e0889eed89297c0f84baf13456bc630c02a7fe8:eyJzZWxlY3RlZExpbmVDb3VudCI6NDgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZkNDdjYjljODJkMzgxZTk3Y2E5NDc2MGJiYjU5ZDU2NTQ3Y2E1NmU3NzgyYmE3MjVjNGI2ZjVjNGQzZDBiZTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk5OWJkZWZlZWFjYTYzNDBlMDI5MGRjODZlODg5Yzg5ZDVlMTg5YWE1YmE0NGI1ODViM2I3MDczNGY0YTYyZDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdiZGEyODg2YzQwNTllZTU2MTdjY2NiMWZlY2ZiZWZiY2E5YzViMjI3OWVlODQyZmY3YWZjOWYxOGI3NzdmOWUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_7c735b88a0cd4b7cad9cd336d7fbe9e2",
+      "statement": "The Android TV CI workflow runs unit tests and a debug build on every relevant push or pull request, and runs emulator UI tests only on non-pull-request events after the unit job passes.",
+      "evidence": [
+        {
+          "resource": "repo://.github/workflows/android-tv.yaml#L1-L77",
+          "version": "repo-lines-v1:sha256:865e3bc6f208871d70c64e2b3baeec0ac9f13805c379316122db78889fef0afa:eyJzZWxlY3RlZExpbmVDb3VudCI6NzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZkYzBiYjA0ODBjMmE4NjQ4Mjk3ODcxODIwNjdlNGI0NzZmOWY1MjI3YzVkOTFhZjY2OGYwNDhmNTFjZDk4NzMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZmY2YxYTlhNjRlNzdmMjIwN2JiYmZmMGU4ZDZmZjc0MGRjODIyNzA2ZDE2Y2E5MDg5OTM2MmVmMTI5YTIxNTciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.7.2",
+    "at": "2026-10-27T17:59:33.551Z"
+  }
+}

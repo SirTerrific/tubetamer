@@ -1,14 +1,14 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:3150ae73691a15f86bdfb6a1066791ad5025e26322064ad248b114328c2875da",
+  "pageVersion": "sha256:22af8e52ac9268242bf669d69d5a0ea8f2a39810efe159dd9b397ed33aa59c8a",
   "claims": [
     {
       "id": "claim_03bf8c79bde0457e812a4b58c41eaf92",
-      "statement": "web/app.py creates the FastAPI app, mounts /static, includes nine routers and starts channel_cache_loop in its lifespan.",
+      "statement": "web/app.py creates the FastAPI app, mounts /static, includes ten routers (including api_v1) and starts channel_cache_loop in its lifespan.",
       "evidence": [
         {
-          "resource": "repo://web/app.py",
-          "version": "repo-file-v1:sha256:f60ff1db0e0357a13fdc38e075c6af541025d9f0bab09e11b33a34ba1d70680b"
+          "resource": "repo://web/app.py#L40-L49",
+          "version": "repo-lines-v1:sha256:1c0b1e582767c93d0f8aa0deeed5b9db0a10382f5c45ff4f201e58f87ad1a586:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBkNmI2NGYwMDIzODIyYmI0YWMxZTM4MDg2OTZjMTI0MGU4NGI3ZDQ5YzYzZDVlOTQzODIzNmU4ODA5MjAyN2UiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE5ODRmOGNkYjM1YWJiNDcwNjFmNWJmMWYwMjBlNzUyZTM1ZjU0NTM2ZDBlZDhmN2UxOWFjMjA4MDFjZjdhNTYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM3NzkzNmJkMzVjZDY4ZTljNzk3ODQzMjNlMTgwZDFlY2FiNzIzNGU1NDk2YjlmNmNhODVmYzM2MDQ3YTU2ZDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgzYzFjOTg2MDdkYzY4ZjRhZjE2NDQxNmUwN2IwMmEwMWQ0NmY4NTEwOTljNTg5NDQwNTg5OTViYTU0ZDQyZGUifQ"
         }
       ]
     },
@@ -18,7 +18,7 @@
       "evidence": [
         {
           "resource": "repo://web/middleware.py",
-          "version": "repo-file-v1:sha256:f146ed22bedbb67867fa8d5941421a9f582a79bba6401d122d3c53c87e1de928"
+          "version": "repo-file-v1:sha256:25f7b3096959d99f9d0a6ee110d9df96e04e2266c0fd95482f0ce66676443b2a"
         }
       ]
     },
@@ -28,7 +28,7 @@
       "evidence": [
         {
           "resource": "repo://web/middleware.py",
-          "version": "repo-file-v1:sha256:f146ed22bedbb67867fa8d5941421a9f582a79bba6401d122d3c53c87e1de928"
+          "version": "repo-file-v1:sha256:25f7b3096959d99f9d0a6ee110d9df96e04e2266c0fd95482f0ce66676443b2a"
         }
       ]
     },
@@ -38,17 +38,17 @@
       "evidence": [
         {
           "resource": "repo://main.py",
-          "version": "repo-file-v1:sha256:fb2e263a9c7c24c5b846e739be46b2c616dc696d8fd5484efe5e7c83027d1d0d"
+          "version": "repo-file-v1:sha256:1d73de1ff442c3706a522349c0d39b3ad53cb593965cef2b49463197eb40b684"
         }
       ]
     },
     {
       "id": "claim_ba343c0c592e4f9693f65c1a0b7d68fe",
-      "statement": "watch-heartbeat requires session watching to match, approved video, schedule window, clamps seconds 0-60 and triggers the time limit callback when a budget is exceeded.",
+      "statement": "watch-heartbeat requires the video to be in the session's watching list, an approved video and the schedule window, clamps seconds to 0-60 and to the real elapsed time plus 2 seconds, and triggers the time limit callback when a budget is exceeded.",
       "evidence": [
         {
-          "resource": "repo://web/routers/watch.py",
-          "version": "repo-file-v1:sha256:30b5526c1cd002bc815dcc2527304c9f28a5b7ecae4057626b3a655a8695f1f1"
+          "resource": "repo://web/routers/watch.py#L216-L301",
+          "version": "repo-lines-v1:sha256:b3bc41421b6a7ee6923b075fcca9a9523b692db90043f40503dda0cb2fbca8f3:eyJzZWxlY3RlZExpbmVDb3VudCI6ODYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNkMmNmMTk0NDIyYzkyN2RmNTZlMjJhMjgwYmI2YTkyMDIzY2U4YjBiMGUwZGVhYjkwMTFmYTFmOGNmZjU5NTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI4NjFkN2MzMjY1MTMyOGQwYmRhNWEzM2Y0NTgzYzJiZDg3NmJjNjI4MjEwMWNmYmFjMWJjY2NlNTI5ZjJiMGUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY0ZjA2NDBjZGI4Zjg1ZTI5NTY3N2FhMjllY2NiNTIzYmM0MzE3ZjZjM2NiMzc5NTgxNDE1NmUwYTMwMWZmN2QiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         }
       ]
     },
@@ -58,7 +58,7 @@
       "evidence": [
         {
           "resource": "repo://web/routers/watch.py",
-          "version": "repo-file-v1:sha256:30b5526c1cd002bc815dcc2527304c9f28a5b7ecae4057626b3a655a8695f1f1"
+          "version": "repo-file-v1:sha256:9273e231d41579b9260c1bdf1e03229437a9ec94ef0830533c57094f3e7cdec5"
         }
       ]
     },
@@ -68,7 +68,7 @@
       "evidence": [
         {
           "resource": "repo://web/routers/stream.py",
-          "version": "repo-file-v1:sha256:9daff289df5c4a7ebbb863de5cc65312ae6f90f164a377ff06ea4ea9006ef66d"
+          "version": "repo-file-v1:sha256:8c3acc44acf884f683ebd2ebcbf6d7a481c3039e0d2a6677ff05d93991287b40"
         }
       ]
     },
@@ -78,7 +78,7 @@
       "evidence": [
         {
           "resource": "repo://web/routers/ytproxy.py",
-          "version": "repo-file-v1:sha256:17fa74919a37d7c95caa2345dfa16394cec267f69fc5edf9dd3fa63cd4f473dc"
+          "version": "repo-file-v1:sha256:00ccb367e5826b3bb59a6368dee227cfd671ea66709194131f2f4e99a8c78a34"
         }
       ]
     },
@@ -88,7 +88,7 @@
       "evidence": [
         {
           "resource": "repo://web/cache.py",
-          "version": "repo-file-v1:sha256:e6bd4cdde9399008aa825909a3690b9398e5510c0e262d7ddefa139d65ba698a"
+          "version": "repo-file-v1:sha256:a74e3d8e5de80bc7dfb7ef2826fe138e711bf9438f25091adc5f8c65e6ec9797"
         }
       ]
     },
@@ -101,10 +101,34 @@
           "version": "repo-file-v1:sha256:7a06ed952fcfb1d3aabd40c80e9e6190538d16f3615881ef1929f69da9530d10"
         }
       ]
+    },
+    {
+      "id": "claim_67aab40651834fdbba2de8a5f7efb6dd",
+      "statement": "PinAuthMiddleware clears a cookie session whose profile was deleted or whose PIN changed since login, using a PIN fingerprint stamped at the first request after login.",
+      "evidence": [
+        {
+          "resource": "repo://web/middleware.py#L82-L122",
+          "version": "repo-lines-v1:sha256:f3c8eac0b41366884bf22555aa0be5445c7512dda66e7bffeafbd1409a3004ae:eyJzZWxlY3RlZExpbmVDb3VudCI6NDEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM1NDBkOGRlZDZmZDQ3NWI5MmUyYTQwZTU2NTkwNTRlNmQ2MDcxNTU2MjZhYmM2ZTU1YTk0YjYzZTliYmE3MWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIzY2Q1N2E0NTA2MmE5NjgzMjliMWMyOGVhOTAxMDVlZjNmOTIzZDg0NTU2ZTY5YzE4YTdhNGY1YWU2MzEzZjAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjViOGEyOTY2MGI4M2I2ZTUzZmE2YzgxM2E2ZWMzYWYyYzFiZjA2N2Y5OTJiOGYyMGQyMmM3ZTAwYjcyMjA0MzQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjAyODY0NjNkMTVlMDg1ZDdkY2UxMzAzOGEyN2IwNGM1N2ZiNjdiZDk2NjdjMGI2NmEyMzQzYjRmNjM2Y2JlZTYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_b4add9c7f76743e084296c47509ede79",
+      "statement": "A bearer token request runs in a throwaway session holding the token's profile, and the original session is restored before the response so no cookie is issued; an invalid token gets 401 and never falls back to the cookie.",
+      "evidence": [
+        {
+          "resource": "repo://web/middleware.py#L124-L147",
+          "version": "repo-lines-v1:sha256:096d5e0e2d1515bbd8ef00b740c416eec2e7da873ba867fdab54d54947670ac8:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4N2Y4MjUyN2E3NjA1ZTBmZWFlNWExYmE3ODBjNDY0ZjEyYjhkZDA3YTY0NjE5OGE4NGFiMjY0NzY5ZGY1ZDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRmMWQxNzBiYjE3ZGU3NmM4NWVhOTE2ZTA1OGU3NjZiYjI1NjJmZDJkMGVmYjA1Yzc5ODM3M2NkNjJkMDAxYjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjIxMDMwZGU3YzE5OTAzZjBkY2Y1YTFhNjc5NGQyOTM2YWEyMzhjMWQxZTE1NjM5NWI2ZWJhOWUxZDQ3NDdiZDQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://web/middleware.py#L76-L80",
+          "version": "repo-lines-v1:sha256:f9cee1a4a33d33c64d469fe35aa37e72e9a7d9e50f0a875b2732bcdfa84039fb:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNWUwYmIxM2M0MzQ1YWU0MzI3NGRmZTkwNDNkMWIwOWJiODk2MmJjNDNlNTk2NjBlYmRmMmUyOTkxNjRiNjMyOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZmYwYjgxOWZhN2Q1YmI4N2IxNmE5ODk4MTEwZjU5YTcxZDcxOTM1YzgyMGQxZWE4MDZiMDNiMGE0MDkxZjRhMCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZDE0NDE5MjQ1ZjZlNDFlYThlOTAzYWUwMmEwZDZkMzVjMmE3MDA5NWE0Mzk1MjljZTM2MzAxMzk2OTM0MGZmZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODQ2ODI4MjhmM2FiZjA2ZjFiOTk1MGFkMTBlZDIyZTJjZDgyNGU0Y2YwOWVlMDc3OTQzZDkyNTdjMDJlODhhYSJ9"
+        }
+      ]
     }
   ],
   "verification": {
-    "by": "openwiki/0.7.0",
-    "at": "2026-10-05T04:15:14.909Z"
+    "by": "openwiki/0.7.2",
+    "at": "2026-10-27T17:59:33.551Z"
   }
 }

@@ -3,8 +3,26 @@ type: "Guide"
 title: "Build, test and release"
 openwiki_generated: true
 verified:
-  - by: openwiki/0.7.0
-    at: 2026-10-05T04:15:14.909Z
+  - by: openwiki/0.7.2
+    at: 2026-10-27T17:59:33.551Z
+sources:
+  - id: openwiki-source-0c849b5f83d434626169903c
+    resource: repo://.github/workflows/docker-publish.yaml
+  - id: openwiki-source-ca6cb4b1a14fd7969dfae3ec
+    resource: repo://CHANGELOG.md
+  - id: openwiki-source-828d24ee9ccc8738afe410fb
+    resource: repo://deploy.sh
+  - id: openwiki-source-b79fbbd921df689b4bbdc82f
+    resource: repo://docker-compose.yml
+  - id: openwiki-source-bb1ebe868e35e9e500714501
+    resource: repo://Dockerfile
+  - id: openwiki-source-e9906b078522ed0a08c64ff1
+    resource: repo://entrypoint.sh
+  - id: openwiki-source-f0a6e7dc03522b2682f88655
+    resource: repo://tests/conftest.py
+  - id: openwiki-source-7c77ca718b9f5ccae5537b17
+    resource: repo://unraid-template.xml
+generated: { by: "claude-code", at: "2026-10-27T17:59:33.551Z" }
 ---
 
 # Build, test and release
@@ -26,7 +44,7 @@ The default command runs `python main.py -c /app/config.yaml` when that file exi
 
 ## Deployment
 
-- **docker-compose**: `docker-compose.yml` defines one `tubetamer` service. It uses the `tubetamer` image, restarts `unless-stopped`, maps port `8080:8080`, mounts `./config.yaml` read-only and the `brg_db` and `brg_videos` volumes, and passes `BRG_BOT_TOKEN`, `BRG_ADMIN_CHAT_ID` and `BRG_PIN` from the host environment.
+- **docker-compose**: `docker-compose.yml` defines one `tubetamer` service. It uses the `tubetamer` image, restarts `unless-stopped`, maps port `8080:8080`, mounts `./config.yaml` read-only and the `brg_db` and `brg_videos` volumes, and passes `BRG_BOT_TOKEN`, `BRG_ADMIN_CHAT_ID`, `BRG_TELEGRAM_API_URL` (optional) and `BRG_PIN` from the host environment.
 - **Unraid**: `unraid-template.xml` points at the published image `ghcr.io/sirterrific/tubetamer:latest`.
 - **Remote host**: `deploy.sh` packs the source into a tarball (leaving out `__pycache__`, `.pyc`, `.env`, `.log` and similar), copies it over `ssh`/`scp` (default `/opt/tubetamer`), creates `config.yaml` from `config.example.yaml` the first time, and runs `docker compose build` and `docker compose up -d`.
 
@@ -38,7 +56,9 @@ The suite lives in `tests/` and runs with pytest (plus `pytest-asyncio` for asyn
 - `child_store`: a `ChildStore` for the default profile, built on `video_store`
 - `config_yaml`: writes a minimal config file
 
-Test modules cover one area each: bot (`test_bot_*`, `test_callback_router.py`), stores (`test_video_store.py`, `test_child_store.py`), the extractor (`test_extractor_*`), i18n, utils, the web layer (`test_web_*`) and full web integration (`test_web_integration.py`).
+Test modules cover one area each: bot (`test_bot_*`, including `test_bot_audit.py`, and `test_callback_router.py`), stores (`test_video_store.py`, `test_child_store.py`), the extractor (`test_extractor_*`), the downloader (`test_video_downloader.py`), i18n, utils, the web layer (`test_web_*`), full web integration (`test_web_integration.py`) and the native API (`test_api_v1*.py`).
+
+The Android TV app has its own tests under `android-tv/`: JVM unit tests and Compose UI tests. See [Android TV client](android-tv.md).
 
 Run everything with `pytest`, or one file with `pytest tests/test_config.py`. Without a local Python, run it in a container:
 
@@ -50,19 +70,27 @@ docker run --rm -v "$PWD:/src:ro" -w /work python:3.14-slim bash -c \
 ## Versioning and changelog
 
 - `version.py` holds the version string (`__version__`). The web templates display it, and the release workflow checks it.
-- `CHANGELOG.md` has one `## vX.Y.Z - YYYY-MM-DD` section per release, with `### Added` / `### Changed` / `### Fixed` subsections. Add new entries at the top.
+- `CHANGELOG.md` has an `## Unreleased` section at the top and one `## vX.Y.Z - YYYY-MM-DD` section per release, with `### Added` / `### Changed` / `### Fixed` subsections. Add new entries at the top.
 - Releases are tagged `vX.Y.Z` on `main`.
 
-## Publish workflow (GHCR)
+## CI workflows
 
-`.github/workflows/docker-publish.yaml` runs on a pushed `main`, on a published GitHub release, and on manual dispatch. It:
+### Test and Publish (GHCR)
 
-1. On release events, checks that the tag (`GITHUB_REF_NAME` without the `v`) matches `__version__` in `version.py`. If they differ, the job fails.
-2. Sets up QEMU and Buildx, then logs in to `ghcr.io` with `GITHUB_TOKEN`.
-3. Generates tags with `docker/metadata-action`: semver `{{version}}`, `{{major}}.{{minor}}` and `{{major}}`, plus `latest`.
-4. Builds and pushes a multi-arch image for `linux/amd64` and `linux/arm64`.
+`.github/workflows/docker-publish.yaml` is named "Test and Publish". It runs on pull requests, on a pushed `main`, on a published GitHub release, and on manual dispatch. It has two jobs.
+
+1. `test` sets up Python 3.14, installs `requirements.txt` and pytest, and runs `pytest -q`. It runs for every trigger.
+2. `build-and-push` needs `test` and is skipped on pull requests, so a PR never publishes an image. It:
+   1. On release events, checks that the tag (`GITHUB_REF_NAME` without the `v`) matches `__version__` in `version.py`. If they differ, the job fails.
+   2. Sets up QEMU and Buildx, then logs in to `ghcr.io` with `GITHUB_TOKEN`.
+   3. Generates tags with `docker/metadata-action`: semver `{{version}}`, `{{major}}.{{minor}}` and `{{major}}`, plus `latest`.
+   4. Builds and pushes a multi-arch image for `linux/amd64` and `linux/arm64`.
 
 The workflow sets `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24` so the actions run on Node 24.
+
+### Android TV Tests
+
+`.github/workflows/android-tv.yaml` runs only when `android-tv/**` or its own file changes (push to `main`, pull request or manual). A `unit` job runs the Gradle unit tests and a debug build. A `ui` job then runs emulator tests, except on pull requests. Details are in [Android TV client](android-tv.md).
 
 Release steps:
 

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:b98752ab6d8847034d2f90b607e7a2b2dea80b63c8cb62edf7fe88dfb8858a86",
+  "pageVersion": "sha256:180cfcf4730f9422b733e9e11eb225b4c0d8917902636191040914cff458dd14",
   "claims": [
     {
       "id": "claim_c5ad02825d6941e1bcde3f3e99e15593",
@@ -8,7 +8,7 @@
       "evidence": [
         {
           "resource": "repo://bot/telegram_bot.py",
-          "version": "repo-file-v1:sha256:cd63d21ebae42ee74164f84b16507f1a6386ab938366957ba3e7fff99946ef8f"
+          "version": "repo-file-v1:sha256:906bd66d674021d6495857995f631d013a38a8e816084be007ff93be4d27c18e"
         }
       ]
     },
@@ -18,7 +18,7 @@
       "evidence": [
         {
           "resource": "repo://bot/telegram_bot.py",
-          "version": "repo-file-v1:sha256:cd63d21ebae42ee74164f84b16507f1a6386ab938366957ba3e7fff99946ef8f"
+          "version": "repo-file-v1:sha256:906bd66d674021d6495857995f631d013a38a8e816084be007ff93be4d27c18e"
         }
       ]
     },
@@ -28,7 +28,7 @@
       "evidence": [
         {
           "resource": "repo://bot/telegram_bot.py",
-          "version": "repo-file-v1:sha256:cd63d21ebae42ee74164f84b16507f1a6386ab938366957ba3e7fff99946ef8f"
+          "version": "repo-file-v1:sha256:906bd66d674021d6495857995f631d013a38a8e816084be007ff93be4d27c18e"
         }
       ]
     },
@@ -38,7 +38,7 @@
       "evidence": [
         {
           "resource": "repo://bot/telegram_bot.py",
-          "version": "repo-file-v1:sha256:cd63d21ebae42ee74164f84b16507f1a6386ab938366957ba3e7fff99946ef8f"
+          "version": "repo-file-v1:sha256:906bd66d674021d6495857995f631d013a38a8e816084be007ff93be4d27c18e"
         }
       ]
     },
@@ -58,7 +58,7 @@
       "evidence": [
         {
           "resource": "repo://bot/telegram_bot.py",
-          "version": "repo-file-v1:sha256:cd63d21ebae42ee74164f84b16507f1a6386ab938366957ba3e7fff99946ef8f"
+          "version": "repo-file-v1:sha256:906bd66d674021d6495857995f631d013a38a8e816084be007ff93be4d27c18e"
         }
       ]
     },
@@ -68,7 +68,7 @@
       "evidence": [
         {
           "resource": "repo://bot/timelimits.py",
-          "version": "repo-file-v1:sha256:f280ff674e226e8bc6c123f0baa61ad6c19b6564922e78375572cf8c4f1d2072"
+          "version": "repo-file-v1:sha256:5a80657f284ef3cec588ce29755aa69fd497a76d5f0ce7b1295188afe5648252"
         }
       ]
     },
@@ -78,11 +78,11 @@
       "evidence": [
         {
           "resource": "repo://bot/helpers.py",
-          "version": "repo-file-v1:sha256:4287006e16307560543a12be0a81618bfa8edceb83194af53bb6407c176bc226"
+          "version": "repo-file-v1:sha256:2fee1383aa812ed31f28cdf0defb8d15c639cf2c33273c321be76ba002ad99e3"
         },
         {
           "resource": "repo://bot/telegram_bot.py",
-          "version": "repo-file-v1:sha256:cd63d21ebae42ee74164f84b16507f1a6386ab938366957ba3e7fff99946ef8f"
+          "version": "repo-file-v1:sha256:906bd66d674021d6495857995f631d013a38a8e816084be007ff93be4d27c18e"
         }
       ]
     },
@@ -92,13 +92,37 @@
       "evidence": [
         {
           "resource": "repo://docs/telegram-commands.md",
-          "version": "repo-file-v1:sha256:31d221e5ee8380a5c780dac9fb4e8849bbe1d1ad6e5e3154564afc72b0c81591"
+          "version": "repo-file-v1:sha256:e31a707c32d95008e016127a41681da9c5801e16563c78df842da0e099ec400d"
+        }
+      ]
+    },
+    {
+      "id": "claim_3eb1ff9fc0034002a556f396f9fe3863",
+      "statement": "The bot escapes user-supplied text such as channel names with _esc before placing it in MarkdownV2 links, so punctuation stays literal.",
+      "evidence": [
+        {
+          "resource": "repo://bot/helpers.py#L17-L23",
+          "version": "repo-lines-v1:sha256:849f9d133b780831a7fc8d94025703fd46eee793010f4379515c5665d1400f3c:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZDEwMGU3ZjkwNzc2NGY3Njc4YmU0MTMyMWFjYTUyYmZlZGY3NmJkM2E3MWQ0NWNiNTA3ZTQ2OTEzZjU0YTcxNSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzA1YTIwNmU3OTEwNzNlOGQ3NjZlYTA4YTEyZmVkZTM1M2ZkZWY1MmZiMTA5N2EwY2JjYjU0YmY3MTYyNzg0MiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODdkNmMxN2Y3ODI3MGVkODUwZTgxOGY3MzQ1NTY3YTlmNzIwOTE3MDM2NmFhMzQ0NjVhMzkzMjRmN2IyMDk4MyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNWY3NGI4ZmQwMmE0NDMzZTc5OTA2NjE4YjBlZTE2ODIyNTlhMDM3OWVkOGE4YTViNDMwYjkzNWFhOGM5MTNlZSJ9"
+        },
+        {
+          "resource": "repo://bot/helpers.py#L74-L78",
+          "version": "repo-lines-v1:sha256:1a0ba8f1082b7f886fcbf90c9f5bafb6ea766a1daf45f887f72455a577dd63c7:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTk1MjNhZjRiYzI1YmE5MzhkNTBlZGRjNGQwMjRjYTQwNzhkZjJhNzFkYTE4YTYxYjBhZWIwM2RmMTc1NjAwZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiODQ4YzNlYTlmYjk2ZWE2NjlmMTg5ODFjYjllMTQxMzE4ZjEyZjhlMzVhNjZkNGNkZWM4NmI0NWNmNDY4ZDI4YSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODU4ZDgwYWVkZGI2MjdkZTNlMTgzM2MzZTEwZTg2NWRjZmQ1OWVmNDUyYzNiZjZhMTBkZGRjNjU1OGVlZWNmMyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_d8207ac13689474c83c75b20ab9c611d",
+      "statement": "The update check times out after 10 seconds, ignores responses over 100 kB, and logs failures at debug level before retrying at the next interval.",
+      "evidence": [
+        {
+          "resource": "repo://bot/telegram_bot.py#L330-L362",
+          "version": "repo-lines-v1:sha256:ed2567dbd20c8d16d55ad04a7d4896e4be7207909270d8e3809c60c977c0b86a:eyJzZWxlY3RlZExpbmVDb3VudCI6MzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFiYjVjOWVmYzNlMmYzMzUwMjUxMjRlNzk1NDBkZDk5ZjY1ZDY4NjkwMmM0ODdhMDMwYWFkMGJkMmNkY2U4NGEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNjNTg2ZWQzMDRjNDNkNTgzYzY2NjYwNDljOTJkZjc4NTBmYTg5ZWQ4MjZjNGU1NGJlYWY0ODIxNzQ3NzllYTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM5NjM2MmFjYzM5Nzk4YTc3NWFkNTNiYTIwMjA5YzdlZDFmZDAyZTIxOTM1MjE4Y2E2YzZmYmUwMDZkMmYxNjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk4MGI1MzE1OTU2NDAxZDQ3NGY1ZjU4OGQ3Y2RlYzBmYmFiMjNkNDQwZjU2NmM0YzQyOTJlYjY0YWE2Yjg2NGEifQ"
         }
       ]
     }
   ],
   "verification": {
-    "by": "openwiki/0.7.0",
-    "at": "2026-10-05T04:15:14.909Z"
+    "by": "openwiki/0.7.2",
+    "at": "2026-10-27T17:59:33.551Z"
   }
 }

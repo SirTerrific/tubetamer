@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:bea36840578519c66d99091f95bf49976f58859b9e8d54084222bb33d3b83152",
+  "pageVersion": "sha256:c3f57f117e92dbf2ba81d3ef47bb8477af1b74c8d54257ba8aab5dc6c2fda238",
   "claims": [
     {
       "id": "claim_414ce9d612294c04abff193d3c8aa26c",
@@ -24,11 +24,11 @@
     },
     {
       "id": "claim_baed13d44f39452aa6f488634b58afaa",
-      "statement": "docker-compose.yml maps port 8080 and passes BRG_BOT_TOKEN, BRG_ADMIN_CHAT_ID and BRG_PIN.",
+      "statement": "docker-compose.yml maps port 8080 and passes BRG_BOT_TOKEN, BRG_ADMIN_CHAT_ID, BRG_TELEGRAM_API_URL and BRG_PIN.",
       "evidence": [
         {
-          "resource": "repo://docker-compose.yml",
-          "version": "repo-file-v1:sha256:ac21e76e787a1065c9b6994f9fd9eb003bad5c38e8c52fce57256bf40a32b128"
+          "resource": "repo://docker-compose.yml#L7-L13",
+          "version": "repo-lines-v1:sha256:cf63babc8ec004ea2b20cb989d38cc0902c040859be1442a844fcddd06b46fd7:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYmMxNmVkMjM5YTM2NTFiNTA3OWMwZTRlN2YwNzg0NGVhMzI5Yzg3NjI4YmY5ZmNjNDYzNjc3MzNmNWUxZTkzZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNmU2NDIzNmE3MjEzNjc5Nzg3Nzk5NzI1Zjk2NmQ2MmYyZmFiZWI0YWI0OGZmMWExMWVmNjc3NWFmNmM1ZTc4ZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMGQyY2M0Yzc1M2U5ZDcyZTk4Yjc4NjY4ZjQ2MDQ4YWJkYjBkYzNiNmZiYTNhOGU0ZTJjMTYwOWY2ZTNmN2Y0YyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOTczNTRlMGUyNGUwN2VhMGE2N2MxZmM2NTg5ZjVlODRmODk4MzVjOTBhZmRmZmI3Zjk0NzBmMWRlMTc0NjUwNCJ9"
         }
       ]
     },
@@ -58,37 +58,33 @@
       "evidence": [
         {
           "resource": "repo://tests/conftest.py",
-          "version": "repo-file-v1:sha256:34297a1f3c0d197fcde448294d792023333f6e6f3b6c221edf269696794682c2"
+          "version": "repo-file-v1:sha256:de2248b77394a6536ae7c23c8658117eb98ab52f2303fbd188ff4478c13107b0"
         }
       ]
     },
     {
       "id": "claim_aa1b2fa97b1e4ddcb73e76baa70459e0",
-      "statement": "The publish workflow verifies the release tag matches version.py and pushes a linux/amd64 and linux/arm64 image to GHCR with semver and latest tags.",
+      "statement": "The Test and Publish workflow runs pytest on every trigger including pull requests; only for non-PR events does it verify the release tag against version.py and push a linux/amd64 and linux/arm64 image to GHCR with semver and latest tags.",
       "evidence": [
         {
-          "resource": "repo://.github/workflows/docker-publish.yaml",
-          "version": "repo-file-v1:sha256:472d01c20edaa916f76ee9c254a2637342cc856c88e70df7aed88913ddb6de50"
-        },
-        {
-          "resource": "repo://version.py",
-          "version": "repo-file-v1:sha256:562ea89b72889a52ac4bf5a0e428d48187dfa22db3c7b4fe4913e79c62f41bb3"
+          "resource": "repo://.github/workflows/docker-publish.yaml#L17-L96",
+          "version": "repo-lines-v1:sha256:10ed716d7304d2d8267433315a798a1bef58935cd8c7bfb10fa110b785c9022d:eyJzZWxlY3RlZExpbmVDb3VudCI6ODAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU5ZDgwMTU0ZWQ0MmZjNWM3NzliMTMzMTU3OGI1OGI4OWM4MDFlYWNlNzRmMjRjZDQ4ZWI0YTIzNTc5NDBhOTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg5MDBkZTFiODIwMWUzYjYxYmI5NGM0YWQ3MWVkM2ZjOTE4NGFhMjBjYjY0NjNlZWVlYzQyZmU5YTQ4NTk4MGYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM3M2NlMjAzNWU0MmY0MWY2NDE2NzA2MzdhNWNjMWI2Nzc0OGYwMGY3NzJjNmZlMWZlYjk1OGJiOGI3OWYwMDkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         }
       ]
     },
     {
       "id": "claim_d6bb4c8d886441728e82479b242f4cc8",
-      "statement": "CHANGELOG.md has one vX.Y.Z dated section per release.",
+      "statement": "CHANGELOG.md has an Unreleased section followed by one vX.Y.Z dated section per release.",
       "evidence": [
         {
-          "resource": "repo://CHANGELOG.md",
-          "version": "repo-file-v1:sha256:65e0a0a63f18592a83025a4040c119a7d413860a834742e02679e7cb0c57223d"
+          "resource": "repo://CHANGELOG.md#L3-L22",
+          "version": "repo-lines-v1:sha256:9ec7ef8198355ca49ee94fb3f55d2d0f4de664be78872867f637e72348cf3f35:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRkZDdjYzJmZDZmMTRhODMyYzE2MjAwYWM3YmM2MjczOTUyOGYxMDI2YWQ0Yzg3NTg2MDZjMDRjZWQzNDRmYzciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJiZGEyMTk0YjJjODRmNGY5OWEzMDFmM2U3OTFjMDQ3NzlkNDgzNDQ0ZTcyN2UzMWVmNmExYWQyYTEzNTMyYTYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjoyLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJkNjhjNWI4OGFjNDg3MmM2MDNkNjZlNjUxMzcwNzRjZmJmMTg4MjdkZmU3NTYyNTA5NDJmOGEyMTM2OTQwNzEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRhYjVjNzA1NWQ1OTZjNWMxZDc1YWRiMzliNTExYjM4YzE5MzAyNTIzZWNiNWNlNmJmZTVkMzNkZTI5OGQ1NDEifQ"
         }
       ]
     }
   ],
   "verification": {
-    "by": "openwiki/0.7.0",
-    "at": "2026-10-05T04:15:14.909Z"
+    "by": "openwiki/0.7.2",
+    "at": "2026-10-27T17:59:33.551Z"
   }
 }

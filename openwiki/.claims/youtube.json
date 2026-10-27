@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:8d0c652bef045fac46db3ae0f0a27e876efb89b6592eac3d4ab7b42c8effe379",
+  "pageVersion": "sha256:0a4e6373c489e9a9541da494ec3109630bfaa166c8c39d69913f6a95ef6766ae",
   "claims": [
     {
       "id": "claim_8dcf6c049efb4221a37b6f098fd58ba0",
@@ -8,7 +8,7 @@
       "evidence": [
         {
           "resource": "repo://youtube/extractor.py",
-          "version": "repo-file-v1:sha256:9c1833d8e55fc7f2477ac1d95efd13e7546cc2859c8dd9ae8dae5dce7cf0f885"
+          "version": "repo-file-v1:sha256:def85938f1704200f289b357d6ef5e42fcfcb9904ab13fa1f6e783ce3bb29a26"
         }
       ]
     },
@@ -18,7 +18,7 @@
       "evidence": [
         {
           "resource": "repo://youtube/extractor.py",
-          "version": "repo-file-v1:sha256:9c1833d8e55fc7f2477ac1d95efd13e7546cc2859c8dd9ae8dae5dce7cf0f885"
+          "version": "repo-file-v1:sha256:def85938f1704200f289b357d6ef5e42fcfcb9904ab13fa1f6e783ce3bb29a26"
         }
       ]
     },
@@ -28,7 +28,7 @@
       "evidence": [
         {
           "resource": "repo://youtube/extractor.py",
-          "version": "repo-file-v1:sha256:9c1833d8e55fc7f2477ac1d95efd13e7546cc2859c8dd9ae8dae5dce7cf0f885"
+          "version": "repo-file-v1:sha256:def85938f1704200f289b357d6ef5e42fcfcb9904ab13fa1f6e783ce3bb29a26"
         }
       ]
     },
@@ -38,7 +38,7 @@
       "evidence": [
         {
           "resource": "repo://youtube/extractor.py",
-          "version": "repo-file-v1:sha256:9c1833d8e55fc7f2477ac1d95efd13e7546cc2859c8dd9ae8dae5dce7cf0f885"
+          "version": "repo-file-v1:sha256:def85938f1704200f289b357d6ef5e42fcfcb9904ab13fa1f6e783ce3bb29a26"
         }
       ]
     },
@@ -48,17 +48,17 @@
       "evidence": [
         {
           "resource": "repo://youtube/extractor.py",
-          "version": "repo-file-v1:sha256:9c1833d8e55fc7f2477ac1d95efd13e7546cc2859c8dd9ae8dae5dce7cf0f885"
+          "version": "repo-file-v1:sha256:def85938f1704200f289b357d6ef5e42fcfcb9904ab13fa1f6e783ce3bb29a26"
         }
       ]
     },
     {
       "id": "claim_b51bacf19a0c437e8ea56d10f8a7c2ef",
-      "statement": "VideoDownloader enqueue dedups, queues (video_id, profile_id) and workers run _download under a semaphore.",
+      "statement": "VideoDownloader.enqueue dedups on an in-memory active set, queues (video_id, profile_id), and workers run _download under a semaphore.",
       "evidence": [
         {
-          "resource": "repo://video_downloader.py",
-          "version": "repo-file-v1:sha256:d277acfed79abfca9758f142913e7fd4f83401ba00546abc50ae4b4668b8e6f7"
+          "resource": "repo://video_downloader.py#L191-L220",
+          "version": "repo-lines-v1:sha256:f003705883b55ee291db5f1863bc10b486f9c67ca8c7e2c7b6eb62ae18e60309:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdmNDE2NWM3MTdhMjEzMGViMjU4MjczZjVlYjBkM2NiMmUwMWJkYjUzMGJlYzg5MWZkNDU3YWM1NzIzM2ZmZjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM2ZTJmOTNjNTI3YzBkOGVkYTgzNmFjY2UwN2UxMWYzMmMyMjIzYjgwNzQ0YTEwODc0NjI5N2EzYjE3YzA5Y2MiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjIzZWM3OWM2YzgzN2IyNmZkMjZiZmNkNTZhMjhlYjA0MzIzZDQ4YmRmNmE3NDYzNWRiYjllMTJjMWY3MzRmYmUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIyMGU3NDZlMjQxMzE2MjE5MzBkNjk3MDljZDhiNmM1OWMyNGY4N2JmNGMwYzJiNzU1YmI2MDI1ZGQ0MTQ1M2UifQ"
         }
       ]
     },
@@ -68,7 +68,7 @@
       "evidence": [
         {
           "resource": "repo://video_downloader.py",
-          "version": "repo-file-v1:sha256:d277acfed79abfca9758f142913e7fd4f83401ba00546abc50ae4b4668b8e6f7"
+          "version": "repo-file-v1:sha256:38cd63cb79de035adb1a23084f199014a17f33d385c6d7498b33af6a2217f735"
         }
       ]
     },
@@ -78,13 +78,41 @@
       "evidence": [
         {
           "resource": "repo://video_downloader.py",
-          "version": "repo-file-v1:sha256:d277acfed79abfca9758f142913e7fd4f83401ba00546abc50ae4b4668b8e6f7"
+          "version": "repo-file-v1:sha256:38cd63cb79de035adb1a23084f199014a17f33d385c6d7498b33af6a2217f735"
+        }
+      ]
+    },
+    {
+      "id": "claim_7cbd80e3ddce4efc9c97a41125ad04d0",
+      "statement": "A downloading row left over from a restart is queued again, and retry_failed re-queues both failed and downloading rows at startup.",
+      "evidence": [
+        {
+          "resource": "repo://video_downloader.py#L201-L206",
+          "version": "repo-lines-v1:sha256:593fe287ad8d68bbfdce1ff319e5ed274d36ac46e1872cc60957648c23e210b4:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOWVhOGQ1Yzk1NzI2M2FiZjQ5NGFiZmY1NmZjY2I2OTM0YmU4MzE3NzkyYmJhMDM1OGFmNWUxYTgyNDUyMjliZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNGU1YzRkY2Y2MWZlMDg3MmExNDBkZDdkNTlkY2NlNzJlNmVmNjE0YzRhOTMyYTI4ZDhlNzI0NjA5ZWVhOTIzMSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZjIzNjIyNjc0ZDg3OTQxNWMzYWVlYWNlNDRkZjAyZjk4ZTFhYjQwNzBmMWIyZDBiMmRhNzVjNzNiOGY2Njg2NiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMTk4ZjgxN2FjNDU2ZGFiNjE0ZGJiMDYyNzljODc0ZmE2YzU5MWI5YjgyMzgwNzdhY2I5Y2NlODMyOTY5MWMwYiJ9"
+        },
+        {
+          "resource": "repo://video_downloader.py#L483-L490",
+          "version": "repo-lines-v1:sha256:7de58248e589d02382df70489a746470fc49765ad8db5930684f84c8990f381e:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNGU4NTI1OTAxOTdmYzhhNDY3MDQ1NzgyMDYwMWNmZThkOGE1MDg1YTAxZmMzNWVjNGEzNGQ5MjQ4YWRlMWI5ZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYTJkNDcyMTUxMzkxMGZiODBhMzRiZGMyOTczYzkxZTQxOTNjZTI0NTdmYjRhYjYwYzkxZmIxYzQ5ZjYwYjc5ZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOWU0YjcwNDlhNGQ3ZmRlYThiY2U4MjQzOGRhNDgyZDhkZjgwYWJlZDhhZmRmOTg1YmM2MjdhYWE1NmU5ODZjMiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNzE5ODZjMGQwMDU5ZmI4Y2E2YzZlNDEzMDc5NGMxMTllY2QwODhjNzYyMDJlOTNhMTVmODg0MzliYWM4MjQ0ZSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_084125f5b6c34b8cadb01e74e0d373d3",
+      "statement": "_download guarantees the video leaves the active set and marks the row failed on unexpected errors, and downloads run in a dedicated thread pool separate from the default one.",
+      "evidence": [
+        {
+          "resource": "repo://video_downloader.py#L161-L165",
+          "version": "repo-lines-v1:sha256:10279cd3e196582c9529f487c55df9adec1e359817650666702e0db124f669e2:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzVjYTU2NjkwMTVjYjYzNDViYzk1M2MyNWVkMjRlOGIwZDBmMzAxOWQxOWZlMzZiYWE3ZTAwYTYzN2JjNjhjMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMTIzMWM0YjJmOGUxMzY2MDYxM2RhZGEzOTAxMjM1NDhiZDZmYjFhNTY0OTZhMjZlMjQzODQ3NTEzNjIzNWRiOCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYTQ5NjczYjNhMmFkNjc3OGYyMzc3ODA2OTIxZDQwNDI3ZTFhMjcwNDJiYjNiMmMyMjBlNmQ1Y2UxYTExODM0YSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMWQ3YjdmNmU0NjJkYTI4OGRiMjYxMjA5YzBkNjRlMTE2ZDdjNTRmM2YwMTNlYWU4ODIyNDczZGJkNDM4N2UyMyJ9"
+        },
+        {
+          "resource": "repo://video_downloader.py#L224-L235",
+          "version": "repo-lines-v1:sha256:0c489078e671c32914932b32bed89868f605bf49a92eb53dab2918a3dbdfb5ad:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjliZmM2YWEyMzc0MTVjYjk5OGIyZDQyZjFiOTcxOTEwN2I5OGRkZTBmNjQ3YzY5ZGE5YjQ4YjkzNTA0MmMyMDgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM4OTJiMzhkNmE5NGI2N2VhNmZhNmM4NjUyYTdhZmIxYzRhZGRjNTgyYTk3ZmRkOWYxODRkYzA3ZTM4ODU1ZDMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjIyMGU3NDZlMjQxMzE2MjE5MzBkNjk3MDljZDhiNmM1OWMyNGY4N2JmNGMwYzJiNzU1YmI2MDI1ZGQ0MTQ1M2UiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjYyMDM5MmI1MmJjNDRjN2M4NzJlMTIwYjcyZDA2YzkxMGViMmExODk4Y2ZmNWU3ZDk2Y2E2OTIxZDE3ZGQ4OGUifQ"
         }
       ]
     }
   ],
   "verification": {
-    "by": "openwiki/0.7.0",
-    "at": "2026-10-05T04:15:14.909Z"
+    "by": "openwiki/0.7.2",
+    "at": "2026-10-27T17:59:33.551Z"
   }
 }

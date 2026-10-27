@@ -3,8 +3,18 @@ type: "Guide"
 title: "TubeTamer quickstart"
 openwiki_generated: true
 verified:
-  - by: openwiki/0.7.0
-    at: 2026-10-05T04:15:14.909Z
+  - by: openwiki/0.7.2
+    at: 2026-10-27T17:59:33.551Z
+sources:
+  - id: openwiki-source-e3e55ef2e47ca3fb3eb99e5a
+    resource: repo://docs/design-decisions.md
+  - id: openwiki-source-833e692518af9eeaf8564cc6
+    resource: repo://main.py
+  - id: openwiki-source-23775c3de52f3ab95a13cb8b
+    resource: repo://README.md
+  - id: openwiki-source-44e8f7b828c72a31971ba289
+    resource: repo://version.py
+generated: { by: "claude-code", at: "2026-10-27T17:59:33.551Z" }
 ---
 
 # TubeTamer quickstart
@@ -16,12 +26,14 @@ TubeTamer is a self-hosted YouTube approval system for children. The child searc
 | Component | What it does | Page |
 |---|---|---|
 | Kid web app (FastAPI, Jinja2, PWA) | Catalog, search, watch page, history, PIN and profile login | [Kid-facing web app](web-app.md) |
+| Native API (`/api/v1`) | Bearer-token JSON API for native clients: login, catalog, search, requests, playback gate, heartbeats | [API v1](api-v1.md) |
+| Android TV app (`android-tv/`) | Native Kotlin client for the TV, installed without ADB, playing from the server with the same time limits | [Android TV client](android-tv.md) |
 | Telegram bot | Approvals, channels, time limits, activity, setup wizard | [Telegram bot](telegram-bot.md) |
 | YouTube extractor and downloader (yt-dlp) | Search, metadata, channel pages, Shorts, local downloads | [YouTube extraction and downloads](youtube.md) |
 | SQLite storage | One file with profiles, videos, channels, settings and logs | [Data layer](data-layer.md) |
-| Localization | English, French and Norwegian for the web UI and the bot | [Localization](i18n.md) |
+| Localization | English, French and Norwegian for the web UI, the bot and the TV app | [Localization](i18n.md) |
 | Configuration | `config.yaml` or `BRG_*` environment variables | [Configuration](configuration.md) |
-| Packaging | Docker image, tests, releases | [Build, test and release](build-test-release.md) |
+| Packaging | Docker image, two CI workflows (Test and Publish, Android TV Tests), releases | [Build, test and release](build-test-release.md) |
 
 ## How the pieces fit
 
@@ -32,6 +44,8 @@ All of this runs in a single Python process started by `main.py`. It creates the
 3. The parent taps a button. The bot updates the database and, for an approval, tells the downloader to fetch the file.
 4. The child's pending page polls the status. Once it is approved, it opens the watch page.
 5. The watch page plays the local file (or a YouTube embed when local playback is off) and reports watch time, which the server checks against the schedule and daily limits.
+
+The Android TV app follows the same flow through [`/api/v1`](api-v1.md) with a bearer token instead of a cookie. It only plays local files, and the server stays the single authority for approval, budgets and schedule.
 
 See [Architecture](architecture.md) for the startup order and the shared state.
 
@@ -74,4 +88,6 @@ The full list is in `docs/design-decisions.md`.
 - Understand a bot command: [Telegram bot](telegram-bot.md).
 - Debug video loading, Shorts or downloads: [YouTube extraction and downloads](youtube.md).
 - Change a page or the PWA: [Kid-facing web app](web-app.md).
+- Change what the TV app can call, or how tokens work: [API v1](api-v1.md).
+- Change the TV app, its player or its CI: [Android TV client](android-tv.md).
 - Change the schema: [Data layer](data-layer.md).

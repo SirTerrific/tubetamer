@@ -3,8 +3,20 @@ type: "Reference"
 title: "Telegram bot"
 openwiki_generated: true
 verified:
-  - by: openwiki/0.7.0
-    at: 2026-10-05T04:15:14.909Z
+  - by: openwiki/0.7.2
+    at: 2026-10-27T17:59:33.551Z
+sources:
+  - id: openwiki-source-7c6dc494cb6385d5178881b7
+    resource: repo://bot/callback_router.py
+  - id: openwiki-source-1b6e092b158d045dc481b4a4
+    resource: repo://bot/helpers.py
+  - id: openwiki-source-9d466315e1f0ff671c570f26
+    resource: repo://bot/telegram_bot.py
+  - id: openwiki-source-fb9b53a1fb1f77143f27d8c9
+    resource: repo://bot/timelimits.py
+  - id: openwiki-source-a8add76ad8aadcefc4545221
+    resource: repo://docs/telegram-commands.md
+generated: { by: "claude-code", at: "2026-10-27T17:59:33.551Z" }
 ---
 
 # Telegram bot
@@ -24,7 +36,7 @@ The `TubeTamerBot` class in `bot/telegram_bot.py` is built from six mixins, each
 | `CommandsMixin` | `bot/commands.py` | `/child`, `/start`, `/help`, `/shorts`, `/autoload`, `/pending`, `/approved`, `/revoke_<id>`, `/stats`, `/changelog` |
 | `ActivityMixin` | `bot/activity.py` | `/watch`, `/logs`, `/search`, `/filter` |
 
-`bot/helpers.py` holds the shared helpers: `_md` (markdown to Telegram MarkdownV2 through `telegramify_markdown`), `_answer_bg` (answers a callback query in the background so it never delays the message edit), `_edit_msg`, `_nav_row` (Back/Next pagination row) and `_channel_md_link`.
+`bot/helpers.py` holds the shared helpers: `_esc` (backslash-escapes punctuation so user-supplied text such as channel names stays literal in MarkdownV2, and `_channel_md_link` applies it to names), `_md` (markdown to Telegram MarkdownV2 through `telegramify_markdown`, returning the input unchanged if conversion fails), `_answer_bg` (answers a callback query in the background so it never delays the message edit), `_edit_msg`, `_nav_row` (Back/Next pagination row) and `_channel_md_link`.
 
 The constructor takes the bot token, admin chat id, the `VideoStore`, the config and the path to `starter-channels.yaml`. It reads locale and time format from the config (see [Localization](i18n.md)) and exposes `tr()`, `cat_label()`, `day_label()` and `fmt_time()` for the mixins.
 
@@ -45,7 +57,7 @@ Registered handlers:
 
 ### Update notifications
 
-`_version_check_loop` waits 60 seconds, then checks the latest GitHub release of `SirTerrific/tubetamer` every 12 hours (`_UPDATE_CHECK_INTERVAL`). It tells the admin once, stores `last_notified_version` in settings, and then stops checking.
+`_version_check_loop` waits 60 seconds, then checks the latest GitHub release of `SirTerrific/tubetamer` every 12 hours (`_UPDATE_CHECK_INTERVAL`). The request times out after 10 seconds, and a response over 100 kB is ignored. It tells the admin once, stores `last_notified_version` in settings, and then stops checking. Failures are logged at debug level and retried at the next interval.
 
 ## Callback routing
 

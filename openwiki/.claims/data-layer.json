@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:bd5437572f4353f40b7ee6a34ee138aa8c8818a3dd171bcd9e19846b452ee970",
+  "pageVersion": "sha256:bcac9ef94c2a1639dc3739b660509c0fe2611c2a17d6af527780fe45d5ead0b4",
   "claims": [
     {
       "id": "claim_5dbd3306e48d4e14998158a2f000b886",
@@ -8,17 +8,17 @@
       "evidence": [
         {
           "resource": "repo://data/video_store.py",
-          "version": "repo-file-v1:sha256:279518e09706efa0dad02d9c08c3e458a859376fa729b1473aab68d741c56eaa"
+          "version": "repo-file-v1:sha256:f7ca94c22d838cf6978f57094bd889e959101a94c050cf31a40ac54021903974"
         }
       ]
     },
     {
       "id": "claim_eb868e2af67543f5a5558ffe873ccb87",
-      "statement": "VideoStore creates the tables profiles, videos, watch_log, channels, settings, search_log, word_filters and video_titles with CREATE TABLE IF NOT EXISTS.",
+      "statement": "VideoStore creates the tables profiles, videos, watch_log, channels, settings, search_log, word_filters, video_titles and device_tokens with CREATE TABLE IF NOT EXISTS.",
       "evidence": [
         {
-          "resource": "repo://data/video_store.py",
-          "version": "repo-file-v1:sha256:279518e09706efa0dad02d9c08c3e458a859376fa729b1473aab68d741c56eaa"
+          "resource": "repo://data/video_store.py#L62-L184",
+          "version": "repo-lines-v1:sha256:e94df3c41f7668fb321f419eda92fb1a6eb9c149f7589656bf70e64236f88487:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIzLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIyNWI4ZWE5MGE5NDJiOTViZWQ1YjYxNDg3MzliOTA5M2EyN2M4ODlmOTBjOTgzMGQxNjQ4MzQxMGRkZTI1YWRlIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI1ZjYwMzQyNGY1NDE0ZTljMGMxZDEzYzE0Y2YyYmNiNWFhODk3Yjg2ZTljNGE5YzIxNmNlNjQ3ZGVmNDliZWM2IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJhMDFmMWUzMGFlZjVkNDFlMDI5MGE3MTg4M2UwZDIzZDU1Y2RjODFmMGI0NDk0ZmMzYTAxYTkyNDU5Zjg3ZGY5IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlYWVhYmRiMmM1OWVjOGQyYjUwMTBjMTE4Y2FmM2Q1OTEwMzc1NjdhYTc4ZTMxZDhiYzM4OTc1ZjdjNDMwOGJmIn0"
         }
       ]
     },
@@ -28,7 +28,7 @@
       "evidence": [
         {
           "resource": "repo://data/video_store.py",
-          "version": "repo-file-v1:sha256:279518e09706efa0dad02d9c08c3e458a859376fa729b1473aab68d741c56eaa"
+          "version": "repo-file-v1:sha256:f7ca94c22d838cf6978f57094bd889e959101a94c050cf31a40ac54021903974"
         }
       ]
     },
@@ -38,7 +38,7 @@
       "evidence": [
         {
           "resource": "repo://data/child_store.py",
-          "version": "repo-file-v1:sha256:8cc67b42d6ef616b620b2a379450e6ca4fc1677c72a0de6899705bed8e32c39a"
+          "version": "repo-file-v1:sha256:cb025a54cae9faffd769267d5887823799821b400ad51e6eb536cc2e452c3bda"
         }
       ]
     },
@@ -58,11 +58,11 @@
       "evidence": [
         {
           "resource": "repo://bot/telegram_bot.py",
-          "version": "repo-file-v1:sha256:cd63d21ebae42ee74164f84b16507f1a6386ab938366957ba3e7fff99946ef8f"
+          "version": "repo-file-v1:sha256:906bd66d674021d6495857995f631d013a38a8e816084be007ff93be4d27c18e"
         },
         {
           "resource": "repo://main.py",
-          "version": "repo-file-v1:sha256:fb2e263a9c7c24c5b846e739be46b2c616dc696d8fd5484efe5e7c83027d1d0d"
+          "version": "repo-file-v1:sha256:1d73de1ff442c3706a522349c0d39b3ad53cb593965cef2b49463197eb40b684"
         }
       ]
     },
@@ -75,10 +75,30 @@
           "version": "repo-file-v1:sha256:21ddb12de6fd94d3510c5fc645fdcd15879d892df853e734f66854d5eb7f1733"
         }
       ]
+    },
+    {
+      "id": "claim_0f30ec6b1dd445b9a7905faf6a458c4d",
+      "statement": "Device tokens are random URL-safe values that are stored only as SHA-256 hashes, expire after 365 days by default, and are valid only if unrevoked, unexpired and the profile still exists; last_used_at is refreshed at most once per hour.",
+      "evidence": [
+        {
+          "resource": "repo://data/video_store.py#L447-L502",
+          "version": "repo-lines-v1:sha256:b22f237f9611c85912625cecbe5d77b7e7bb4223bd51cd856cdb7d6c41c4e22a:eyJzZWxlY3RlZExpbmVDb3VudCI6NTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4N2Y4MjUyN2E3NjA1ZTBmZWFlNWExYmE3ODBjNDY0ZjEyYjhkZDA3YTY0NjE5OGE4NGFiMjY0NzY5ZGY1ZDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM5YTg1NzJiODg4YjA4Zjc5Nzk4YTE5YWNhZDFlZmRhZmVkMDI3MDQyNWEzZTFjMjJkODg4ZDEwNmQ2NTY4M2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFjNzJlOTIwNjc5MmIwNjU1YzAwODY2Y2Q3ZTg4MTg4NDM1MGM3OWJmZjY1YTcwNDkxYzQwYzI4OTA5NWVmY2MiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBiYWMyZTFjOTI5YjllNGEyNDY3NDA0NDVlYTYyMmY4NmVlYTMyNjRjMWU3NjMxMzk3N2U4OGUzZTAwZWQ3YzgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_36087dacdda247c48af08260373400de",
+      "statement": "prune_old_data also deletes device tokens that have been revoked or expired for more than 30 days.",
+      "evidence": [
+        {
+          "resource": "repo://data/video_store.py#L1397-L1412",
+          "version": "repo-lines-v1:sha256:cd4146839117670e06b75c654812ee179951a23e308913ab774923c114f36027:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImViZjNlMGEwZDY0OWU3YTI2NzgzMTczMzVhNzk3MDAzY2UxMTkyMTY5NmU4NzQxZWJmNWUyOGY0NjNiNjhhOTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNiN2IwOTYyOGRkM2ExY2Y2ZTViOTdmMTE2ZTNhMDU1Y2RmMzc0MzIxMjdkMWE0OGM3ZjA3NTYyZjcwNTIxODMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ0YWYzNjA1ZDY5Yjk3NWFmNGMwZTczMzA2Njg1YWNjMGQ0MzQzYjlhOTU4NWM3ODRkODEwOTQ1YTdiMTZkYjQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE3ZGU4NWFlYzhhMmUyZDUxNGI1MzY3MmY4NjJhNTZhMGU0OGVkNGZlZWE0MGY4YjMyZDYyYWYyZTRkNTNkMDgifQ"
+        }
+      ]
     }
   ],
   "verification": {
-    "by": "openwiki/0.7.0",
-    "at": "2026-10-05T04:15:14.909Z"
+    "by": "openwiki/0.7.2",
+    "at": "2026-10-27T17:59:33.551Z"
   }
 }

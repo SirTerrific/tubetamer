@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:c0ec79c35703cf740fbcd4c688a3aab7326df4acbe132ba8f651aa2cc86fd65b",
+  "claims": [
+    {
+      "id": "claim_6dfad4d4eac9467582a65a13e9bad593",
+      "statement": "POST /api/v1/auth/login is limited to 5 per hour, compares the PIN with hmac.compare_digest when the profile has one, and issues a device token.",
+      "evidence": [
+        {
+          "resource": "repo://web/routers/api_v1.py#L120-L139",
+          "version": "repo-lines-v1:sha256:9310cfd450e68bbf1b1eef16c25284a9a8e20a02b24500267f9439e074ba4c44:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJiNmYzMjMzYjdmZDIyOTZhMzFjYjM0NWUyN2E2NWE1N2Y4NjUxMjU0NmI3NzhkMWJhNzA1NTM2NDVhYzhkYWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE0MTlhNmRjYzA0ZTIxM2EzYzdhNzdhNDU2YjAxZTc2ZDFlZjc4Y2QwMGJiZWMxZDhmODE0NThmZTkzZWRjNTYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRlODUxYmJmNDhiZGI1MWUzNmI5MGE0NWJjZmI3MjJhZWMzNGRjZDk5OGYzZTNmZjU3MDFiMmI3MWEwYzAyNjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ3NDk1YzZlZTgxYzYxNmI1ZDk0ODdlODg2Zjc5YWE1OTc1NDA1ZjA4NjkzMGYzZWU2ZDkyMWZmOGViMzU5YjMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_e3ed354a9627475b8076eb1c31d0a247",
+      "statement": "The /api/v1/profiles endpoint needs no auth and exposes has_pin but never the PIN itself.",
+      "evidence": [
+        {
+          "resource": "repo://web/routers/api_v1.py#L79-L111",
+          "version": "repo-lines-v1:sha256:fb4af1a924214f727324ac0eebe27da37ffb9fa1a0d03beb934a92144650599f:eyJzZWxlY3RlZExpbmVDb3VudCI6MzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU5ZjBkODA4Y2QyNDJmM2Y0NDgzYzUyMTI0ZmU1NTIwNTQ3MDExNDg0ZTRiZjg4MjBkMmJmMWY3ZjJhMTkyMzUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE0MTlhNmRjYzA0ZTIxM2EzYzdhNzdhNDU2YjAxZTc2ZDFlZjc4Y2QwMGJiZWMxZDhmODE0NThmZTkzZWRjNTYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU5MzdmYjA3OGMyODFhN2I5NDNhZTNhNzE2YmNjNjNjYjRlZWQ2ZGNiY2E3NTZkNTc2ODNiMWNlMjA4ODUzNjQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRhNGI4ODA1YzQzY2M5MjcyYjY3OWU3Y2E4MmUyNzhkM2IyNDU1YmYzMTE1YWI3ZTk1N2FjY2NmNjQzZWFjNDQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_03be692e89b24c98b9f91da506f85b49",
+      "statement": "The play endpoint applies the category or daily budget then the schedule window, returning 403 time_up or outside_schedule, 409 when local playback is disabled, and 202 while the download is queued.",
+      "evidence": [
+        {
+          "resource": "repo://web/routers/api_v1.py#L324-L395",
+          "version": "repo-lines-v1:sha256:cf864aade0ebc9e163b0387cc4ed4b24d43a81532775e2527e2f1d8ea311a824:eyJzZWxlY3RlZExpbmVDb3VudCI6NzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVmNDU2ZjcyY2M0Yjg3MDBlMzdkODZkNjc4MWVlOTkyOGNkOWVhODg1ZWRhNTJhYWE5OTRkOTNjYTQzZmQxY2UiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk3MWFhN2Y4NjdlM2MzZjRiNDA0ZGRjZTdkNmU1NDlkZWQ2MzVhNmJiZTBlMmU4NGUxNzU5NjQzZWNmMDAwZTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU5MzdmYjA3OGMyODFhN2I5NDNhZTNhNzE2YmNjNjNjYjRlZWQ2ZGNiY2E3NTZkNTc2ODNiMWNlMjA4ODUzNjQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVkNGVjOTM3NGEzZmE1MzI3ZWM2NjgyYWExYWRhZWNiY2M4YTg2OWMyZjc5MmY5MDA0ZGNlZTA3NjZhYjVjNjEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_794e480e4c3b40a983633b527046cd54",
+      "statement": "Watching state for bearer clients is stored in memory on app state keyed by a SHA-256 hash of the token, so heartbeats for a video not marked as watching return 409 not_watching.",
+      "evidence": [
+        {
+          "resource": "repo://web/routers/api_v1.py#L289-L310",
+          "version": "repo-lines-v1:sha256:c511fb9989bc9a770490a097ac9bd7e05d49f86af449db46f80bc24e46eb3dfd:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUxN2M3N2UyMDFjMzIyN2U0MzllOWE4Yzg3MWZlNGVmZTU1ZjZjNzEyZDBhM2U1MTJkMzdjZTNlZWZmNzFjNTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk5YmE2NTlkOGUyNWZlM2VmNDllYWU5Mjk2YTc1MWIxY2FmZGZhMjZkZGUyNTZmMDBiODE0NTExNGNmNzA5MTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFjY2EzMzAxNjVkYWY5MjdmM2QxYTg1NDQ2OTYzNzgyOTQ1OWM3MDEwZmUwZTYyNTg3ZDQwNTc0YzdmYzFlNzIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFkNWFjM2E4MWI0ZDA5NTZkMGMzZWQzNzBkYzliODQ1NzA4ZWExYTc1YTlhZGY5MzIzZGVhNzlhOTljYmQxN2UifQ"
+        },
+        {
+          "resource": "repo://web/routers/api_v1.py#L413-L430",
+          "version": "repo-lines-v1:sha256:1f4236dd43f02f66c8b05529973728afe3cbe6cf7be2bf7d9f02e286b49c6068:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUyNjVmYWNlOWJkNzY0MWQ5YmZiMTJhOTVmYTQ5NzNiMTkxMzBhMGU0ZTg0YTg3NmY2YjExOWY0Y2RkNzM3YzgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI5MjNkNmRiZDYyYTNhMjFhYmY3MmZkNjljY2M5YzBkMGE0ZDg2MWVmZmMzN2M0MDhjMzY4ODI2YzYwNmRiYWMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU5MzdmYjA3OGMyODFhN2I5NDNhZTNhNzE2YmNjNjNjYjRlZWQ2ZGNiY2E3NTZkNTc2ODNiMWNlMjA4ODUzNjQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_049ef85d5d8f4a5da41531875370ef42",
+      "statement": "Heartbeat seconds are clamped to the range 0 to 60 and time_up is set when the remaining budget reaches zero.",
+      "evidence": [
+        {
+          "resource": "repo://web/routers/api_v1.py#L413-L430",
+          "version": "repo-lines-v1:sha256:1f4236dd43f02f66c8b05529973728afe3cbe6cf7be2bf7d9f02e286b49c6068:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUyNjVmYWNlOWJkNzY0MWQ5YmZiMTJhOTVmYTQ5NzNiMTkxMzBhMGU0ZTg0YTg3NmY2YjExOWY0Y2RkNzM3YzgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI5MjNkNmRiZDYyYTNhMjFhYmY3MmZkNjljY2M5YzBkMGE0ZDg2MWVmZmMzN2M0MDhjMzY4ODI2YzYwNmRiYWMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU5MzdmYjA3OGMyODFhN2I5NDNhZTNhNzE2YmNjNjNjYjRlZWQ2ZGNiY2E3NTZkNTc2ODNiMWNlMjA4ODUzNjQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_13f2c40c5f234e1b9abdd253e58e95bc",
+      "statement": "POST /api/v1/requests follows the web form rules and returns 400 for an invalid video and 502 when YouTube cannot be read.",
+      "evidence": [
+        {
+          "resource": "repo://web/routers/api_v1.py#L247-L265",
+          "version": "repo-lines-v1:sha256:8190678b4b14689785baf4d0bb0f50600e553a33841f170f4b666bd92915f2c9:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA1ZDhlZGQxY2ZjYzVlMTc2NjliYzBlMGY3ZWIzMjYwM2NlODhlY2I2YzA0NzcxYjU5MjBhMzhkZjdmODBkZjQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA0ZDEzZjZlNmExYjcyYzdhYmRmNTlmODQ0YWEwMmRiMmFhMTlkMjM5MDc2YWI5OGVhYzczNGNhODEzZmY2N2MiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZmZjIzMDM4MGQ4NGQxMjdjYWU3NmNhMTg2MjFmYjAwZTY3YTUzOTM5OTFmMDYyZTg2YjU2YWJhNWEyOWM4M2QiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMzYzQyYWY2OTVjODc3NzM3YWFjNTU3YzVmZjRiYmU0NTc5NjFkYjZjZTlhNDg0NDAxOWI5NGIwMjkyNmIyZmEifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.7.2",
+    "at": "2026-10-27T17:59:33.551Z"
+  }
+}

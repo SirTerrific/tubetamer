@@ -3,8 +3,14 @@ type: "Reference"
 title: "Architecture and startup"
 openwiki_generated: true
 verified:
-  - by: openwiki/0.7.0
-    at: 2026-10-05T04:15:14.909Z
+  - by: openwiki/0.7.2
+    at: 2026-10-27T17:59:33.551Z
+sources:
+  - id: openwiki-source-833e692518af9eeaf8564cc6
+    resource: repo://main.py
+  - id: openwiki-source-1630f0300428cfb7dff847c2
+    resource: repo://web/shared.py
+generated: { by: "claude-code", at: "2026-10-27T17:59:33.551Z" }
 ---
 
 # Architecture and startup
@@ -35,7 +41,7 @@ flowchart LR
 3. If a Telegram bot token and admin chat ID are set, creates `TubeTamerBot` (it also gets the path to `starter-channels.yaml`).
 4. Fills `fastapi_app.state` with shared objects: the video store, the web, watch-limit and YouTube configs, the locale and time format, a `YouTubeExtractor`, and callbacks (see below).
 5. If `local_playback.enabled` is true, creates a `VideoDownloader` (video dir, quality, max storage, concurrency, retention, subtitle languages) and connects it to the bot's approve/revoke events.
-6. Adds the middleware: `SecurityHeadersMiddleware`, `PinAuthMiddleware` (with the config PIN) and Starlette `SessionMiddleware`. The session secret is created once and saved in the DB settings table. Sessions last 86400 s with `same_site="strict"`.
+6. Adds the middleware: `SecurityHeadersMiddleware`, `PinAuthMiddleware` (with the config PIN) and Starlette `SessionMiddleware`. The session secret comes from `web.session_secret` when configured. Otherwise it is created once and saved in the DB settings table. Sessions last 86400 s with `same_site="strict"`.
 
 `TubeTamer.run()` starts the bot, starts the downloader workers (retrying downloads that failed before), prunes old `watch_log`/`search_log` rows, starts `_backfill_loop`, and serves FastAPI through `uvicorn.Server`.
 
@@ -61,18 +67,19 @@ Callbacks set in `setup()` connect the web app and the bot:
 - `notify_callback(video, profile_id)` → `bot.notify_new_request`
 - `time_limit_cb(...)` → `bot.notify_time_limit_reached`
 - `bot.on_channel_change` → invalidates the channel cache for the profile
+- `bot.on_video_change` → invalidates the catalog cache
 - `download_on_approve` / `delete_on_revoke` → downloader enqueue / delete (only in local playback mode)
 
 ## FastAPI app (`web/app.py`)
 
-`web/app.py` creates the `FastAPI` instance with a `lifespan` context manager. On startup it launches `channel_cache_loop(app.state)` as a background task. The module also mounts `/static`, registers the Jinja2 filters, and includes the routers: auth, profile, ytproxy, catalog, pages, pwa, search, watch, stream.
+`web/app.py` creates the `FastAPI` instance with a `lifespan` context manager. On startup it launches `channel_cache_loop(app.state)` as a background task. The module also mounts `/static`, registers the Jinja2 filters, and includes the routers: auth, profile, ytproxy, catalog, pages, pwa, search, watch, stream and `api_v1`. The last one serves native clients such as the [Android TV app](android-tv.md); see [API v1](api-v1.md).
 
 `RateLimitExceeded` (slowapi) is turned into an HTTP 429 with `Retry-After: 5`. Paths under `/api/` get a JSON body, other paths get a short localized HTML page.
 
 `web/shared.py` is a neutral module (it imports nothing from `web.*`). It holds:
 
 - the `Jinja2Templates` instance and its globals: `t`, `cat_label`, `day_label`, `fmt_time`, `html_lang`, `app_name`, `format_duration`, `app_version`
-- the slowapi `limiter`. Its key function uses the first `X-Forwarded-For` IP, then `X-Real-IP`, then the socket address.
+- the slowapi `limiter`. Its key is the client address as resolved by uvicorn, which rewrites `request.client` from `X-Forwarded-For` only for proxies listed in `FORWARDED_ALLOW_IPS` (default 127.0.0.1). A LAN client therefore cannot choose its own rate-limit bucket. Behind another reverse proxy, set that variable.
 
 ## Request / approval flow
 
@@ -85,4 +92,4 @@ Callbacks set in `setup()` connect the web app and the bot:
 
 These helpers handle timezones and schedules for watch limits: `get_weekday`, `get_today_str`, `get_day_utc_bounds`, `parse_time_input`, `format_time_12h`, `is_within_schedule`, `get_bonus_minutes` and `resolve_setting`. `resolve_setting` looks for a per-day override of a setting before falling back to the base key.
 
-Related: [Web app](web-app.md) · [Telegram bot](telegram-bot.md) · [Data layer](data-layer.md) · [Quickstart](quickstart.md)
+Related: [Web app](web-app.md) · [API v1](api-v1.md) · [Android TV client](android-tv.md) · [Telegram bot](telegram-bot.md) · [Data layer](data-layer.md) · [Quickstart](quickstart.md)

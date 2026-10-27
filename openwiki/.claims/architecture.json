@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:a923f41ede7d3d16caf14e746f8d0c1d800f7f22ee552563e9348167af429c51",
+  "pageVersion": "sha256:da17f0dd922545687b5cded6b7ef912270e9235d33e8d0487f666799dfb9225b",
   "claims": [
     {
       "id": "claim_831689f4aeb8405da05176a57f7225c5",
@@ -8,13 +8,33 @@
       "evidence": [
         {
           "resource": "repo://main.py",
-          "version": "repo-file-v1:sha256:fb2e263a9c7c24c5b846e739be46b2c616dc696d8fd5484efe5e7c83027d1d0d"
+          "version": "repo-file-v1:sha256:1d73de1ff442c3706a522349c0d39b3ad53cb593965cef2b49463197eb40b684"
+        }
+      ]
+    },
+    {
+      "id": "claim_cc27d6ce2d8049798949c858a3b414d3",
+      "statement": "The rate-limit key is the client address resolved by uvicorn, which honours X-Forwarded-For only for proxies in FORWARDED_ALLOW_IPS, so LAN clients cannot pick their own bucket.",
+      "evidence": [
+        {
+          "resource": "repo://web/shared.py#L23-L30",
+          "version": "repo-lines-v1:sha256:6567e502ff3e539b80fe969c8f17a5d9d081ed552490350345080ab856906f3d:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZDNiZDJmN2ViMjAwMDk1YzM5Y2M1NzU5Y2M2YTY5YTgyOTQwMTAxMTAxMTA1ZDMzZTEyMDRmYzY4ZjliYTNhOCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMmM1OTNhNTAxM2RkNTgwNWRlMDE2MWMxMDdjYjJhODY2ZTAyYjNkOWJmY2ZlM2FjMzE4ZmFmNjBjMzU4ZTI5MyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiM2MzMTNhNWVkMTA0M2UxYzhhNjYyYjU0YWI2ZTcwMWJkZDZlNDQ2ODRhNjY5NTQzOThjNjk5Y2I0NjEwZjJjZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNzAwYzY2ODA0YTM5Y2NlNWJjM2ZmZDAwOWUzMmMzYmVhMDFhNDg5MzJlZGJkNjZjMjlmNjdjZjhmYjVmNTcyZCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_41d9341be6d94f8ab8b0db20ca81db2c",
+      "statement": "The session secret comes from the web.session_secret config when set, otherwise it is generated once and persisted in the settings table.",
+      "evidence": [
+        {
+          "resource": "repo://main.py#L153-L168",
+          "version": "repo-lines-v1:sha256:04b57bb1ec628db8311d2e78fd8ea90b8a6d65f9a0053f64ed3f5e9ef573705f:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRjZDNmYTYxMjRkMTI3MDIxZDZkOThlZjUyZDgyOWQyZDYwZWE2MGZlNTNiMGMxMjlkMzI4YTJmNmI5OTBkY2EiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNhMzkzZmU2OTNlYmZlNzk2ZjI2ODgyMjZlYTlmOTMzNjdhMWJhNzRiZDI3MTQzNzg2MDUyMzlhZGNkNDY3MDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU5YzkxNWYwMzBjNjAyM2YyYTI4MTkwMTkxODliNmIxOWVjOTNlYjE1MGFmNDI5ODgzNzAyOWMwNTk1ZWI5ZTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJiZWExMWU4Y2QwODExYjkxZGM0OTJmMDI5ZWU4YTc2ZGFkMzM4YjNiZWFkZjI1ODlkYjNjYTQxNTQwZGQ1NTUifQ"
         }
       ]
     }
   ],
   "verification": {
-    "by": "openwiki/0.7.0",
-    "at": "2026-10-05T04:15:14.909Z"
+    "by": "openwiki/0.7.2",
+    "at": "2026-10-27T17:59:33.551Z"
   }
 }

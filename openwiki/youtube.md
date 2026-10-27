@@ -3,8 +3,14 @@ type: "Reference"
 title: "YouTube extraction and downloads"
 openwiki_generated: true
 verified:
-  - by: openwiki/0.7.0
-    at: 2026-10-05T04:15:14.909Z
+  - by: openwiki/0.7.2
+    at: 2026-10-27T17:59:33.551Z
+sources:
+  - id: openwiki-source-c0a9a745cfcf83e7a01a16d6
+    resource: repo://video_downloader.py
+  - id: openwiki-source-e2365cc1d855cd3a6232a1b2
+    resource: repo://youtube/extractor.py
+generated: { by: "claude-code", at: "2026-10-27T17:59:33.551Z" }
 ---
 
 # YouTube extraction and downloads
@@ -46,9 +52,10 @@ A video is a Short when its URL contains `/shorts/` (`_is_short_url`). For flat 
 ### Queue and workers
 
 - `start(num_workers)` launches worker tasks and, if `retention_days > 0`, a daily cleanup loop. `stop()` ends them.
-- `enqueue(video_id, profile_id)` ignores invalid ids and videos already active. If the file exists it only marks the download `ready`. If the database says `downloading`, it skips, which also covers restarts. Otherwise it records `pending` and queues `(video_id, profile_id)`.
-- Each worker takes one item and runs `_download` under an `asyncio.Semaphore` sized by `max_concurrent_downloads`.
-- The bot hooks `on_video_approve` and `on_video_revoke` call `enqueue` and delete the file. Failed downloads are retried at startup (see [Architecture](architecture.md)).
+- `enqueue(video_id, profile_id)` ignores invalid ids and videos already in the in-memory `_active` set, which is the only dedup. If the file exists it only marks the download `ready`. Otherwise it records `pending` and queues `(video_id, profile_id)`. A `downloading` row in the database does not block queueing: without an active task it is a leftover from a restart and must run again.
+- Each worker takes one item and runs `_download` under an `asyncio.Semaphore` sized by `max_concurrent_downloads`. `_download` wraps the real work (`_run_download`) so the video always leaves `_active` and the database row never stays at `downloading`: an unexpected error marks it `failed`.
+- Downloads run in a dedicated `ThreadPoolExecutor` created in `start()`, so slow downloads cannot starve the default thread pool used by searches and metadata lookups.
+- The bot hooks `on_video_approve` and `on_video_revoke` call `enqueue` and delete the file. At startup `retry_failed` queues again both `failed` downloads and ones a restart left at `downloading` (see [Architecture](architecture.md)).
 
 ### Download steps
 
@@ -56,7 +63,7 @@ A video is a Short when its URL contains `/shorts/` (`_is_short_url`). For flat 
 2. Mark it `downloading` and write to a `tmp/` subfolder of `video_dir`.
 3. **Phase 1, video:** yt-dlp with a format string for the configured quality (`360p`, `480p`, `720p`, `1080p`, or `best`; an unknown value falls back to `720p`), merged to mp4 with ffmpeg, 3 retries and 3 fragment retries, and a progress hook that records percent, size, speed and ETA for the watch page's progress display. On error, it deletes the temporary files and marks `failed`.
 4. The merged file is renamed to `<video_id>.mp4` and temporary files are removed.
-5. **Phase 2, subtitles:** best-effort download of the languages in `subtitle_langs`. A subtitle failure does not fail the video.
+5. **Phase 2, subtitles:** best-effort download of the languages in `subtitle_langs`. A subtitle failure does not fail the video. Afterwards, files that are not `.vtt` or whose language code fails `_SAFE_LANG_RE` are deleted, because the language ends up in a URL.
 6. Mark `ready`.
 
 Status values (`pending`, `downloading`, `ready`, `failed`) are stored through `VideoStore.set_download_status` (see [Data layer](data-layer.md)) and read by `/api/download-status/{id}`.
@@ -66,7 +73,7 @@ Status values (`pending`, `downloading`, `ready`, `failed`) are stored through `
 - **Daily:** with `retention_days` above 0, every 24 hours it deletes `.mp4` files older than that many days (by modification time), their subtitles and their download status. A value of 0 disables age-based deletion.
 - **When full:** `_cleanup_storage` first deletes files that are not approved for any profile (`is_video_approved_anywhere`), and files whose name is not a valid video id. If usage is still at the limit, it removes the oldest files first (by modification time), with their subtitles and download status, until usage drops below 80% of the limit.
 
-Downloads are logged to `db/logs/downloads.log` in addition to the normal application log.
+Downloads are logged to `db/logs/downloads.log` in addition to the normal application log. That file rotates at 5 MB and keeps three backups. yt-dlp's own messages are routed into it through a small logger object.
 
 ## Related
 

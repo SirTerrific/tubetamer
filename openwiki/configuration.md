@@ -3,8 +3,13 @@ type: "Reference"
 title: "Configuration"
 openwiki_generated: true
 verified:
-  - by: openwiki/0.7.0
-    at: 2026-10-05T04:15:14.909Z
+  - by: openwiki/0.7.2
+    at: 2026-10-27T17:59:33.551Z
+sources:
+  - id: openwiki-source-bbbb757758dc109f3a4477fc
+    resource: repo://config.py
+  - id: openwiki-source-833e692518af9eeaf8564cc6
+    resource: repo://main.py
 ---
 
 # Configuration
@@ -21,7 +26,7 @@ TubeTamer reads its settings from a YAML file or, if there is none, from `BRG_*`
 
 YAML and env-only modes are separate. When a YAML file is loaded, a `BRG_*` variable only has an effect if the YAML refers to it as `${VAR}`. The exceptions are `BRG_BASE_URL` and `BRG_TV_APK`, which `WebConfig.__post_init__` reads whenever `web.base_url` or `web.tv_apk` is empty.
 
-After loading, `load_config` normalizes `app.locale` and `app.time_format` through `i18n`. It logs a warning if `telegram.admin_chat_id` is empty ("bot commands will be unauthorized") or is not numeric.
+After loading, `load_config` normalizes `app.locale` and `app.time_format` through `i18n`. It logs a warning if `telegram.admin_chat_id` is empty ("bot commands will be unauthorized") or is not numeric. It also checks `watch_limits.timezone` with `ZoneInfo`. An invalid name logs a warning and the timezone is cleared (empty), so the app falls back to UTC.
 
 ## Environment variable expansion in YAML
 

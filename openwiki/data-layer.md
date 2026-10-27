@@ -3,8 +3,22 @@ type: "Reference"
 title: "Data layer"
 openwiki_generated: true
 verified:
-  - by: openwiki/0.7.0
-    at: 2026-10-05T04:15:14.909Z
+  - by: openwiki/0.7.2
+    at: 2026-10-27T17:59:33.551Z
+sources:
+  - id: openwiki-source-9d466315e1f0ff671c570f26
+    resource: repo://bot/telegram_bot.py
+  - id: openwiki-source-5a63c691eaf81cc8c127492d
+    resource: repo://data/child_store.py
+  - id: openwiki-source-15171a1dd4ef264a3ac2757c
+    resource: repo://data/starter_channels.py
+  - id: openwiki-source-50563eb1b4c838bc9eb8dc1c
+    resource: repo://data/video_store.py
+  - id: openwiki-source-833e692518af9eeaf8564cc6
+    resource: repo://main.py
+  - id: openwiki-source-53688c65a9b4548093faff14
+    resource: repo://utils.py
+generated: { by: "claude-code", at: "2026-10-27T17:59:33.551Z" }
 ---
 
 # Data layer
@@ -15,10 +29,11 @@ TubeTamer keeps all state in one SQLite file (default `db/videos.db`). `VideoSto
 
 `VideoStore(db_path)` creates the parent directory if needed, opens the database with `check_same_thread=False` and `sqlite3.Row` rows, and enables `PRAGMA journal_mode=WAL`. A `threading.Lock` guards access, because the web server, the Telegram bot and the background workers share the same connection.
 
-`_create_tables()` runs on every start and uses `CREATE TABLE IF NOT EXISTS`:
+`_create_tables()` runs on every start and uses `CREATE TABLE IF NOT EXISTS` for these tables:
 
 | Table | Purpose |
 |---|---|
+| `device_tokens` | Bearer tokens for native clients such as the [Android TV app](android-tv.md). Only the SHA-256 of a token is stored; the profile, device name, expiry, last use and revocation time are kept alongside |
 | `profiles` | One row per child: display name, PIN, avatar icon and color |
 | `videos` | Approval state per video and profile: `pending`, `approved` or `denied`, view count, resume position, download status. Unique on `(video_id, profile_id)` |
 | `watch_log` | One row per watch event, used for daily time limits and the history page |
@@ -46,7 +61,8 @@ The store has roughly 80 methods, grouped by what they manage:
 - Watch time: `record_watch_seconds`, daily totals and breakdowns by category.
 - Settings: `get_setting` and `set_setting`.
 - Local playback: `get_download_status`, `set_download_status`, `get_videos_by_download_status`, `clear_download_status`.
-- Maintenance: `prune_old_data` removes old `watch_log` and `search_log` rows at startup, and `close` closes the connection.
+- Device tokens: `create_device_token` issues a random URL-safe token (365-day lifetime by default) and returns it once. `resolve_device_token` accepts only a known, unrevoked, unexpired token whose profile still exists, and refreshes `last_used_at` at most once per hour. `revoke_device_token`, `revoke_device_token_by_id` (parent-side) and `list_device_tokens` (never returns hashes) complete the set.
+- Maintenance: `prune_old_data` removes old `watch_log` and `search_log` rows at startup, along with device tokens that have been revoked or expired for more than 30 days. `close` closes the connection.
 
 ## ChildStore (`data/child_store.py`)
 

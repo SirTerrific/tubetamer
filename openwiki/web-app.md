@@ -3,8 +3,26 @@ type: "Reference"
 title: "Kid-facing web app"
 openwiki_generated: true
 verified:
-  - by: openwiki/0.7.0
-    at: 2026-10-05T04:15:14.909Z
+  - by: openwiki/0.7.2
+    at: 2026-10-27T17:59:33.551Z
+sources:
+  - id: openwiki-source-833e692518af9eeaf8564cc6
+    resource: repo://main.py
+  - id: openwiki-source-fc959868c523cb6553aa7cd4
+    resource: repo://web/app.py
+  - id: openwiki-source-9b795853aa72123a975ba2ab
+    resource: repo://web/cache.py
+  - id: openwiki-source-86b5e8808a87d3ddda80cc29
+    resource: repo://web/middleware.py
+  - id: openwiki-source-611147ec3faccc725ce15727
+    resource: repo://web/routers/stream.py
+  - id: openwiki-source-cfe9973b7091a0bbb9b598fc
+    resource: repo://web/routers/watch.py
+  - id: openwiki-source-24d16f11a7ebee16c4d8355c
+    resource: repo://web/routers/ytproxy.py
+  - id: openwiki-source-d70f86c0012745d8bb0f1033
+    resource: repo://web/static/service-worker.js
+generated: { by: "claude-code", at: "2026-10-27T17:59:33.551Z" }
 ---
 
 # Kid-facing web app
@@ -13,7 +31,7 @@ The web app is what the child sees on a tablet or computer: a catalog of approve
 
 ## Application setup (`web/app.py`)
 
-`web/app.py` creates the `FastAPI` app, mounts `/static`, registers the custom Jinja filters and includes nine routers: auth, profile, ytproxy, catalog, pages, pwa, search, watch and stream. A `lifespan` handler starts `channel_cache_loop` as a background task when the app starts. `RateLimitExceeded` from `slowapi` returns a localized message with status 429 and `Retry-After: 5`, as JSON under `/api/` and as a small HTML page elsewhere.
+`web/app.py` creates the `FastAPI` app, mounts `/static`, registers the custom Jinja filters and includes ten routers: auth, profile, ytproxy, catalog, pages, pwa, search, watch, stream and api_v1. A `lifespan` handler starts `channel_cache_loop` as a background task when the app starts. `RateLimitExceeded` from `slowapi` returns a localized message with status 429 and `Retry-After: 5`, as JSON under `/api/` and as a small HTML page elsewhere.
 
 `main.py` (see [Architecture](architecture.md)) adds the two middlewares, the session middleware and the shared objects the routers read from `app.state`. The `web/deps.py` helpers (`get_child_store`, `get_web_config`, `get_wl_config`, `get_youtube_config`, `get_extractor`, `get_notify_cb`, `get_time_limit_cb`) give routers typed access to that state. `get_child_store(request)` returns a `ChildStore` for the session's profile (see [Data layer](data-layer.md)).
 
@@ -23,8 +41,8 @@ The web app is what the child sees on a tablet or computer: a catalog of approve
 
 **`PinAuthMiddleware`** requires a profile login whenever one is needed:
 
-- `/login`, `/static`, `/manifest.webmanifest`, `/service-worker.js`, `/api/status/` and the two YouTube script proxies need no authentication.
-- A session with `child_id` passes.
+- `/login`, `/static`, `/manifest.webmanifest`, `/service-worker.js`, the TV app download `/app/tubetamer.apk` and the two YouTube script proxies need no authentication. The same holds for `/api/v1/info`, `/api/v1/profiles` and `/api/v1/auth/login`, which clients call before they have a token.
+- A session with `child_id` passes, but only while its profile still exists and its PIN is unchanged since login. The session stores a short SHA-256 fingerprint of the PIN on the first request after login. If the profile is deleted or the parent changes the PIN, the session is cleared and the child must log in again (JSON 401 under `/api/`, otherwise a redirect to `/login`).
 - If there is exactly one profile and it has no PIN, the middleware signs the session in as that profile automatically. With no profiles, or no legacy PIN configured, requests pass through.
 - Otherwise `/api/` paths get `401 {"error": "unauthorized"}` and other paths a 303 redirect to `/login`.
 - A request with `Authorization: Bearer <token>` (the Android TV app) is checked against the `device_tokens` table instead of the cookie. A valid token runs the request as its profile in a throwaway session, so no cookie is read or set; an invalid, revoked or expired token gets a 401 and never falls back to the cookie. `/api/v1/info`, `/api/v1/profiles` and `/api/v1/auth/login` need no authentication.
@@ -52,11 +70,11 @@ Sessions use Starlette's `SessionMiddleware` (signed cookie, 24-hour `max_age`, 
 
 ### Watching and time limits
 
-`/watch/{id}` only plays approved videos. Pending or denied videos get the `pending.html` or `denied.html` page, and unknown ones go back to `/`. When the category or global budget is used up it renders `timesup.html`. Outside the allowed schedule it renders `outsidehours.html`. While a local download is still running it renders `downloading.html`. The page remembers the video in the session as `watching`, and its player script sends `POST /api/watch-heartbeat` periodically (also with `sendBeacon` when the page closes). The server:
+`/watch/{id}` only plays approved videos. Pending or denied videos get the `pending.html` or `denied.html` page, and unknown ones go back to `/`. When the category or global budget is used up it renders `timesup.html`. Outside the allowed schedule it renders `outsidehours.html`. While a local download is still running it renders `downloading.html`. The page adds the video to the session's `watching` list, which keeps the five most recent videos (older cookies held a single id), and its player script sends `POST /api/watch-heartbeat` periodically (also with `sendBeacon` when the page closes). The shared logic is `process_heartbeat`, which the native API also uses. The server:
 
-- accepts it only for the video in `session["watching"]`, and only if it is approved;
+- accepts it only for a video in the session's `watching` list (400 `not_watching` otherwise), and only if it is approved;
 - rejects it with 403 outside the schedule window;
-- clamps the reported seconds to 0..60, and counts nothing if a heartbeat arrives faster than the minimum interval (evicting stale entries from the tracking dict as it goes);
+- clamps the reported seconds to 0..60 and caps them by the real time since the previous heartbeat for the same video and profile plus 2 seconds, so a client cannot claim more time than passed (stale entries in the tracking dict are evicted as it goes);
 - records the seconds and the playback position (for resume);
 - checks the per-category budget (edu or fun) or the global budget, calls the time-limit callback once the budget is exceeded (the bot then notifies the parent) and returns the remaining seconds to the page.
 
