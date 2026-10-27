@@ -1,10 +1,11 @@
-name: Docker Publish
+name: Test and Publish
 
 on:
   release:
     types: [published]
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
 
 env:
@@ -38,6 +39,8 @@ jobs:
 
   build-and-push:
     needs: test
+    # PRs only run the tests; never publish an image from a PR
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       contents: read
