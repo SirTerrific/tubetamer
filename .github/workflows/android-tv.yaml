@@ -1,0 +1,77 @@
+name: Android TV Tests
+
+on:
+  push:
+    branches: [main]
+    paths: ['android-tv/**', '.github/workflows/android-tv.yaml']
+  pull_request:
+    paths: ['android-tv/**', '.github/workflows/android-tv.yaml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # Opt in to Node.js 24 for all JS actions (Node 20 deprecated Sept 2026)
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+defaults:
+  run:
+    working-directory: android-tv
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up JDK
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      # gradlew is stored without the executable bit, so run it through sh
+      - name: Unit tests and debug build
+        run: sh gradlew testDebugUnitTest assembleDebug --console=plain
+
+  ui:
+    # Compose UI tests on an Android TV emulator: slow, so not on pull requests
+    if: github.event_name != 'pull_request'
+    needs: unit
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+        working-directory: .
+
+      - name: Set up JDK
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Compose UI tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          target: android-tv
+          arch: x86
+          profile: tv_1080p
+          disable-animations: true
+          working-directory: android-tv
+          script: sh gradlew connectedDebugAndroidTest --console=plain
