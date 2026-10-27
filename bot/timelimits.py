@@ -413,7 +413,7 @@ class TimeLimitMixin:
             )
         elif sub == "copy":
             await self._time_day_copy(update, day, args[1:], store=s)
-        elif sub.isdigit():
+        elif sub.isdecimal():
             await self._time_set_flat_limit(update, [sub], day=day, store=s)
         else:
             label = self.day_label(day)
@@ -525,7 +525,7 @@ class TimeLimitMixin:
     async def _time_set_flat_limit(self, update: Update, args: list[str], day: str = "", store=None) -> None:
         """Handle /time [<day>] limit|<N> with mode switch warning."""
         s = store or self.video_store
-        if not args or not args[0].isdigit():
+        if not args or not args[0].isdecimal():
             await update.effective_message.reply_text(self.tr("Usage: /time [<day>] limit <minutes>"))
             return
         minutes = int(args[0])
@@ -638,7 +638,7 @@ class TimeLimitMixin:
                                                                   category=cat_label))
             return
 
-        if not value.isdigit():
+        if not value.isdecimal():
             await update.effective_message.reply_text(self.tr("Usage: /time {category} <minutes|off>", category=category))
             return
 
@@ -758,7 +758,7 @@ class TimeLimitMixin:
     async def _time_add_bonus(self, update: Update, args: list[str], store=None) -> None:
         """Handle /time add <minutes> — grant bonus screen time for today only."""
         s = store or self.video_store
-        if not args or not args[0].isdigit():
+        if not args or not args[0].isdecimal():
             await update.effective_message.reply_text(self.tr("Usage: /time add <minutes>"))
             return
         add_min = int(args[0])
@@ -1272,7 +1272,7 @@ class TimeLimitMixin:
 
         parts = choice.split(":")
         # Format: {pid}:simple:{minutes} or {pid}:category:{cat}:{minutes}
-        if len(parts) >= 3 and parts[1] == "simple" and parts[2].isdigit():
+        if len(parts) >= 3 and parts[1] == "simple" and parts[2].isdecimal():
             pid = parts[0]
             ws = self._child_store(pid)
             minutes = int(parts[2])
@@ -1280,7 +1280,7 @@ class TimeLimitMixin:
             self._auto_clear_mode("simple", store=ws)
             text = _md(self.tr("✓ Switched to simple limit: {minutes} min/day", minutes=minutes))
             await _edit_msg(query, text)
-        elif len(parts) >= 4 and parts[1] == "category" and parts[3].isdigit():
+        elif len(parts) >= 4 and parts[1] == "category" and parts[3].isdecimal():
             pid = parts[0]
             ws = self._child_store(pid)
             category = parts[2]
@@ -1308,9 +1308,9 @@ class TimeLimitMixin:
         if not self._check_admin(update):
             return
         chat_id = update.effective_chat.id
-        state = self._pending_wizard.get(chat_id)
+        state = self._pending_wizard.live(chat_id)
         if not state:
-            return  # No wizard active
+            return  # No wizard active, or the prompt is too old to be the answer
 
         # Route onboard_* steps to SetupMixin
         step = state["step"]
@@ -1389,7 +1389,7 @@ class TimeLimitMixin:
             return
 
         # Limit wizard steps expect positive integer minutes
-        if not text.isdigit() or int(text) <= 0:
+        if not text.isdecimal() or int(text) <= 0:
             await update.effective_message.reply_text(self.tr("Please reply with a positive number of minutes."))
             return
         onboard = state.get("onboard_return", False)

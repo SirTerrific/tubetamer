@@ -6,6 +6,7 @@ network access to Google/YouTube — the server fetches on their behalf.
 
 import logging
 import re
+import uuid
 from pathlib import Path
 
 import httpx
@@ -13,12 +14,13 @@ from fastapi import APIRouter, Request
 from fastapi.responses import FileResponse, PlainTextResponse, Response
 
 from web.cache import fetch_yt_scripts, yt_cache_stale
+from web.shared import limiter
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-_VIDEO_ID_RE = re.compile(r"^[a-zA-Z0-9_-]{11}$")
+_VIDEO_ID_RE = re.compile(r"^[a-zA-Z0-9_-]{11}\Z")
 # hqdefault always exists; hq1-3 are the auto-generated preview frames
 _THUMB_VARIANTS = {"default", "mqdefault", "hqdefault", "sddefault", "maxresdefault", "hq1", "hq2", "hq3"}
 
@@ -51,6 +53,7 @@ def _thumb_dir(request: Request) -> Path:
 
 @router.get("/thumb/{video_id}")
 @router.get("/thumb/{video_id}/{variant}")
+@limiter.limit("120/minute")
 async def thumbnail_proxy(request: Request, video_id: str, variant: str = "hqdefault"):
     """Serve YouTube thumbnails from a server-side disk cache.
 
@@ -87,7 +90,8 @@ async def thumbnail_proxy(request: Request, video_id: str, variant: str = "hqdef
             # negative cache: don't re-hit ytimg for variants that don't exist
             negative.touch()
             return Response(status_code=404)
-        tmp = cached.with_suffix(".tmp")
+        # unique temp name: two requests for the same thumbnail must not share a file
+        tmp = cached.with_name(f"{cached.name}.{uuid.uuid4().hex}.tmp")
         tmp.write_bytes(content)
         tmp.replace(cached)
 

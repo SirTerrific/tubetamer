@@ -379,7 +379,7 @@ class TestPageLoads:
 
 
 class TestLimiterKey:
-    def test_prefers_forwarded_for_header(self):
+    def test_ignores_spoofable_forwarded_headers(self):
         request = StarletteRequest({
             "type": "http",
             "headers": [
@@ -388,15 +388,15 @@ class TestLimiterKey:
             ],
             "client": ("127.0.0.1", 1234),
         })
-        assert _rate_limit_key(request) == "203.0.113.10"
+        assert _rate_limit_key(request) == "127.0.0.1"
 
-    def test_falls_back_to_real_ip_and_client(self):
+    def test_uses_client_address(self):
         request = StarletteRequest({
             "type": "http",
             "headers": [(b"x-real-ip", b"198.51.100.7")],
             "client": ("127.0.0.1", 1234),
         })
-        assert _rate_limit_key(request) == "198.51.100.7"
+        assert _rate_limit_key(request) == "127.0.0.1"
 
         request = StarletteRequest({
             "type": "http",
@@ -1044,3 +1044,70 @@ class TestLanguageSwitcherOptions:
 
     def test_api_still_accepts_every_supported_locale(self, auth_client):
         assert auth_client.post("/api/locale", json={"locale": "nb"}).status_code == 200
+
+
+# ---------------------------------------------------------------------------
+# Audit fixes: sessions, PIN, filters on auto-approve, search, JSON bodies
+# ---------------------------------------------------------------------------
+
+class TestAuditFixes:
+    def test_session_ends_when_pin_changes(self, auth_client, store):
+        assert auth_client.get("/", follow_redirects=False).status_code == 200
+        store.update_profile("default", pin="9999")
+        resp = auth_client.get("/", follow_redirects=False)
+        assert resp.status_code == 303 and resp.headers["location"] == "/login"
+
+    def test_session_ends_when_profile_deleted(self, auth_client, store):
+        store.create_profile("other", "Other", pin="5678")
+        assert auth_client.get("/", follow_redirects=False).status_code == 200
+        store.delete_profile("default")
+        assert auth_client.get("/", follow_redirects=False).status_code == 303
+
+    def test_pin_change_revokes_device_tokens(self, store):
+        token, _ = store.create_device_token("default", "TV")
+        assert store.resolve_device_token(token)
+        store.update_profile("default", pin="9999")
+        assert store.resolve_device_token(token) is None
+
+    def test_api_status_needs_a_session(self, client):
+        assert client.get("/api/status/dQw4w9WgXcQ", follow_redirects=False).status_code == 401
+
+    def test_non_ascii_pin_is_a_wrong_pin_not_a_500(self, client):
+        resp = client.get("/login")
+        csrf = re.search(r'name="csrf_token"\s+value="([^"]+)"', resp.text).group(1)
+        resp = client.post("/login", data={"pin": "é1234", "profile_id": "default",
+                                           "csrf_token": csrf}, follow_redirects=False)
+        assert resp.status_code == 200 and "Wrong PIN" in resp.text
+
+    def test_json_body_must_be_an_object(self, auth_client):
+        assert auth_client.post("/api/locale", json=["fr"]).status_code == 400
+        assert auth_client.post("/api/avatar", json=[1]).status_code == 400
+
+    def test_eleven_letter_word_is_searched_not_looked_up_as_id(self, store):
+        app = _create_test_app(store)
+        app.state.extractor.extract_metadata.return_value = None
+        c = AppClient(app, raise_server_exceptions=False)
+        _login(c, "1234")
+        resp = c.get("/search?q=mathematics")
+        assert resp.status_code == 200 and "Search Result 1" in resp.text
+        app.state.extractor.search.assert_awaited()
+
+    def test_allowlisted_channel_does_not_bypass_word_filter(self, auth_client, store):
+        cs = ChildStore(store, "default")
+        cs.add_channel("Test Channel", "allowed", channel_id="UCtest123")
+        store.add_word_filter("video")
+        auth_client.get("/watch/dQw4w9WgXcQ", follow_redirects=False)
+        assert cs.get_video("dQw4w9WgXcQ") is None
+
+    def test_allowlisted_channel_does_not_bypass_shorts_setting(self, store):
+        app = _create_test_app(store)
+        app.state.extractor.extract_metadata.return_value = {
+            "video_id": "shortvid123", "title": "Clip", "channel_name": "Test Channel",
+            "channel_id": "UCtest123", "thumbnail_url": "", "duration": 20, "is_short": True}
+        c = AppClient(app, raise_server_exceptions=False)
+        _login(c, "1234")
+        cs = ChildStore(store, "default")
+        cs.add_channel("Test Channel", "allowed", channel_id="UCtest123")
+        cs.set_setting("shorts_enabled", "false")
+        c.get("/watch/shortvid123", follow_redirects=False)
+        assert cs.get_video("shortvid123") is None

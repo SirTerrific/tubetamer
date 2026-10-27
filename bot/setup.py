@@ -3,7 +3,7 @@
 import logging
 import re
 
-from telegram import ForceReply, Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 
 from bot.helpers import _md, _answer_bg, _edit_msg, MD2
@@ -15,14 +15,6 @@ class SetupMixin:
     """Interactive setup hub for first-run and returning configuration."""
 
     # --- Hub ---
-
-    async def _send_reply_prompt(self, message, prompt: str, markdown: bool = False) -> None:
-        """Send a ForceReply prompt so free-text steps work reliably in groups."""
-        kwargs = {"reply_markup": ForceReply(selective=True)}
-        text = _md(prompt) if markdown else prompt
-        if markdown:
-            kwargs["parse_mode"] = MD2
-        await message.reply_text(text, **kwargs)
 
     def _build_setup_hub(self, chat_id: int) -> tuple[str, InlineKeyboardMarkup]:
         """Build the setup hub message text + 4 category buttons with current status."""

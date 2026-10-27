@@ -219,3 +219,37 @@ class TestTime:
         body = client.get("/api/v1/time", headers=_auth(player["token"])).json()
         assert body["categories"]["edu"]["limit_min"] == 20
         assert body["daily"] is None
+
+
+class TestStreamGate:
+    """Stream and subtitles follow the same budget/schedule gate as /play."""
+
+    def _blocked(self, monkeypatch):
+        import web.routers.api_v1 as api
+        monkeypatch.setattr(api, "get_schedule_info", lambda **_: {
+            "allowed": False, "unlock_time": "8:00", "start": "8:00", "end": "20:00"})
+
+    def test_stream_refused_outside_schedule(self, client, player, monkeypatch):
+        self._blocked(monkeypatch)
+        resp = client.get(f"/api/stream/{VID}", headers=_auth(player["token"]))
+        assert resp.status_code == 403 and resp.json()["error"] == "outside_schedule"
+
+    def test_subtitles_refused_outside_schedule(self, client, player, monkeypatch):
+        self._blocked(monkeypatch)
+        resp = client.get(f"/api/subs/{VID}/en", headers=_auth(player["token"]))
+        assert resp.status_code == 403
+
+
+class TestRangeHandling:
+    def test_suffix_range(self, client, player):
+        resp = client.get(f"/api/stream/{VID}", headers={**_auth(player["token"]), "Range": "bytes=-10"})
+        assert resp.status_code == 206
+        assert resp.content == bytes(range(256))[-10:]
+
+    def test_end_beyond_file_is_clamped(self, client, player):
+        resp = client.get(f"/api/stream/{VID}", headers={**_auth(player["token"]), "Range": "bytes=1000-99999999"})
+        assert resp.status_code == 206 and len(resp.content) == 24
+
+    def test_start_beyond_file_is_416(self, client, player):
+        resp = client.get(f"/api/stream/{VID}", headers={**_auth(player["token"]), "Range": "bytes=5000-"})
+        assert resp.status_code == 416

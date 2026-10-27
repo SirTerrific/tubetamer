@@ -6,8 +6,8 @@ import re
 from pathlib import Path
 
 from fastapi import APIRouter, Request
-from fastapi.responses import Response, StreamingResponse
-from starlette.status import HTTP_200_OK, HTTP_206_PARTIAL_CONTENT, HTTP_404_NOT_FOUND, HTTP_416_RANGE_NOT_SATISFIABLE
+from fastapi.responses import FileResponse, JSONResponse, Response
+from starlette.status import HTTP_404_NOT_FOUND
 
 from web.shared import limiter
 from web.deps import get_child_store
@@ -16,9 +16,14 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-_VIDEO_ID_RE = re.compile(r'^[a-zA-Z0-9_-]{11}$')
-_RANGE_RE = re.compile(r'^bytes=(\d+)-(\d*)$')
-_CHUNK_SIZE = 1024 * 1024  # 1 MB chunks
+_VIDEO_ID_RE = re.compile(r'^[a-zA-Z0-9_-]{11}\Z')
+
+
+def _blocked(request: Request, cs, video: dict):
+    """403 when the time budget or schedule blocks playback (same gate as /watch)."""
+    from web.routers.api_v1 import _gate
+    block, _ = _gate(cs, request.app.state.wl_config, video)
+    return JSONResponse(block, status_code=403) if block else None
 
 
 def _get_downloader(request: Request):
@@ -45,6 +50,9 @@ async def stream_video(request: Request, video_id: str):
     video = cs.get_video(video_id)
     if not video or video["status"] != "approved":
         return Response(status_code=HTTP_404_NOT_FOUND)
+    block = _blocked(request, cs, video)
+    if block:
+        return block
 
     # Get downloader and verify file exists
     downloader = _get_downloader(request)
@@ -65,53 +73,15 @@ async def stream_video(request: Request, video_id: str):
     except (OSError, ValueError):
         return Response(status_code=HTTP_404_NOT_FOUND)
 
-    file_size = file_path.stat().st_size
-    headers = {
-        "Accept-Ranges": "bytes",
-        "Content-Type": "video/mp4",
-        "Cache-Control": "private, max-age=3600",
-        "X-Content-Type-Options": "nosniff",
-    }
-
-    # Parse Range header
-    range_header = request.headers.get("range")
-    if range_header:
-        match = _RANGE_RE.match(range_header)
-        if not match:
-            return Response(
-                status_code=HTTP_416_RANGE_NOT_SATISFIABLE,
-                headers={"Content-Range": f"bytes */{file_size}"},
-            )
-
-        start = int(match.group(1))
-        end_str = match.group(2)
-        end = int(end_str) if end_str else file_size - 1
-
-        # Validate range
-        if start >= file_size or end >= file_size or start > end:
-            return Response(
-                status_code=HTTP_416_RANGE_NOT_SATISFIABLE,
-                headers={"Content-Range": f"bytes */{file_size}"},
-            )
-
-        content_length = end - start + 1
-        headers["Content-Range"] = f"bytes {start}-{end}/{file_size}"
-        headers["Content-Length"] = str(content_length)
-
-        return StreamingResponse(
-            _file_range_iterator(file_path, start, end),
-            status_code=HTTP_206_PARTIAL_CONTENT,
-            headers=headers,
-            media_type="video/mp4",
-        )
-
-    # No Range header: full file
-    headers["Content-Length"] = str(file_size)
-    return StreamingResponse(
-        _file_iterator(file_path),
-        status_code=HTTP_200_OK,
-        headers=headers,
+    # FileResponse handles Range (open-ended, suffix, multi-range), 416, and reads
+    # the file off the event loop.
+    return FileResponse(
+        file_path,
         media_type="video/mp4",
+        headers={
+            "Cache-Control": "private, max-age=3600",
+            "X-Content-Type-Options": "nosniff",
+        },
     )
 
 
@@ -167,6 +137,9 @@ async def serve_subtitle(request: Request, video_id: str, lang: str):
     video = cs.get_video(video_id)
     if not video or video["status"] != "approved":
         return Response(status_code=HTTP_404_NOT_FOUND)
+    block = _blocked(request, cs, video)
+    if block:
+        return block
 
     downloader = _get_downloader(request)
     if not downloader:
@@ -191,27 +164,3 @@ async def serve_subtitle(request: Request, video_id: str, lang: str):
             "X-Content-Type-Options": "nosniff",
         },
     )
-
-
-async def _file_iterator(path: Path):
-    """Yield chunks of a file."""
-    with open(path, "rb") as f:
-        while True:
-            chunk = f.read(_CHUNK_SIZE)
-            if not chunk:
-                break
-            yield chunk
-
-
-async def _file_range_iterator(path: Path, start: int, end: int):
-    """Yield chunks of a file within a byte range."""
-    remaining = end - start + 1
-    with open(path, "rb") as f:
-        f.seek(start)
-        while remaining > 0:
-            chunk_size = min(_CHUNK_SIZE, remaining)
-            chunk = f.read(chunk_size)
-            if not chunk:
-                break
-            remaining -= len(chunk)
-            yield chunk

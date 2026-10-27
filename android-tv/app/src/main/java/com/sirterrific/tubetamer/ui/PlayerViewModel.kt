@@ -91,6 +91,8 @@ class PlayerViewModel(private val c: AppContainer) : ViewModel() {
                 is ApiResult.Ok -> r.value
                 else -> { fail(r); return }
             }
+            // 403 {"error":"not_approved","status":"pending"} is a refusal, not a download to wait for
+            if (p.status != "ready" && p.error.isNotEmpty()) { _state.value = blocked(p); return }
             when (p.status) {
                 "ready" -> {
                     _remaining.value = p.remainingSec
@@ -106,6 +108,7 @@ class PlayerViewModel(private val c: AppContainer) : ViewModel() {
     /** Polls the download until the file is ready (true), or sets a final state (false). */
     private suspend fun waitForDownload(creds: Credentials.Value): Boolean {
         _state.value = PlayerState.Preparing(null)
+        var notFound = 0
         while (true) {
             delay(POLL_MS)
             when (val r = c.api.downloadStatus(creds.baseUrl, creds.token, videoId)) {
@@ -113,8 +116,16 @@ class PlayerViewModel(private val c: AppContainer) : ViewModel() {
                     "ready" -> return true
                     "failed" -> { _state.value = PlayerState.Blocked(Block.DOWNLOAD_FAILED); return false }
                     "disabled" -> { _state.value = PlayerState.Blocked(Block.NO_LOCAL_PLAYBACK); return false }
-                    "downloading" -> _state.value = PlayerState.Preparing(r.value.percent.toInt().coerceIn(0, 100))
-                    else -> Unit // queued, or status not written yet
+                    "downloading" -> {
+                        notFound = 0
+                        _state.value = PlayerState.Preparing(r.value.percent.toInt().coerceIn(0, 100))
+                    }
+                    // The server lost the video (not approved any more, row cleaned up): stop waiting
+                    "not_found" -> if (++notFound >= NOT_FOUND_LIMIT) {
+                        _state.value = PlayerState.Blocked(Block.NOT_FOUND)
+                        return false
+                    }
+                    else -> notFound = 0 // queued
                 }
                 is ApiResult.HttpError -> if (r.code == 401) { _expired.value = true; return false }
                 else -> Unit // transient network trouble: keep waiting
@@ -153,6 +164,11 @@ class PlayerViewModel(private val c: AppContainer) : ViewModel() {
                     401 -> if (!final) _expired.value = true
                     // The server forgot what we watch (restart): open the video again, keep the seconds.
                     409 -> if (!final) { played += secs; rearm(creds) }
+                    // The parent revoked the video, or the schedule closed, while it was playing
+                    400 -> if (!final) _state.value = PlayerState.Blocked(Block.NOT_APPROVED)
+                    403 -> if (!final) _state.value = PlayerState.Blocked(Block.OUTSIDE_SCHEDULE)
+                    // 429 and 5xx: the seconds are still owed, send them with the next report
+                    else -> if (!final) played += secs
                 }
                 else -> if (!final) played += secs // retry with the next report
             }
@@ -200,6 +216,7 @@ class PlayerViewModel(private val c: AppContainer) : ViewModel() {
     companion object {
         const val HEARTBEAT_EVERY = 30
         private const val POLL_MS = 3_000L
+        private const val NOT_FOUND_LIMIT = 4
 
         fun factory(c: AppContainer): ViewModelProvider.Factory = viewModelFactory {
             initializer { PlayerViewModel(c) }

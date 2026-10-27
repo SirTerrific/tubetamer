@@ -26,6 +26,8 @@ async def set_locale(request: Request):
     except Exception:
         return JSONResponse({"error": "invalid json"}, status_code=400)
 
+    if not isinstance(body, dict):
+        return JSONResponse({"error": "invalid json"}, status_code=400)
     requested = str(body.get("locale", ""))
     if requested not in SUPPORTED_LOCALES:
         return JSONResponse({"error": "unsupported locale"}, status_code=400)
@@ -59,6 +61,8 @@ async def update_avatar(request: Request):
     except Exception:
         return JSONResponse({"error": "invalid json"}, status_code=400)
 
+    if not isinstance(body, dict):
+        return JSONResponse({"error": "invalid json"}, status_code=400)
     icon = body.get("icon", "")
     color = body.get("color", "")
 

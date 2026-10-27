@@ -234,8 +234,15 @@ class VideoStore:
 
     def _rebuild_videos_table(self) -> None:
         """Rebuild videos table with profile_id and new unique constraint."""
+        # The copy below reads these; an old table may not have them yet
+        self._add_column_if_missing("videos", "yt_view_count", "INTEGER DEFAULT 0")
+        self._add_column_if_missing("videos", "resume_seconds", "INTEGER DEFAULT 0")
+        self._add_column_if_missing("videos", "download_status", "TEXT DEFAULT ''")
+        # One transaction: a crash between DROP and RENAME must not leave no `videos` table
         self.conn.executescript("""
-            CREATE TABLE IF NOT EXISTS videos_new (
+            BEGIN;
+            DROP TABLE IF EXISTS videos_new;
+            CREATE TABLE videos_new (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 video_id TEXT NOT NULL,
                 title TEXT NOT NULL,
@@ -251,28 +258,34 @@ class VideoStore:
                 category TEXT,
                 is_short INTEGER DEFAULT 0,
                 resume_seconds INTEGER DEFAULT 0,
+                yt_view_count INTEGER DEFAULT 0,
+                download_status TEXT DEFAULT '',
                 profile_id TEXT NOT NULL DEFAULT 'default',
                 UNIQUE(video_id, profile_id)
             );
             INSERT OR IGNORE INTO videos_new
                 (id, video_id, title, channel_name, thumbnail_url, duration, status,
                  requested_at, decided_at, view_count, last_viewed_at,
-                 channel_id, category, is_short, resume_seconds, profile_id)
+                 channel_id, category, is_short, resume_seconds, yt_view_count, download_status, profile_id)
             SELECT id, video_id, title, channel_name, thumbnail_url, duration, status,
                    requested_at, decided_at, view_count, last_viewed_at,
-                   channel_id, category, COALESCE(is_short, 0), COALESCE(resume_seconds, 0), 'default'
+                   channel_id, category, COALESCE(is_short, 0), COALESCE(resume_seconds, 0),
+                   COALESCE(yt_view_count, 0), COALESCE(download_status, ''), 'default'
             FROM videos;
             DROP TABLE videos;
             ALTER TABLE videos_new RENAME TO videos;
             CREATE INDEX IF NOT EXISTS idx_videos_status ON videos(status);
             CREATE INDEX IF NOT EXISTS idx_videos_profile ON videos(profile_id);
+            COMMIT;
         """)
         self.conn.commit()
 
     def _rebuild_channels_table(self) -> None:
         """Rebuild channels table with profile_id and new unique constraint."""
         self.conn.executescript("""
-            CREATE TABLE IF NOT EXISTS channels_new (
+            BEGIN;
+            DROP TABLE IF EXISTS channels_new;
+            CREATE TABLE channels_new (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 channel_name TEXT NOT NULL COLLATE NOCASE,
                 status TEXT NOT NULL DEFAULT 'allowed',
@@ -290,6 +303,7 @@ class VideoStore:
             DROP TABLE channels;
             ALTER TABLE channels_new RENAME TO channels;
             CREATE INDEX IF NOT EXISTS idx_channels_profile ON channels(profile_id);
+            COMMIT;
         """)
         self.conn.commit()
 
@@ -377,6 +391,11 @@ class VideoStore:
                 f"UPDATE profiles SET {', '.join(parts)} WHERE id = ?",
                 params,
             )
+            if pin is not None and cursor.rowcount > 0:
+                # A changed PIN signs the profile's TVs out
+                self.conn.execute(
+                    "UPDATE device_tokens SET revoked_at = datetime('now') "
+                    "WHERE profile_id = ? AND revoked_at IS NULL", (profile_id,))
             self.conn.commit()
             return cursor.rowcount > 0
 
@@ -1276,8 +1295,12 @@ class VideoStore:
                 )
                 if cursor.fetchone() is not None:
                     return True
+            # Display names are not unique on YouTube: when the caller knows the
+            # channel id, a name match only counts for rows that have no id stored.
+            no_id = "AND (channel_id IS NULL OR channel_id = '') " if channel_id else ""
             cursor = self.conn.execute(
-                "SELECT 1 FROM channels WHERE channel_name = ? COLLATE NOCASE AND status = 'allowed' AND profile_id = ?",
+                "SELECT 1 FROM channels WHERE channel_name = ? COLLATE NOCASE AND status = 'allowed' "
+                + no_id + "AND profile_id = ?",
                 (name, profile_id),
             )
             return cursor.fetchone() is not None
@@ -1382,6 +1405,9 @@ class VideoStore:
                 "DELETE FROM search_log WHERE searched_at < datetime('now', ?)",
                 (f"-{search_days} days",),
             )
+            # tokens that are revoked or expired for more than a month are dead rows
+            self.conn.execute(
+                "DELETE FROM device_tokens WHERE COALESCE(revoked_at, expires_at) < datetime('now', '-30 days')")
             self.conn.commit()
             return c1.rowcount, c2.rowcount
 

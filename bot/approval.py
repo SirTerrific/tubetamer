@@ -8,7 +8,7 @@ from urllib.parse import urlparse
 import aiohttp
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 
-from bot.helpers import _md, _channel_md_link, _answer_bg, _edit_msg, MD2
+from bot.helpers import _md, _esc, _channel_md_link, _answer_bg, _edit_msg, MD2
 from youtube.extractor import format_duration, THUMB_ALLOWED_HOSTS
 
 logger = logging.getLogger(__name__)
@@ -57,7 +57,7 @@ class ApprovalMixin:
         )
         caption = _md(
             f"**{request_label}**\n\n"
-            f"**{self.tr('Title:')}** {title}\n"
+            f"**{self.tr('Title:')}** {_esc(title)}\n"
             f"**{self.tr('Channel:')}** {channel_link}\n"
             f"**{self.tr('Duration:')}** {duration}\n"
             f"[{self.tr('Watch on YouTube')}]({yt_link}){cross_child_note}"
@@ -190,23 +190,36 @@ class ApprovalMixin:
 
         if self.on_video_change:
             self.on_video_change()
+        if self.on_video_approve:
+            import asyncio
+            asyncio.create_task(self.on_video_approve(video_id, profile_id))
 
         channel_link = _channel_md_link(video['channel_name'], video.get('channel_id'))
         yt_link = f"https://www.youtube.com/watch?v={video_id}"
         cat_label = self.cat_label(cat)
         result_text = _md(
             f"**{self.tr('AUTO-APPROVED ({category})', category=cat_label)}**\n\n"
-            f"**{self.tr('Title:')}** {video['title']}\n"
+            f"**{self.tr('Title:')}** {_esc(video['title'])}\n"
             f"**{self.tr('Channel:')}** {channel_link}\n"
             f"[{self.tr('Watch on YouTube')}]({yt_link})"
         )
         reply_markup = InlineKeyboardMarkup([[
             InlineKeyboardButton(f"↩️ {self.tr('Revoke')}", callback_data=f"revoke:{profile_id}:{video_id}"),
         ]])
+        await self._edit_card(query, result_text, reply_markup)
+
+    async def _edit_card(self, query, text: str, reply_markup) -> None:
+        """Show the result on a request card (photo caption, else text message).
+        The DB is already updated when this runs, so a failed edit is only logged."""
         try:
-            await query.edit_message_caption(caption=result_text, reply_markup=reply_markup, parse_mode=MD2)
+            await query.edit_message_caption(caption=text, reply_markup=reply_markup, parse_mode=MD2)
+            return
         except Exception:
-            await query.edit_message_text(text=result_text, reply_markup=reply_markup, parse_mode=MD2)
+            pass
+        try:
+            await query.edit_message_text(text=text, reply_markup=reply_markup, parse_mode=MD2)
+        except Exception as e:
+            logger.warning("Could not update approval card: %s", e)
 
     async def _cb_resend(self, query, profile_id: str, video_id: str) -> None:
         """Resend notification for a pending video from /pending list."""
@@ -350,14 +363,16 @@ class ApprovalMixin:
         if is_now_approved and self.on_video_approve:
             import asyncio
             asyncio.create_task(self.on_video_approve(video_id, profile_id))
-        elif action in ("deny", "revoke", "blockchan") and self.on_video_revoke:
+        elif (action in ("deny", "revoke", "blockchan") and self.on_video_revoke
+              and not self.video_store.find_video_approved_for_others(video_id, profile_id)):
+            # The file is shared by all profiles: keep it while another still has it approved
             import asyncio
             asyncio.create_task(self.on_video_revoke(video_id))
 
         channel_link = _channel_md_link(video['channel_name'], video.get('channel_id'))
         result_text = _md(
             f"**{status_label}**\n\n"
-            f"**{self.tr('Title:')}** {video['title']}\n"
+            f"**{self.tr('Title:')}** {_esc(video['title'])}\n"
             f"**{self.tr('Channel:')}** {channel_link}\n"
             f"**{self.tr('Duration:')}** {duration}\n"
             f"[{self.tr('Watch on YouTube')}]({yt_link})"
@@ -375,7 +390,4 @@ class ApprovalMixin:
         else:
             reply_markup = None
 
-        try:
-            await query.edit_message_caption(caption=result_text, reply_markup=reply_markup, parse_mode=MD2)
-        except Exception:
-            await query.edit_message_text(text=result_text, reply_markup=reply_markup, parse_mode=MD2)
+        await self._edit_card(query, result_text, reply_markup)

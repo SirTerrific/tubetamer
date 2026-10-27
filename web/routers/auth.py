@@ -103,7 +103,7 @@ async def login_submit(
 
     # Validate PIN
     stored_pin = profile["pin"] or ""
-    if pin and stored_pin and hmac.compare_digest(pin, stored_pin):
+    if pin and stored_pin and hmac.compare_digest(pin.encode(), stored_pin.encode()):
         request.session["child_id"] = profile["id"]
         request.session["child_name"] = profile["display_name"]
         request.session["avatar_icon"] = profile.get("avatar_icon") or ""

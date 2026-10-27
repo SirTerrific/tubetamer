@@ -1,5 +1,6 @@
 """HTTP middleware: security headers + PIN-based profile authentication."""
 
+import hashlib
 import logging
 
 from fastapi import Request
@@ -10,7 +11,7 @@ from starlette.responses import Response
 logger = logging.getLogger(__name__)
 
 # API paths safe to access without PIN auth
-_API_AUTH_EXEMPT = ("/api/status/", "/api/yt-iframe-api.js", "/api/yt-widget-api.js")
+_API_AUTH_EXEMPT = ("/api/yt-iframe-api.js", "/api/yt-widget-api.js")
 _ROOT_AUTH_EXEMPT = (
     "/manifest.webmanifest", "/service-worker.js",
     # Android TV app download (Downloader on the TV has no session).
@@ -80,6 +81,11 @@ class PinAuthMiddleware(BaseHTTPMiddleware):
 
         # Profile-based auth: check if child_id is in session
         if request.session.get("child_id"):
+            if vs and not self._session_current(request, vs):
+                request.session.clear()
+                if request.url.path.startswith("/api/"):
+                    return JSONResponse({"error": "unauthorized"}, status_code=401)
+                return RedirectResponse(url="/login", status_code=303)
             return await call_next(request)
 
         # Auto-login: if only one profile and it has no PIN, set session directly
@@ -104,6 +110,16 @@ class PinAuthMiddleware(BaseHTTPMiddleware):
         if request.url.path.startswith("/api/"):
             return JSONResponse({"error": "unauthorized"}, status_code=401)
         return RedirectResponse(url="/login", status_code=303)
+
+    @staticmethod
+    def _session_current(request: Request, vs) -> bool:
+        """The session's profile still exists and its PIN is unchanged since login.
+        The PIN fingerprint is stamped on the first request after login."""
+        profile = vs.get_profile(request.session["child_id"])
+        if not profile:
+            return False
+        fp = hashlib.sha256((profile["pin"] or "").encode()).hexdigest()[:16]
+        return request.session.setdefault("pin_fp", fp) == fp
 
     @staticmethod
     async def _dispatch_bearer(request: Request, call_next, vs, token: str) -> Response:

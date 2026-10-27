@@ -10,6 +10,7 @@ import logging
 import os
 import re
 import time as _time
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
@@ -18,7 +19,7 @@ import yt_dlp
 
 logger = logging.getLogger(__name__)
 
-_VIDEO_ID_RE = re.compile(r'^[a-zA-Z0-9_-]{11}$')
+_VIDEO_ID_RE = re.compile(r'^[a-zA-Z0-9_-]{11}\Z')
 _SAFE_LANG_RE = re.compile(r'^[a-zA-Z]{2,3}(-[a-zA-Z0-9]+)?$')
 
 STATUS_PENDING = "pending"
@@ -98,6 +99,9 @@ class VideoDownloader:
         self._running = False
         # Dedup: track video IDs currently in the queue or downloading
         self._active: set[str] = set()
+        # Own thread pool: slow downloads must not starve the default pool that
+        # searches and metadata lookups use. Created in start().
+        self._executor: ThreadPoolExecutor | None = None
         # Download progress: {video_id: {"percent": 45.2, "downloaded": "50MiB", "total": "120MiB", "speed": "5MiB/s", "eta": 30}}
         self._progress: dict[str, dict] = {}
         # Download file logger
@@ -156,6 +160,7 @@ class VideoDownloader:
 
     async def start(self, num_workers: int = 2) -> None:
         self._running = True
+        self._executor = ThreadPoolExecutor(max_workers=num_workers, thread_name_prefix="download")
         for i in range(num_workers):
             self._workers.append(asyncio.create_task(self._worker(i)))
         if self.retention_days > 0:
@@ -176,6 +181,9 @@ class VideoDownloader:
             self._cleanup_task.cancel()
             self._cleanup_task = None
         self._active.clear()
+        if self._executor:
+            self._executor.shutdown(wait=False, cancel_futures=True)
+            self._executor = None
         self.dl_log.info("=== Downloader stopped ===")
 
     # --- Queue (with dedup) ---
@@ -190,11 +198,8 @@ class VideoDownloader:
         if self.is_downloaded(video_id):
             self.video_store.set_download_status(video_id, STATUS_READY, profile_id=profile_id)
             return
-        # Already actively downloading (DB check for cross-restart)
-        current = self.video_store.get_download_status(video_id, profile_id=profile_id)
-        if current == STATUS_DOWNLOADING:
-            return
-
+        # `_active` is the dedup. A "downloading" row without an active task is left
+        # over from a restart, so it must be queued again, not skipped.
         self._active.add(video_id)
         self.video_store.set_download_status(video_id, STATUS_PENDING, profile_id=profile_id)
         await self._queue.put((video_id, profile_id))
@@ -217,6 +222,19 @@ class VideoDownloader:
     # --- Download (two-phase) ---
 
     async def _download(self, video_id: str, profile_id: str) -> None:
+        """Run one download. Whatever happens, the video leaves `_active` and the DB
+        row never stays at "downloading"."""
+        try:
+            await self._run_download(video_id, profile_id)
+        except Exception as e:
+            self.dl_log.error("FAILED %s — unexpected error: %s", video_id, e)
+            self.video_store.set_download_status(video_id, STATUS_FAILED, profile_id=profile_id)
+            self._progress.pop(video_id, None)
+            raise
+        finally:
+            self._active.discard(video_id)
+
+    async def _run_download(self, video_id: str, profile_id: str) -> None:
         if not _VIDEO_ID_RE.match(video_id):
             self._active.discard(video_id)
             return
@@ -262,9 +280,9 @@ class VideoDownloader:
 
         # Phase 1: video
         try:
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
             self.dl_log.info("DOWNLOADING %s — phase 1 (video, format=%s)", video_id, self.quality)
-            await loop.run_in_executor(None, _ydl_download, url, video_opts, self.dl_log)
+            await loop.run_in_executor(self._executor, _ydl_download, url, video_opts, self.dl_log)
         except Exception as e:
             elapsed = _time.monotonic() - start_time
             self.dl_log.error("FAILED %s — video download error after %.0fs: %s", video_id, elapsed, e)
@@ -297,7 +315,7 @@ class VideoDownloader:
         if self.subtitle_langs:
             try:
                 self.dl_log.info("DOWNLOADING %s — phase 2 (subtitles: %s)", video_id, self.subtitle_langs)
-                await loop.run_in_executor(None, self._download_subs, url, video_id)
+                await loop.run_in_executor(self._executor, self._download_subs, url, video_id)
             except Exception as e:
                 self.dl_log.warning("SUBS FAILED %s (video OK): %s", video_id, e)
 
@@ -463,7 +481,9 @@ class VideoDownloader:
         self.video_store.clear_download_status(video_id)
 
     async def retry_failed(self) -> None:
-        failed = self.video_store.get_videos_by_download_status(STATUS_FAILED)
+        """Queue failed downloads again, and ones a restart left at "downloading"."""
+        failed = (self.video_store.get_videos_by_download_status(STATUS_FAILED)
+                  + self.video_store.get_videos_by_download_status(STATUS_DOWNLOADING))
         for v in failed:
             await self.enqueue(v["video_id"], profile_id=v.get("profile_id", "default"))
         if failed:
@@ -472,17 +492,28 @@ class VideoDownloader:
 
 # --- Module-level helpers ---
 
+class _YdlLogger:
+    """Route yt-dlp messages to the download log. yt-dlp accepts any object with
+    these methods, so no named logger is created (and leaked) per download."""
+
+    def __init__(self, dl_log: logging.Logger):
+        self._log = dl_log
+
+    def debug(self, msg):
+        self._log.info("[yt-dlp] %s", msg)
+
+    info = debug
+
+    def warning(self, msg):
+        self._log.warning("[yt-dlp] %s", msg)
+
+    def error(self, msg):
+        self._log.error("[yt-dlp] %s", msg)
+
+
 def _ydl_download(url: str, opts: dict, dl_log: logging.Logger) -> None:
     """Run yt-dlp download with logging."""
-    class _LogFilter(logging.Filter):
-        """Route yt-dlp logs to our download log."""
-        def filter(self, record):
-            dl_log.log(record.levelno, "[yt-dlp] %s", record.getMessage())
-            return True
-
-    ydl_logger = logging.getLogger(f"yt-dlp.{id(opts)}")
-    ydl_logger.addFilter(_LogFilter())
-    opts_with_log = {**opts, 'logger': ydl_logger}
+    opts_with_log = {**opts, 'logger': _YdlLogger(dl_log)}
 
     with yt_dlp.YoutubeDL(opts_with_log) as ydl:
         ret = ydl.download([url])

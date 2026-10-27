@@ -5,9 +5,10 @@ import logging
 from telegram import Update, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 
-from bot.helpers import _md, _answer_bg, _nav_row, _edit_msg, _channel_md_link, MD2
+from bot.helpers import _md, _esc, _answer_bg, _nav_row, _edit_msg, _channel_md_link, MD2
 from bot.timelimits import _progress_bar
 from i18n import format_month_day
+from web.helpers import get_category_time_info
 from utils import get_today_str, get_day_utc_bounds, get_bonus_minutes
 
 logger = logging.getLogger(__name__)
@@ -29,8 +30,8 @@ class ActivityMixin:
                 arg = context.args[0].lower()
                 if arg == "yesterday":
                     days = 1
-                elif arg.isdigit():
-                    days = min(int(arg), 365)
+                elif arg.isdecimal():
+                    days = min(int(arg), 60)  # a message holds 4096 chars max
 
             tz = self._get_tz()
             from datetime import timedelta
@@ -70,7 +71,17 @@ class ActivityMixin:
 
                 bonus = get_bonus_minutes(cs, today)
 
-                if limit_min == 0:
+                cat_info = get_category_time_info(store=cs, wl_cfg=self.config.watch_limits if self.config else None)
+                if cat_info:
+                    # category mode: one budget per category, not the flat daily limit
+                    for cat, info in cat_info["categories"].items():
+                        if info["limit_min"] > 0:
+                            lines.append(self.tr("**{category}:** {used}/{limit} min", category=_esc(self.cat_label(cat)),
+                                                 used=int(info["used_min"]), limit=info["limit_min"]))
+                        else:
+                            lines.append(self.tr("**{category}:** {used} min (no limit)", category=_esc(self.cat_label(cat)),
+                                                 used=int(info["used_min"])))
+                elif limit_min == 0:
                     lines.append(f"**{self.tr('Watch limit:')}** {self.tr('OFF')}")
                     lines.append(self.tr("**Watched today:** {used} min", used=int(used)))
                 else:
@@ -138,7 +149,7 @@ class ActivityMixin:
                                                  category=cat_label, used=int(cat_total)))
 
                         for v in vids:
-                            title = v['title'][:40]
+                            title = _esc(v['title'][:40])
                             ch_link = _channel_md_link(v['channel_name'], v.get('channel_id'))
                             watched_min = int(v['minutes'])
                             vid_dur = v.get('duration')
@@ -171,7 +182,7 @@ class ActivityMixin:
                 arg = context.args[0].lower()
                 if arg == "today":
                     days = 1
-                elif arg.isdigit():
+                elif arg.isdecimal():
                     days = min(int(arg), 365)
             activity = cs.get_recent_activity(days)
             if not activity:
@@ -202,7 +213,7 @@ class ActivityMixin:
         for v in page_items:
             icon = status_icon.get(v['status'], '?')
             ts = v['requested_at'][5:16].replace('T', ' ')
-            title = v['title'][:32]
+            title = _esc(v['title'][:32])
             lines.append(f"{icon} {ts}  {title}")
         lines.append("```")
 
@@ -247,7 +258,7 @@ class ActivityMixin:
                 days = 1
             elif arg == "all":
                 days = 365
-            elif arg.isdigit():
+            elif arg.isdecimal():
                 days = min(int(arg), 365)
         searches = s.get_recent_searches(days)
         if not searches:
@@ -276,7 +287,7 @@ class ActivityMixin:
         lines = [header, "", "```"]
         for s in page_items:
             ts = s['searched_at'][5:16].replace('T', ' ')
-            query = s['query'][:40]
+            query = s['query'][:40].replace('`', "'")
             lines.append(f"{ts}  {query}")
         lines.append("```")
 

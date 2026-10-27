@@ -10,7 +10,7 @@ from web.deps import get_child_store, get_extractor
 from web.helpers import (
     VIDEO_ID_RE, HeartbeatRequest,
     _HEARTBEAT_EVICT_AGE,
-    base_ctx, resolve_video_category,
+    base_ctx, resolve_video_category, shorts_enabled,
     get_time_limit_info, get_category_time_info,
     get_schedule_info, get_next_start_time, current_locale, localize_titles,
 )
@@ -18,6 +18,15 @@ from web.cache import invalidate_catalog_cache
 from i18n import category_label
 
 router = APIRouter()
+
+
+def filtered_out(request: Request, cs, metadata: dict) -> bool:
+    """True when the word filter or the Shorts setting hides this video, so an
+    allowlisted channel must not auto-approve it."""
+    from web.cache import get_word_filter_patterns, title_matches_filter
+    if title_matches_filter(metadata.get('title') or "", get_word_filter_patterns(request.app.state)):
+        return True
+    return bool(metadata.get('is_short')) and not shorts_enabled(request, cs)
 
 
 async def get_or_auto_approve(request: Request, cs, video_id: str) -> dict | None:
@@ -32,6 +41,8 @@ async def get_or_auto_approve(request: Request, cs, video_id: str) -> dict | Non
         return None
     if not cs.is_channel_allowed(metadata['channel_name'],
                                  channel_id=metadata.get('channel_id') or ""):
+        return None
+    if filtered_out(request, cs, metadata):
         return None
     cs.add_video(
         video_id=metadata['video_id'],

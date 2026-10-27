@@ -17,3 +17,9 @@ docker-compose*.yml
 LICENSE
 android-tv/
 tasks/
+config.yaml
+db/
+.venv/
+venv/
+tests/
+openwiki/

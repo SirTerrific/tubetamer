@@ -40,4 +40,26 @@
     <string name="cancel">Avbryt</string>
     <string name="requests_empty">Ingen forespørsler ennå.</string>
     <string name="pin_delete">Slett</string>
+    <string name="home_hello">Hei %1$s!</string>
+    <string name="loading">Laster…</string>
+    <string name="ok">OK</string>
+    <string name="retry">Prøv igjen</string>
+    <string name="change_server">Bytt server</string>
+    <string name="switch_profile">Bytt profil</string>
+    <string name="setup_title">Koble til TubeTamer-serveren din</string>
+    <string name="setup_hint">Skriv inn adressen du ser i nettleseren når du åpner TubeTamer, for eksempel 192.168.1.10:8080</string>
+    <string name="setup_placeholder">192.168.1.10:8080</string>
+    <string name="setup_connect">Koble til</string>
+    <string name="setup_checking">Sjekker…</string>
+    <string name="offline_title">Får ikke kontakt med serveren</string>
+    <string name="profiles_title">Hvem ser på?</string>
+    <string name="profiles_empty">Ingen profiler ennå. Opprett en fra Telegram-boten.</string>
+    <string name="pin_title">PIN for %1$s</string>
+    <string name="err_bad_address">Adressen ser ikke riktig ut.</string>
+    <string name="err_unreachable">Ingen svar fra serveren. Sjekk adressen og at serveren kjører.</string>
+    <string name="err_not_tubetamer">Denne adressen er ikke en TubeTamer-server.</string>
+    <string name="err_too_old">Denne TubeTamer-serveren er for gammel for TV-appen. Oppdater den først.</string>
+    <string name="err_wrong_pin">Feil PIN.</string>
+    <string name="err_too_many_tries">For mange forsøk. Vent et minutt og prøv igjen.</string>
+    <string name="err_server">Serveren svarte med en feil. Prøv igjen.</string>
 </resources>

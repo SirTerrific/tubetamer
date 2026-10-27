@@ -21,15 +21,9 @@ templates = Jinja2Templates(directory=str(templates_dir))
 
 
 def _rate_limit_key(request: Request) -> str:
-    """Prefer proxy-forwarded client IPs when present."""
-    forwarded_for = request.headers.get("x-forwarded-for", "")
-    if forwarded_for:
-        client_ip = forwarded_for.split(",", 1)[0].strip()
-        if client_ip:
-            return client_ip
-    real_ip = request.headers.get("x-real-ip", "").strip()
-    if real_ip:
-        return real_ip
+    """Client IP as resolved by uvicorn. Uvicorn rewrites request.client from
+    X-Forwarded-For only for proxies listed in FORWARDED_ALLOW_IPS (default
+    127.0.0.1), so a LAN client cannot pick its own rate-limit bucket."""
     return get_remote_address(request)
 
 

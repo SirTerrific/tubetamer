@@ -20,7 +20,7 @@ YOUTUBE_URL_PATTERN = re.compile(
     r'(?:https?://)?(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/|youtube\.com/shorts/)([a-zA-Z0-9_-]{11})'
 )
 
-_VIDEO_ID_RE = re.compile(r'^[a-zA-Z0-9_-]{11}$')
+_VIDEO_ID_RE = re.compile(r'^[a-zA-Z0-9_-]{11}\Z')
 
 _SHORTS_PATH_RE = re.compile(r'/shorts/')
 
@@ -51,7 +51,7 @@ def extract_video_id(url_or_id: str) -> Optional[str]:
     if match:
         return match.group(1)
     # Check if it's already a valid video ID (11 chars, alphanumeric + _ -)
-    if re.match(r'^[a-zA-Z0-9_-]{11}$', url_or_id):
+    if re.match(r'^[a-zA-Z0-9_-]{11}\Z', url_or_id):
         return url_or_id
     return None
 

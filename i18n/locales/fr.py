@@ -515,4 +515,8 @@ TRANSLATIONS: dict[str, str] = {
     "A revoked device must sign in again with the child's PIN.": "Un appareil révoqué doit se reconnecter avec le PIN de l'enfant.",
     'Device revoked.': 'Appareil révoqué.',
     'Already revoked.': 'Déjà révoqué.',
+    "**{category}:** {used} min (no limit)": "**{category} :** {used} min (sans limite)",
+    'No pending requests.': 'Aucune demande en attente.',
+    'No {status} channels.': 'Aucune chaîne {status}.',
+    'Usage: /child [add|remove|rename|pin]\n\n`/child` — list profiles\n`/child add <name> [pin]` — create\n`/child remove <name>` — delete\n`/child rename <name> <new>` — rename\n`/child pin <name> [pin]` — set/clear PIN': 'Utilisation : /child [add|remove|rename|pin]\n\n`/child` — lister les profils\n`/child add <nom> [pin]` — créer\n`/child remove <nom>` — supprimer\n`/child rename <nom> <nouveau>` — renommer\n`/child pin <nom> [pin]` — définir/effacer le PIN',
 }

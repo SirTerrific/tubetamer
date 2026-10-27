@@ -46,7 +46,12 @@ class HomeViewModel(private val c: AppContainer) : ViewModel() {
     private val _expired = MutableStateFlow(false)
     val expired: StateFlow<Boolean> = _expired.asStateFlow()
 
-    init {
+    /**
+     * Start from a clean session. The ViewModel outlives a sign-out, so without this
+     * its old "expired" flag would send the child straight back out after signing in.
+     */
+    fun begin() {
+        _expired.value = false
         refresh()
     }
 

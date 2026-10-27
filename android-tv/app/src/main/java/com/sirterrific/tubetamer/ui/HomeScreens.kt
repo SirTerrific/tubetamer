@@ -67,6 +67,9 @@ private const val PREFETCH_DISTANCE = 4
 fun HomeScreen(profile: Profile, onSwitchProfile: () -> Unit, onExpired: () -> Unit) {
     val container = (LocalContext.current.applicationContext as TubeTamerApp).container
     val vm: HomeViewModel = viewModel(key = "home-${profile.id}", factory = HomeViewModel.factory(container))
+    val search: SearchViewModel = viewModel(key = "search-${profile.id}", factory = SearchViewModel.factory(container))
+    // Before anything reads the flags: a ViewModel kept from an earlier sign-in must not say "expired".
+    remember(profile.id) { vm.begin(); search.begin() }
     val home by vm.home.collectAsStateWithLifecycle()
     val channel by vm.channel.collectAsStateWithLifecycle()
     val expired by vm.expired.collectAsStateWithLifecycle()
@@ -78,7 +81,6 @@ fun HomeScreen(profile: Profile, onSwitchProfile: () -> Unit, onExpired: () -> U
     var playing by remember(profile.id) { mutableStateOf<VideoCard?>(null) }
     val onPlay: (VideoCard) -> Unit = { playing = it }
     var page by remember(profile.id) { mutableStateOf(HomePage.HOME) }
-    val search: SearchViewModel = viewModel(key = "search-${profile.id}", factory = SearchViewModel.factory(container))
     val searchExpired by search.expired.collectAsStateWithLifecycle()
     LaunchedEffect(searchExpired) { if (searchExpired) onExpired() }
 

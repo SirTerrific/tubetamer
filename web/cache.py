@@ -112,6 +112,15 @@ def get_profile_cache(state, profile_id: str) -> dict:
 
 
 async def _refresh_channel_cache_for_profile(state, profile_id: str):
+    """Refresh one profile's cache. Refreshes for a profile run one at a time, so a
+    slow older fetch cannot overwrite the result of a newer one (read after an
+    allowlist change)."""
+    lock = get_profile_cache(state, profile_id).setdefault("lock", asyncio.Lock())
+    async with lock:
+        await _do_refresh_channel_cache(state, profile_id)
+
+
+async def _do_refresh_channel_cache(state, profile_id: str):
     """Fetch latest videos and Shorts for a profile's allowlisted channels."""
     vs = getattr(state, "video_store", None)
     if not vs:
@@ -142,7 +151,8 @@ async def _refresh_channel_cache_for_profile(state, profile_id: str):
             channel_id_to_name[cid] = ch_name
         if isinstance(result, Exception):
             logger.error("Channel cache fetch failed for '%s': %s", ch_name, result)
-            channels[cache_key] = []
+            # keep what we had: one timeout must not empty the channel for a whole TTL
+            channels[cache_key] = cache["channels"].get(cache_key, [])
         else:
             channels[cache_key] = result
 
@@ -167,7 +177,7 @@ async def _refresh_channel_cache_for_profile(state, profile_id: str):
             cache_key = cid or ch_name
             if isinstance(result, Exception):
                 logger.debug("Channel shorts fetch failed for '%s': %s", ch_name, result)
-                shorts[cache_key] = []
+                shorts[cache_key] = cache["shorts"].get(cache_key, [])
             else:
                 shorts[cache_key] = result
     else:

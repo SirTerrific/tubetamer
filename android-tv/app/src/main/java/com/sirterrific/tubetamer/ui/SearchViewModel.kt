@@ -57,6 +57,11 @@ class SearchViewModel(private val c: AppContainer) : ViewModel() {
     private var pollJob: Job? = null
     private var pollers = 0
 
+    /** See HomeViewModel.begin: forget a stale "expired" flag from before a sign-out. */
+    fun begin() {
+        _expired.value = false
+    }
+
     fun search(q: String) {
         val text = q.trim()
         query = text

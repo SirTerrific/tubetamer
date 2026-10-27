@@ -12,6 +12,7 @@ from web.helpers import (
 from web.cache import (
     get_word_filter_patterns, title_matches_filter, invalidate_catalog_cache,
 )
+from web.routers.watch import filtered_out
 from youtube.extractor import extract_video_id
 from i18n import t
 
@@ -41,12 +42,17 @@ async def run_search(request: Request, q: str) -> tuple[list[dict], bool]:
     fetch_failed = False
     search_lang = current_locale(request)
 
+    results = []
     if video_id:
         metadata = await extractor.extract_metadata(video_id, lang=search_lang)
         results = [metadata] if metadata else []
         if not metadata:
-            fetch_failed = True
-    else:
+            # A bare 11-character word ("mathematics") looks like an ID: search it
+            if q.strip() == video_id:
+                video_id = None
+            else:
+                fetch_failed = True
+    if not video_id:
         yt_cfg = state.youtube_config
         max_results = yt_cfg.search_max_results if yt_cfg else 10
         results = await extractor.search(q, max_results=max_results, lang=search_lang)
@@ -163,7 +169,7 @@ async def submit_request(request: Request, video_id: str) -> tuple[str, str, boo
             return "denied", video_id, False
 
         # Check if channel is allowlisted -> auto-approve
-        if cs.is_channel_allowed(channel_name, channel_id=channel_id):
+        if cs.is_channel_allowed(channel_name, channel_id=channel_id) and not filtered_out(request, cs, metadata):
             _add_from_metadata(cs, metadata)
             cs.update_status(video_id, "approved")
             invalidate_catalog_cache(state)

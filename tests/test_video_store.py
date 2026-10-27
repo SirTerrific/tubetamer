@@ -448,3 +448,60 @@ class TestVideoStoreClose:
     def test_close(self, tmp_path):
         store = VideoStore(db_path=str(tmp_path / "close_test.db"))
         store.close()  # Should not raise
+
+
+class TestChannelAllowedByName:
+    """Display names are not unique: a known channel id must not match another channel's name."""
+
+    def test_same_name_other_id_is_not_allowed(self, video_store):
+        video_store.add_channel("Blippi", "allowed", channel_id="UCreal")
+        assert video_store.is_channel_allowed("Blippi", channel_id="UCreal")
+        assert not video_store.is_channel_allowed("Blippi", channel_id="UCfake")
+
+    def test_name_still_matches_when_no_id_stored_or_given(self, video_store):
+        video_store.add_channel("Old Entry", "allowed")
+        assert video_store.is_channel_allowed("Old Entry", channel_id="UCany")
+        video_store.add_channel("Blippi", "allowed", channel_id="UCreal")
+        assert video_store.is_channel_allowed("blippi")
+
+
+class TestLegacyMigration:
+    def test_pre_profile_database_keeps_new_columns_and_rows(self, tmp_path):
+        import sqlite3
+        path = str(tmp_path / "old.db")
+        c = sqlite3.connect(path)
+        c.executescript("""
+            CREATE TABLE videos (id INTEGER PRIMARY KEY AUTOINCREMENT, video_id TEXT NOT NULL UNIQUE,
+                title TEXT NOT NULL, channel_name TEXT NOT NULL, thumbnail_url TEXT, duration INTEGER,
+                status TEXT NOT NULL DEFAULT 'pending',
+                requested_at TEXT NOT NULL DEFAULT (datetime('now')), decided_at TEXT,
+                view_count INTEGER DEFAULT 0, last_viewed_at TEXT);
+            INSERT INTO videos (video_id, title, channel_name, status) VALUES ('oldvideo001', 'T', 'C', 'approved');
+            CREATE TABLE channels (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                channel_name TEXT NOT NULL UNIQUE COLLATE NOCASE, status TEXT NOT NULL DEFAULT 'allowed',
+                added_at TEXT NOT NULL DEFAULT (datetime('now')));
+        """)
+        c.commit()
+        c.close()
+        store = VideoStore(db_path=path)
+        try:
+            assert store.get_video("oldvideo001")["status"] == "approved"
+            assert store.add_video("newvideo002", "N", "C", yt_view_count=5)["yt_view_count"] == 5
+            store.set_download_status("oldvideo001", "ready")
+            assert store.get_download_status("oldvideo001") == "ready"
+        finally:
+            store.close()
+
+
+class TestPruneTokens:
+    def test_old_revoked_tokens_are_deleted_live_ones_kept(self, video_store):
+        video_store.create_profile("kid", "Kid")
+        live, _ = video_store.create_device_token("kid", "TV live")
+        old, _ = video_store.create_device_token("kid", "TV old")
+        video_store.revoke_device_token(old)
+        video_store.conn.execute(
+            "UPDATE device_tokens SET revoked_at = datetime('now', '-40 days') WHERE revoked_at IS NOT NULL")
+        video_store.conn.commit()
+        video_store.prune_old_data()
+        assert video_store.conn.execute("SELECT COUNT(*) FROM device_tokens").fetchone()[0] == 1
+        assert video_store.resolve_device_token(live)

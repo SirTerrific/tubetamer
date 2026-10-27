@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+import time
 from pathlib import Path
 from typing import Optional
 from urllib.parse import urlparse
@@ -40,6 +41,25 @@ from i18n import (
 logger = logging.getLogger(__name__)
 
 
+class _PendingWizard(dict):
+    """chat_id -> wizard state. Each stored state is stamped (`_t`) so a text
+    reply sent long after the prompt is not taken as an answer."""
+
+    TTL = 900  # seconds
+
+    def __setitem__(self, chat_id, state):
+        if isinstance(state, dict):
+            state["_t"] = time.monotonic()
+        super().__setitem__(chat_id, state)
+
+    def live(self, chat_id):
+        state = self.get(chat_id)
+        if state and time.monotonic() - state.get("_t", 0) > self.TTL:
+            del self[chat_id]
+            return None
+        return state
+
+
 class TubeTamerBot(SetupMixin, ApprovalMixin, ChannelMixin, TimeLimitMixin, CommandsMixin, ActivityMixin):
     """Telegram bot for parent video approval."""
 
@@ -54,7 +74,7 @@ class TubeTamerBot(SetupMixin, ApprovalMixin, ChannelMixin, TimeLimitMixin, Comm
         self.time_format = get_time_format(config)
         self._app = None
         self._limit_notified_cats: dict[tuple, str] = {}  # (profile_id, category) -> date
-        self._pending_wizard: dict[int, dict] = {}  # chat_id -> wizard state for custom input
+        self._pending_wizard = _PendingWizard()  # chat_id -> wizard state for custom input
         self._pending_cmd: dict[int, dict] = {}  # chat_id -> pending child-scoped command
         self.on_channel_change = None  # callback when channel lists change
         self.on_video_change = None  # callback when video status changes
@@ -266,7 +286,7 @@ class TubeTamerBot(SetupMixin, ApprovalMixin, ChannelMixin, TimeLimitMixin, Comm
             filters.Regex(r'^/revoke_[a-zA-Z0-9_]{11}$'), self._cmd_revoke,
         ))
         self._app.add_handler(MessageHandler(
-            filters.TEXT & ~filters.COMMAND, self._handle_wizard_reply,
+            filters.TEXT & ~filters.COMMAND & filters.UpdateType.MESSAGE, self._handle_wizard_reply,
         ))
         self._app.add_handler(CallbackQueryHandler(self._handle_callback))
 

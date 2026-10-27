@@ -19,7 +19,7 @@ from utils import (
 # Constants
 # ---------------------------------------------------------------------------
 
-VIDEO_ID_RE = re.compile(r'^[a-zA-Z0-9_-]{11}$')
+VIDEO_ID_RE = re.compile(r'^[a-zA-Z0-9_-]{11}\Z')
 
 AVATAR_ICONS = [
     "\U0001f431", "\U0001f436", "\U0001f43b", "\U0001f98a", "\U0001f438",
@@ -295,7 +295,10 @@ def get_schedule_info(store, wl_cfg) -> dict | None:
             now = _dt.now(_tz.utc)
         try:
             eh, em = map(int, end.split(":"))
-            if now.hour * 60 + now.minute >= eh * 60 + em:
+            sh, sm = map(int, start.split(":")) if start else (0, 0)
+            # An overnight window (22:00-06:00) that is closed at noon opens later today;
+            # only a normal window that already ended opens tomorrow.
+            if sh * 60 + sm <= eh * 60 + em and now.hour * 60 + now.minute >= eh * 60 + em:
                 next_start = get_next_start_time(store=store, wl_cfg=wl_cfg)
                 if next_start:
                     unlock_time = t(locale, "tomorrow at {time}", time=next_start)
@@ -342,4 +345,4 @@ def annotate_categories(videos: list[dict], child_store) -> None:
         cat = cat_by_cid.get(vid_cid) if vid_cid else None
         if not cat:
             cat = cat_by_name.get(v.get("channel_name", ""))
-        v["category"] = cat or v.get("category") or "fun"
+        v["category"] = v.get("category") or cat or "fun"

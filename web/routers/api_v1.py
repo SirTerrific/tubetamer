@@ -127,7 +127,7 @@ async def api_login(request: Request, body: LoginBody):
         return JSONResponse({"error": "profile_not_found"}, status_code=404)
 
     stored_pin = profile["pin"] or ""
-    if stored_pin and not (body.pin and hmac.compare_digest(body.pin, stored_pin)):
+    if stored_pin and not (body.pin and hmac.compare_digest(body.pin.encode(), stored_pin.encode())):
         return JSONResponse({"error": "invalid_pin"}, status_code=401)
 
     token, expires_at = vs.create_device_token(profile["id"], body.device_name.strip())

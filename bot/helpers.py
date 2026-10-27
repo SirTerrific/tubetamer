@@ -1,6 +1,7 @@
 """Shared bot helpers: markdown formatting, callback utilities, pagination."""
 
 import asyncio
+import re
 from typing import Optional
 from urllib.parse import quote
 
@@ -11,6 +12,15 @@ MD2 = "MarkdownV2"
 
 _GITHUB_REPO = "SirTerrific/tubetamer"
 _UPDATE_CHECK_INTERVAL = 43200  # 12 hours
+
+
+_ESC_RE = re.compile(r"([\\`*_{}\[\]()#+\-.!|>~=])")
+
+
+def _esc(text: str) -> str:
+    """Backslash-escape punctuation so user text stays literal in MarkdownV2
+    (and in markdown run through _md)."""
+    return _ESC_RE.sub(r"\\\1", text or "")
 
 
 def _md(text: str) -> str:
@@ -64,5 +74,5 @@ async def _edit_msg(query, text: str, markup=None, disable_preview: bool = False
 def _channel_md_link(name: str, channel_id: Optional[str] = None) -> str:
     """Build a markdown link to a YouTube channel page, falling back to search."""
     if channel_id:
-        return f"[{name}](https://www.youtube.com/channel/{channel_id})"
-    return f"[{name}](https://www.youtube.com/results?search_query={quote(name)})"
+        return f"[{_esc(name)}](https://www.youtube.com/channel/{channel_id})"
+    return f"[{_esc(name)}](https://www.youtube.com/results?search_query={quote(name)})"

@@ -515,4 +515,8 @@ TRANSLATIONS: dict[str, str] = {
     "A revoked device must sign in again with the child's PIN.": 'En tilbakekalt enhet må logge inn igjen med barnets PIN.',
     'Device revoked.': 'Enhet tilbakekalt.',
     'Already revoked.': 'Allerede tilbakekalt.',
+    "**{category}:** {used} min (no limit)": "**{category}:** {used} min (ingen grense)",
+    'No pending requests.': 'Ingen ventende forespørsler.',
+    'No {status} channels.': 'Ingen {status} kanaler.',
+    'Usage: /child [add|remove|rename|pin]\n\n`/child` — list profiles\n`/child add <name> [pin]` — create\n`/child remove <name>` — delete\n`/child rename <name> <new>` — rename\n`/child pin <name> [pin]` — set/clear PIN': 'Bruk: /child [add|remove|rename|pin]\n\n`/child` — list profiler\n`/child add <navn> [pin]` — opprett\n`/child remove <navn>` — slett\n`/child rename <navn> <nytt>` — gi nytt navn\n`/child pin <navn> [pin]` — sett/fjern PIN',
 }

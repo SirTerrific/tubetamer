@@ -6,7 +6,7 @@ from urllib.parse import quote
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 
-from bot.helpers import _md, _answer_bg, _nav_row, _edit_msg, MD2
+from bot.helpers import _md, _esc, _answer_bg, _nav_row, _edit_msg, MD2
 
 logger = logging.getLogger(__name__)
 
@@ -265,8 +265,8 @@ class ChannelMixin:
             blocked_names = {name.lower() for name, *_ in s.get_channels_with_ids("blocked")}
             if channel.lower() in blocked_names:
                 await update.effective_message.reply_text(
-                    self.tr("**{channel}** is blocked, not allowed\\. Unblock it first, then allow with a category\\.",
-                            channel=channel),
+                    _md(self.tr("**{channel}** is blocked, not allowed\\. Unblock it first, then allow with a category\\.",
+                                channel=_esc(channel))),
                     parse_mode=MD2,
                 )
             else:
@@ -284,8 +284,8 @@ class ChannelMixin:
             if self.on_channel_change:
                 self.on_channel_change(pid)
             await update.effective_message.reply_text(
-                self.tr("**{channel}** -> {category}\nExisting videos from this channel updated too.",
-                        channel=channel, category=cat_label),
+                _md(self.tr("**{channel}** -> {category}\nExisting videos from this channel updated too.",
+                            channel=_esc(channel), category=_esc(cat_label))),
                 parse_mode=MD2,
             )
         else:
@@ -437,11 +437,12 @@ class ChannelMixin:
                 break
         else:
             # Exact match failed — try prefix match (truncated callback_data)
-            for name, cid, _h, _c in ch_rows:
-                if name.lower().startswith(ch_name.lower()):
-                    resolved_name = name
-                    ch_id = cid or ""
-                    break
+            # Only a name cut at the callback_data limit may be completed, and only
+            # when it is unambiguous, so a stale button never removes another channel.
+            matches = [(name, cid) for name, cid, _h, _c in ch_rows
+                       if name.lower().startswith(ch_name.lower())]
+            if len(ch_name.encode()) >= 40 and len(matches) == 1:
+                resolved_name, ch_id = matches[0][0], matches[0][1] or ""
         if cs.remove_channel(resolved_name):
             if action == "unallow":
                 cs.delete_channel_videos(resolved_name, channel_id=ch_id)

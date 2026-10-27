@@ -88,7 +88,8 @@ class TubeTamer:
         state = fastapi_app.state
         state.video_store = self.video_store
         state.notify_callback = notify_callback
-        state.time_limit_notify_cb = time_limit_cb
+        wl = self.config.watch_limits
+        state.time_limit_notify_cb = time_limit_cb if (wl is None or wl.notify_on_limit) else None
 
         # Download trigger: called when a video is approved (from web or bot)
         async def download_on_approve(video_id: str, profile_id: str = "default"):
@@ -220,6 +221,7 @@ class TubeTamer:
         while self.running:
             try:
                 await self._backfill_identifiers()
+                await asyncio.to_thread(self.video_store.prune_old_data)  # long-running: prune daily-ish, not only at start
             except Exception as e:
                 logger.error(f"Backfill error: {e}")
             await asyncio.sleep(_INTERVAL)
@@ -327,8 +329,10 @@ async def main() -> None:
 
     loop = asyncio.get_event_loop()
 
+    stop_tasks = []  # keep a reference: a task nobody holds can be garbage-collected
+
     def signal_handler():
-        asyncio.create_task(app.stop())
+        stop_tasks.append(asyncio.create_task(app.stop()))
 
     for sig in (signal.SIGINT, signal.SIGTERM):
         try:
@@ -340,6 +344,11 @@ async def main() -> None:
         await app.run()
     except KeyboardInterrupt:
         await app.stop()
+    finally:
+        # run() returns once uvicorn has stopped; wait for the stop task so the
+        # downloader and bot close cleanly before the loop is torn down
+        if stop_tasks:
+            await asyncio.gather(*stop_tasks, return_exceptions=True)
 
 
 if __name__ == "__main__":

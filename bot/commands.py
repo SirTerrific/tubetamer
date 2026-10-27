@@ -8,7 +8,7 @@ from urllib.parse import quote
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 
-from bot.helpers import _md, _answer_bg, _nav_row, _edit_msg, _channel_md_link, MD2
+from bot.helpers import _md, _esc, _answer_bg, _nav_row, _edit_msg, _channel_md_link, MD2
 from youtube.extractor import format_duration
 
 logger = logging.getLogger(__name__)
@@ -68,8 +68,7 @@ class CommandsMixin:
         if not args:
             await update.effective_message.reply_text(self.tr("Usage: /child add <name> [pin]"))
             return
-        name = args[0]
-        pin = args[1] if len(args) > 1 else ""
+        name, pin = self._split_name_pin(args)
         # Generate URL-safe ID from name
         pid = re.sub(r'[^a-z0-9]', '', name.lower())[:20]
         if not pid:
@@ -95,6 +94,14 @@ class CommandsMixin:
             )
         else:
             await update.effective_message.reply_text(self.tr("Failed to create profile."))
+
+    @staticmethod
+    def _split_name_pin(args: list[str]) -> tuple[str, str]:
+        """(name, pin) from command args: a trailing all-digit word is the PIN, the
+        rest is the name, so names with spaces work ("Mary Jane 1234")."""
+        if len(args) > 1 and args[-1].isdigit():
+            return " ".join(args[:-1]), args[-1]
+        return " ".join(args), ""
 
     def _find_profile(self, name: str):
         """Find a profile by display name or id (case-insensitive)."""
@@ -161,8 +168,7 @@ class CommandsMixin:
         if not args:
             await update.effective_message.reply_text(self.tr("Usage: /child pin <name> [pin]\nOmit pin to remove it."))
             return
-        name = args[0]
-        new_pin = args[1] if len(args) > 1 else ""
+        name, new_pin = self._split_name_pin(args)
         target = self._find_profile(name)
         if not target:
             await update.effective_message.reply_text(self.tr("Profile not found: {name}", name=name))
@@ -388,7 +394,7 @@ class CommandsMixin:
         for v in page_items:
             ch = _channel_md_link(v['channel_name'], v.get('channel_id'))
             duration = format_duration(v.get('duration'))
-            lines.append(f"\u2022 {v['title']}")
+            lines.append(f"\u2022 {_esc(v['title'])}")
             lines.append(f"  _{ch} \u00b7 {duration}_")
             lines.append("")
             buttons.append([InlineKeyboardButton(
@@ -427,9 +433,12 @@ class CommandsMixin:
                 if not results:
                     await update.effective_message.reply_text(self.tr('No approved videos matching "{query}".', query=query_str))
                     return
-                text, keyboard = self._render_approved_page(results, len(results), 0, search=query_str, store=cs, profile_id=pid)
+                # One page only (a message holds 4096 chars); the page buttons walk the
+                # unfiltered list, so they are left out of a search.
+                text, _ = self._render_approved_page(results[:self._APPROVED_PAGE_SIZE], len(results), 0,
+                                                     search=query_str, store=cs, profile_id=pid)
                 await update.effective_message.reply_text(
-                    text, parse_mode=MD2, reply_markup=keyboard, disable_web_page_preview=True,
+                    text, parse_mode=MD2, disable_web_page_preview=True,
                 )
                 return
             page_items, total = cs.get_approved_page(0, self._APPROVED_PAGE_SIZE)
@@ -465,7 +474,7 @@ class CommandsMixin:
         )
         for v in page_items:
             vid = v['video_id']
-            title = v['title'][:42]
+            title = _esc(v['title'][:42])
             yt_link = f"https://www.youtube.com/watch?v={vid}"
             views = v.get('view_count', 0)
             watched = watch_mins.get(vid, 0.0)
@@ -527,8 +536,13 @@ class CommandsMixin:
             return
         cs = self._child_store(found_profile["id"])
         cs.update_status(video_id, "denied")
+        if self.on_video_change:
+            self.on_video_change()
+        if self.on_video_revoke and not self.video_store.find_video_approved_for_others(video_id, found_profile["id"]):
+            import asyncio
+            asyncio.create_task(self.on_video_revoke(video_id))
         await update.effective_message.reply_text(
-            _md(self.tr("Approval removed: {title}\nThe video is no longer watchable.", title=video["title"])), parse_mode=MD2,
+            _md(self.tr("Approval removed: {title}\nThe video is no longer watchable.", title=_esc(video["title"]))), parse_mode=MD2,
         )
 
     # --- /watch command ---
@@ -558,7 +572,7 @@ class CommandsMixin:
         from version import __version__
         changelog_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "CHANGELOG.md")
         try:
-            with open(changelog_path, "r") as f:
+            with open(changelog_path, "r", encoding="utf-8") as f:
                 content = f.read()
             sections = content.split("\n## ")
             if len(sections) >= 2:
