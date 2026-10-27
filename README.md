@@ -15,6 +15,7 @@
 <p align="center">
   <a href="https://github.com/SirTerrific/tubetamer/actions/workflows/docker-publish.yaml"><img src="https://github.com/SirTerrific/tubetamer/actions/workflows/docker-publish.yaml/badge.svg?branch=main" alt="Test and Publish"></a>
   <a href="https://github.com/SirTerrific/tubetamer/actions/workflows/android-tv.yaml"><img src="https://github.com/SirTerrific/tubetamer/actions/workflows/android-tv.yaml/badge.svg?branch=main" alt="Android TV Tests"></a>
+  <a href="https://github.com/users/SirTerrific/packages/container/package/tubetamer"><img src="https://img.shields.io/github/v/release/SirTerrific/tubetamer?label=docker&logo=docker&logoColor=white" alt="Docker image version"></a>
 </p>
 
 ---
