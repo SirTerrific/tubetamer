@@ -12,6 +12,11 @@
   <strong>English</strong> · <a href="README.fr.md">Français</a>
 </p>
 
+<p align="center">
+  <a href="https://github.com/SirTerrific/tubetamer/actions/workflows/docker-publish.yaml"><img src="https://github.com/SirTerrific/tubetamer/actions/workflows/docker-publish.yaml/badge.svg?branch=main" alt="Test and Publish"></a>
+  <a href="https://github.com/SirTerrific/tubetamer/actions/workflows/android-tv.yaml"><img src="https://github.com/SirTerrific/tubetamer/actions/workflows/android-tv.yaml/badge.svg?branch=main" alt="Android TV Tests"></a>
+</p>
+
 ---
 
 ## Contents
