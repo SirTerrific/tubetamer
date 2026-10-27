@@ -9,7 +9,7 @@ from web.shared import templates, limiter
 from web.deps import get_child_store, get_extractor
 from web.helpers import (
     VIDEO_ID_RE, HeartbeatRequest,
-    _HEARTBEAT_MIN_INTERVAL, _HEARTBEAT_EVICT_AGE,
+    _HEARTBEAT_EVICT_AGE,
     base_ctx, resolve_video_category,
     get_time_limit_info, get_category_time_info,
     get_schedule_info, get_next_start_time, current_locale, localize_titles,
@@ -134,7 +134,9 @@ async def watch_video(request: Request, video_id: str):
         })
 
     cs.record_view(video_id)
-    request.session["watching"] = video_id
+    # Remember the last few videos: a second tab must not make the first's heartbeats fail.
+    recent = [v for v in _watching_ids(request) if v != video_id]
+    request.session["watching"] = ([video_id] + recent)[:_WATCHING_KEEP]
 
     # Determine if local playback is available
     local_playback_enabled = getattr(state, "local_playback_enabled", False)
@@ -200,6 +202,17 @@ async def api_status(request: Request, video_id: str):
     return JSONResponse({"status": video["status"]})
 
 
+_WATCHING_KEEP = 5
+
+
+def _watching_ids(request: Request) -> list[str]:
+    """Videos this session is watching (old cookies stored a single id string)."""
+    w = request.session.get("watching")
+    if isinstance(w, str):
+        return [w]
+    return list(w) if isinstance(w, list) else []
+
+
 @router.post("/api/watch-heartbeat")
 @limiter.limit("30/minute")
 async def watch_heartbeat(request: Request, body: HeartbeatRequest):
@@ -211,7 +224,7 @@ async def watch_heartbeat(request: Request, body: HeartbeatRequest):
         return JSONResponse({"error": "invalid"}, status_code=400)
 
     # Verify heartbeat matches the video currently being watched in this session
-    if request.session.get("watching") != vid:
+    if vid not in _watching_ids(request):
         return JSONResponse({"error": "not_watching"}, status_code=400)
 
     body_, status = await process_heartbeat(request, vid, seconds, body.position_seconds)
@@ -235,14 +248,14 @@ async def process_heartbeat(request: Request, vid: str, seconds: int,
     if schedule_info and not schedule_info["allowed"]:
         return {"error": "outside_schedule"}, 403
 
-    # Clamp seconds to 0 if heartbeat arrives faster than expected interval
+    # Cap the claimed seconds by the real time since the last heartbeat (+2 s jitter)
     now = time.monotonic()
     last_hb = state.last_heartbeat
     profile_id = cs.profile_id
     hb_key = (vid, profile_id)
     last = last_hb.get(hb_key, 0.0)
-    if last and (now - last) < _HEARTBEAT_MIN_INTERVAL:
-        seconds = 0
+    if last:
+        seconds = min(seconds, int(now - last) + 2)
     last_hb[hb_key] = now
 
     # Periodic cleanup: evict stale entries to prevent unbounded growth

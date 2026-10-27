@@ -39,7 +39,6 @@ _ERROR_MESSAGES = {
 }
 
 # Heartbeat dedup
-_HEARTBEAT_MIN_INTERVAL = 8    # seconds (must be < client heartbeat interval)
 _HEARTBEAT_EVICT_AGE = 120     # evict entries older than this (seconds)
 
 

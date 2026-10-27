@@ -319,7 +319,8 @@ class TimeLimitMixin:
             edu_used = cat_usage.get("edu", 0.0)
             fun_used = cat_usage.get("fun", 0.0) + cat_usage.get(None, 0.0)
             total_limit = edu_limit + fun_limit
-            effective_total = total_limit + bonus
+            # The bonus is added to each limited category (see get_category_time_info)
+            effective_total = total_limit + bonus * ((edu_limit > 0) + (fun_limit > 0))
             total_used = edu_used + fun_used
 
             parts = []
@@ -687,6 +688,13 @@ class TimeLimitMixin:
 
     # --- Schedule ---
 
+    @staticmethod
+    def _start_equals_end(store, setting_key: str, parsed: str) -> bool:
+        """True if `parsed` would make schedule start and end equal (day key falls back to default)."""
+        prefix = setting_key[:setting_key.rindex("schedule_")]
+        other = "schedule_end" if setting_key.endswith("schedule_start") else "schedule_start"
+        return parsed == (store.get_setting(prefix + other, "") or store.get_setting(other, ""))
+
     async def _time_schedule(self, update: Update, args: list[str],
                              setting_key: str, day: str = "", store=None) -> None:
         """Handle /time [<day>] start|stop subcommands."""
@@ -734,6 +742,10 @@ class TimeLimitMixin:
             await update.effective_message.reply_text(
                 self.tr("Invalid time. Examples: 800am, 8:00, 2000, 8:00PM")
             )
+            return
+
+        if self._start_equals_end(s, setting_key, parsed):
+            await update.effective_message.reply_text(self.tr("Start and stop times must be different."))
             return
 
         s.set_setting(setting_key, parsed)
@@ -1320,6 +1332,12 @@ class TimeLimitMixin:
                     self.tr("Invalid time. Examples: 800am, 8:00, 2000, 8:00PM")
                 )
                 return
+            end_key = {"setup_sched_stop": "schedule_end"}.get(step)
+            if step.startswith("setup_daystop:"):
+                end_key = f"{step.split(':', 1)[1]}_schedule_end"
+            if end_key and self._start_equals_end(ws, end_key, parsed):
+                await update.effective_message.reply_text(self.tr("Start and stop times must be different."))
+                return  # keep the wizard step so the parent can retry
             onboard = state.get("onboard_return", False)
             del self._pending_wizard[chat_id]
 

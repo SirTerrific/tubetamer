@@ -279,6 +279,7 @@ TRANSLATIONS: dict[str, str] = {
     "⚠️ You have category limits set (edu:{edu} fun:{fun}).\n\nSwitching to a simple limit replaces category budgets with a single daily cap.": "⚠️ Vous avez des limites par catégorie (éduc:{edu} loisir:{fun}).\n\nPasser à une limite simple remplace les budgets par catégorie par une seule limite quotidienne.",
     "⚠️ You have a simple limit of {minutes} min.\n\nSwitching to category mode replaces this with separate edu and fun budgets.": "⚠️ Vous avez une limite simple de {minutes} min.\n\nPasser en mode catégorie la remplace par des budgets éduc et loisir séparés.",
     "Usage: /time {category} <minutes|off>": "Utilisation : /time {category} <minutes|off>",
+    "Start and stop times must be different.": "Les heures de début et de fin doivent être différentes.",
     "Invalid time. Examples: 800am, 8:00, 2000, 8:00PM": "Heure invalide. Exemples : 800am, 8:00, 2000, 8:00PM",
     "Usage: /time add <minutes>": "Utilisation : /time add <minutes>",
     "Bonus minutes must be a positive number.": "Les minutes bonus doivent être un nombre positif.",

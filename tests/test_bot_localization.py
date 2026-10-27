@@ -206,3 +206,95 @@ def test_revoke_toast_uses_dedicated_localized_key(tmp_path):
         assert query.answers == ["Fjernet!"]
     finally:
         store.close()
+
+
+# --- Time-limit fixes ---------------------------------------------------------
+
+def test_category_status_total_counts_bonus_per_category(tmp_path):
+    """Web adds the bonus to each limited category, so the bot total must too."""
+    from utils import get_today_str
+    bot, store = _make_bot(tmp_path, locale="en")
+    try:
+        store.set_setting("edu_limit_minutes", "30")
+        store.set_setting("fun_limit_minutes", "30")
+        store.set_setting("daily_bonus_minutes", "10")
+        store.set_setting("daily_bonus_date", get_today_str(bot._get_tz()))
+        update = _DummyUpdate("/time", chat_id=1)
+
+        asyncio.run(bot._time_show_status(update))
+
+        text, _ = update.message.replies[0]
+        assert "80m total" in text
+    finally:
+        store.close()
+
+
+def test_schedule_start_equal_to_end_is_refused(tmp_path):
+    bot, store = _make_bot(tmp_path, locale="en")
+    try:
+        store.set_setting("schedule_start", "08:00")
+        update = _DummyUpdate("/time stop 8:00", chat_id=1)
+
+        asyncio.run(bot._time_schedule(update, ["8:00"], "schedule_end"))
+
+        assert "must be different" in update.message.replies[0][0]
+        assert store.get_setting("schedule_end", "") == ""
+        asyncio.run(bot._time_schedule(update, ["20:00"], "schedule_end"))
+        assert store.get_setting("schedule_end", "") == "20:00"
+    finally:
+        store.close()
+
+
+def test_wizard_stop_equal_to_start_keeps_step(tmp_path):
+    bot, store = _make_bot(tmp_path, locale="en")
+    try:
+        store.set_setting("schedule_start", "08:00")
+        admin = int(bot.admin_chat_id)
+        bot._pending_wizard[admin] = {"step": "setup_sched_stop"}
+        update = _DummyUpdate("8:00", chat_id=admin)
+        update.effective_user = type("User", (), {"id": admin})()
+
+        asyncio.run(bot._handle_wizard_reply(update, None))
+
+        assert "must be different" in update.message.replies[0][0]
+        assert admin in bot._pending_wizard
+        assert store.get_setting("schedule_end", "") == ""
+    finally:
+        store.close()
+
+
+def test_category_usage_resolved_by_channel_name_and_id(tmp_path):
+    """Usage uses the same category rule as the gate: video > channel (id, then name)."""
+    store = VideoStore(str(tmp_path / "v.db"))
+    try:
+        store.create_profile("default", "Default")
+        store.add_channel("Khan Lab", "allowed", channel_id="UCkhan", category="edu")
+        # no channel_id on the video: matched by name; other video matched by id (name differs)
+        store.add_video("byname12345", "A", "khan lab")
+        store.add_video("byid1234567", "B", "Old Name", channel_id="UCkhan")
+        store.add_video("override1234", "C", "Khan Lab")
+        store.set_video_category("override1234", "fun")
+        for vid in ("byname12345", "byid1234567", "override1234"):
+            store.record_watch_seconds(vid, 60)
+        usage = store.get_daily_watch_by_category("2000-01-01", utc_bounds=("2000-01-01", "2999-01-01"))
+        assert usage == {"edu": 2.0, "fun": 1.0}
+        rows = store.get_daily_watch_breakdown("2000-01-01", utc_bounds=("2000-01-01", "2999-01-01"))
+        assert {r["video_id"]: r["category"] for r in rows} == {
+            "byname12345": "edu", "byid1234567": "edu", "override1234": "fun"}
+    finally:
+        store.close()
+
+
+def test_cleared_profile_setting_does_not_fall_back_to_legacy_key(tmp_path):
+    from data.child_store import ChildStore
+    store = VideoStore(str(tmp_path / "s.db"))
+    try:
+        store.create_profile("default", "Default")
+        store.set_setting("sat_schedule_start", "10:00")  # legacy bare key
+        cs = ChildStore(store, "default")
+        assert cs.get_setting("sat_schedule_start", "") == "10:00"
+        cs.set_setting("sat_schedule_start", "")  # what `/time sat start off` writes
+        assert cs.get_setting("sat_schedule_start", "") == ""
+        assert cs.get_setting("sat_schedule_start", "x") == "x"
+    finally:
+        store.close()

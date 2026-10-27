@@ -31,6 +31,18 @@ def _validate_thumbnail_url(url: Optional[str]) -> Optional[str]:
     return None
 
 
+# Category of a watched video (alias `v` = videos row): video override, else the
+# channel's category found by id, else by name. Takes two `profile_id` parameters.
+# Same rule as web.helpers.resolve_video_category, so budget and usage agree.
+_EFFECTIVE_CATEGORY_SQL = (
+    "COALESCE(v.category, "
+    "(SELECT c.category FROM channels c WHERE c.profile_id = ? "
+    "AND v.channel_id != '' AND c.channel_id = v.channel_id), "
+    "(SELECT c.category FROM channels c WHERE c.profile_id = ? "
+    "AND c.channel_name = v.channel_name COLLATE NOCASE))"
+)
+
+
 class VideoStore:
     """SQLite database for video approval and parental control tracking."""
 
@@ -969,16 +981,14 @@ class VideoStore:
         end_clause = "?" if utc_bounds else "date(?, '+1 day')"
         with self._lock:
             cursor = self.conn.execute(
-                "SELECT COALESCE(v.category, c.category) as cat, "
-                "       COALESCE(SUM(w.duration), 0) as total_sec "
-                "FROM watch_log w "
-                "LEFT JOIN videos v ON w.video_id = v.video_id AND v.profile_id = ? "
-                "LEFT JOIN channels c ON v.channel_id IS NOT NULL AND v.channel_id != '' "
-                "  AND v.channel_id = c.channel_id AND c.profile_id = ? "
-                f"WHERE w.watched_at >= ? AND w.watched_at < {end_clause} "
-                "AND w.profile_id = ? "
-                "GROUP BY cat",
-                (profile_id, profile_id, start, end, profile_id),
+                "SELECT cat, COALESCE(SUM(dur), 0) as total_sec FROM ("
+                f"  SELECT {_EFFECTIVE_CATEGORY_SQL} as cat, w.duration as dur "
+                "  FROM watch_log w "
+                "  LEFT JOIN videos v ON w.video_id = v.video_id AND v.profile_id = ? "
+                f"  WHERE w.watched_at >= ? AND w.watched_at < {end_clause} "
+                "  AND w.profile_id = ?"
+                ") GROUP BY cat",
+                (profile_id, profile_id, profile_id, start, end, profile_id),
             )
             return {row[0]: row[1] / 60.0 for row in cursor.fetchall()}
 
@@ -1080,15 +1090,13 @@ class VideoStore:
                 "SELECT w.video_id, COALESCE(SUM(w.duration), 0) as total_sec,"
                 "       v.title, v.channel_name, v.thumbnail_url,"
                 "       v.duration, v.channel_id,"
-                "       COALESCE(v.category, c.category) as category "
+                f"       {_EFFECTIVE_CATEGORY_SQL} as category "
                 "FROM watch_log w "
                 "LEFT JOIN videos v ON w.video_id = v.video_id AND v.profile_id = ? "
-                "LEFT JOIN channels c ON v.channel_id IS NOT NULL AND v.channel_id != '' "
-                "  AND v.channel_id = c.channel_id AND c.profile_id = ? "
                 f"WHERE w.watched_at >= ? AND w.watched_at < {end_clause} "
                 "AND w.profile_id = ? "
                 "GROUP BY w.video_id ORDER BY total_sec DESC",
-                (profile_id, profile_id, start, end, profile_id),
+                (profile_id, profile_id, profile_id, start, end, profile_id),
             )
             return [
                 {

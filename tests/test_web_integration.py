@@ -677,6 +677,44 @@ class TestWatchPage:
         video = cs.get_video("watchPos123")
         assert video["resume_seconds"] == 90
 
+    def _approved(self, store, vid):
+        cs = ChildStore(store, "default")
+        cs.add_video(video_id=vid, title=vid, channel_name="Test Channel", duration=120)
+        cs.update_status(vid, "approved")
+        return cs
+
+    def test_two_tabs_both_keep_logging(self, auth_client, store):
+        """Opening video B in a second tab must not break A's heartbeats."""
+        self._approved(store, "tabAAAAAAAA")
+        self._approved(store, "tabBBBBBBBB")
+        auth_client.get("/watch/tabAAAAAAAA")
+        auth_client.get("/watch/tabBBBBBBBB")
+        for vid in ("tabAAAAAAAA", "tabBBBBBBBB"):
+            r = auth_client.post("/api/watch-heartbeat", json={"video_id": vid, "seconds": 5})
+            assert r.status_code == 200, vid
+
+    def test_unwatched_video_heartbeat_rejected(self, auth_client, store):
+        self._approved(store, "tabCCCCCCCC")
+        r = auth_client.post("/api/watch-heartbeat", json={"video_id": "tabCCCCCCCC", "seconds": 5})
+        assert r.status_code == 400
+
+    def test_fast_heartbeat_keeps_real_seconds(self, auth_client, store, monkeypatch):
+        """A heartbeat 5 s after the last one still counts its 5 s (not 0)."""
+        import web.routers.watch as watch_mod
+        cs = self._approved(store, "fastHB12345")
+        auth_client.get("/watch/fastHB12345")
+        clock = [1000.0]
+        monkeypatch.setattr(watch_mod.time, "monotonic", lambda: clock[0])
+        seen = []
+        orig = type(cs).record_watch_seconds
+        monkeypatch.setattr(type(cs), "record_watch_seconds",
+                            lambda self, v, sec, *a, **k: (seen.append(sec), orig(self, v, sec, *a, **k))[1])
+        for dt, claimed in ((0, 10), (5, 5), (5, 60)):
+            clock[0] += dt
+            auth_client.post("/api/watch-heartbeat", json={"video_id": "fastHB12345", "seconds": claimed})
+        # 1st: no reference yet; 2nd: 5 s real; 3rd: claims 60 but only 5 s (+2) elapsed
+        assert seen == [10, 5, 7]
+
 
 # ---------------------------------------------------------------------------
 # No-PIN mode

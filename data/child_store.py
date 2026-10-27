@@ -21,9 +21,11 @@ class ChildStore:
 
     def get_setting(self, key: str, default: str = "") -> str:
         """Read a setting, prefixed by profile_id. Default profile falls back to unprefixed."""
-        prefixed = self._store.get_setting(f"{self.profile_id}:{key}", "")
-        if prefixed:
-            return prefixed
+        missing = object()
+        prefixed = self._store.get_setting(f"{self.profile_id}:{key}", missing)
+        if prefixed is not missing:
+            # A row exists: "" means cleared, so no fallback to the legacy bare key
+            return prefixed or default
         # Backwards compat: default profile tries bare key
         if self.profile_id == "default":
             return self._store.get_setting(key, default)

@@ -211,8 +211,10 @@ function flushWatchProgressOnExit() {
 
 // ── Time display / warnings ────────────────────────────────────────
 function tickCountdown() {
-    if (!isPlaying || !hasTimeLimit) return;
-    remainingSeconds--; playSeconds++;
+    if (!isPlaying) return;
+    playSeconds++;
+    if (!hasTimeLimit) return;
+    remainingSeconds--;
     updateTimeDisplay();
     if (remainingSeconds <= 0) timesUp();
 }
@@ -332,7 +334,7 @@ if (useLocalPlayer) {
             isPlaying = true; exitFlushSent = false; autoplayPending = false;
             startPositionSaving();
             if (!heartbeatInterval) heartbeatInterval = setInterval(sendHeartbeat, 15000);
-            if (hasTimeLimit && !countdownInterval) countdownInterval = setInterval(tickCountdown, 1000);
+            if (!countdownInterval) countdownInterval = setInterval(tickCountdown, 1000);
             if (!endCheckInterval) endCheckInterval = setInterval(checkNearEnd, 1000);
             var eo = document.getElementById('end-overlay'); if (eo) eo.style.display = 'none';
         });
@@ -464,7 +466,7 @@ function onPlayerStateChange(event) {
         isPlaying = true; exitFlushSent = false; autoplayPending = false;
         hidePauseOverlay(); restorePlaybackPosition(); startPositionSaving();
         if (!heartbeatInterval) heartbeatInterval = setInterval(sendHeartbeat, 10000);
-        if (hasTimeLimit && !countdownInterval) countdownInterval = setInterval(tickCountdown, 1000);
+        if (!countdownInterval) countdownInterval = setInterval(tickCountdown, 1000);
         if (!endCheckInterval) endCheckInterval = setInterval(checkNearEnd, 1000);
     } else if (event.data === YT.PlayerState.ENDED) {
         isPlaying = false; hidePauseOverlay(); stopPositionSaving(); clearPlaybackPosition();

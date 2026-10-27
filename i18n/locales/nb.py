@@ -279,6 +279,7 @@ TRANSLATIONS: dict[str, str] = {
     "⚠️ You have category limits set (edu:{edu} fun:{fun}).\n\nSwitching to a simple limit replaces category budgets with a single daily cap.": "⚠️ Du har satt kategorigrenser (læring:{edu} moro:{fun}).\n\nÅ bytte til en enkel grense erstatter kategoribudsjettene med én daglig grense.",
     "⚠️ You have a simple limit of {minutes} min.\n\nSwitching to category mode replaces this with separate edu and fun budgets.": "⚠️ Du har en enkel grense på {minutes} min.\n\nÅ bytte til kategorimodus erstatter denne med egne budsjetter for læring og moro.",
     "Usage: /time {category} <minutes|off>": "Bruk: /time {category} <minutter|off>",
+    "Start and stop times must be different.": "Start- og sluttid må være forskjellige.",
     "Invalid time. Examples: 800am, 8:00, 2000, 8:00PM": "Ugyldig tid. Eksempler: 800am, 8:00, 2000, 8:00PM",
     "Usage: /time add <minutes>": "Bruk: /time add <minutter>",
     "Bonus minutes must be a positive number.": "Bonusminutter må være et positivt tall.",
