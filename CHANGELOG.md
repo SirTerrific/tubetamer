@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+**Fixed**
+- Behind a reverse proxy every client looked like the proxy's address, so all devices shared one login rate-limit bucket and the apps showed "Too many tries". The compose files now pass `FORWARDED_ALLOW_IPS`; set it to the proxy's IP or subnet (for example `172.28.0.0/16`) in `.env`
+
 ## v1.4.0 - 2026-11-04
 
 **Added**

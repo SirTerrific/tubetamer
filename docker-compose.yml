@@ -11,6 +11,8 @@ services:
       - BRG_ADMIN_CHAT_ID=${BRG_ADMIN_CHAT_ID}
       - BRG_TELEGRAM_API_URL=${BRG_TELEGRAM_API_URL:-}
       - BRG_PIN=${BRG_PIN:-}
+      # Behind a reverse proxy: set to the proxy's IP or subnet so the real client IP is used for rate limits
+      - FORWARDED_ALLOW_IPS=${FORWARDED_ALLOW_IPS:-127.0.0.1}
     volumes:
       - ./config.yaml:/app/config.yaml:ro
       - brg_db:/app/db
