@@ -1,8 +1,9 @@
 # Changelog
 
-## Unreleased
+## v1.4.0 - 2026-11-04
 
 **Added**
+- Android phone and tablet app (`android-tv/mobile/`): touch version of the TV app with the same profile and PIN login, rows, search, requests and server-side playback with limits. The code shared with the TV app now lives in the `:core` module
 - Android TV app (`android-tv/`): native Kotlin/Compose app for TV boxes such as the NVIDIA Shield. The child picks a profile, types the PIN with the remote, browses the rows and channels, searches, asks for videos and follows "My requests". Videos play full screen from the server (Media3), with subtitles, resume position, the remaining-time badge and the same budget and schedule rules as the web app. Menus follow the server language. See [docs/android-tv.md](docs/android-tv.md)
 - JSON API for native clients under `/api/v1` (login with profile + PIN for a bearer token, home rows, catalog pages, search, requests, play, heartbeat, time). Tokens are stored as SHA-256 hashes, never logged, and scoped to their profile; `/api/stream`, `/api/subs` and `/api/download-status` accept them too
 - TV app look matches the web app: night-blue background with the doodle pattern, gold accent and focus ring, hat logo, launcher icon and TV banner, line icons, category colors, status badges, loading placeholders. Layout adapts to screen size (card width, grid columns, icon-only header, smaller PIN pad). Screenshots in docs/android-tv.md
