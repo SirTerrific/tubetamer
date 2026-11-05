@@ -16,3 +16,6 @@ updates:
     directory: /android-tv
     schedule:
       interval: weekly
+    groups:
+      android:
+        patterns: ["*"]
