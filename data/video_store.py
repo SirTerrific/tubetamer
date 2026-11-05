@@ -327,18 +327,6 @@ class VideoStore:
             row = cursor.fetchone()
             return dict(row) if row else None
 
-    def get_profile_by_pin(self, pin: str) -> Optional[dict]:
-        """Get a profile by PIN. Returns None if no match or PIN is empty."""
-        if not pin:
-            return None
-        with self._lock:
-            cursor = self.conn.execute(
-                "SELECT id, display_name, pin, created_at, avatar_icon, avatar_color FROM profiles WHERE pin = ?",
-                (pin,),
-            )
-            row = cursor.fetchone()
-            return dict(row) if row else None
-
     def create_profile(self, profile_id: str, display_name: str, pin: str = "",
                        icon: str = "", color: str = "") -> bool:
         """Create a new profile. Returns True if created.

@@ -1111,3 +1111,21 @@ class TestAuditFixes:
         cs.set_setting("shorts_enabled", "false")
         c.get("/watch/shortvid123", follow_redirects=False)
         assert cs.get_video("shortvid123") is None
+
+
+def test_prune_thumb_cache_removes_only_old_files(tmp_path):
+    import os
+    import time
+    from web.routers.ytproxy import prune_thumb_cache
+
+    old = time.time() - 31 * 86400
+    for name in ("a_hqdefault.jpg", "b_hqdefault.404", "c.jpg.abc.tmp"):
+        p = tmp_path / name
+        p.write_bytes(b"x")
+        os.utime(p, (old, old))
+    fresh = tmp_path / "d_hqdefault.jpg"
+    fresh.write_bytes(b"x")
+
+    assert prune_thumb_cache(tmp_path) == 3
+    assert [p.name for p in tmp_path.iterdir()] == ["d_hqdefault.jpg"]
+    assert prune_thumb_cache(tmp_path / "missing") == 0

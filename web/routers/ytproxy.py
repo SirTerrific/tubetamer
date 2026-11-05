@@ -6,6 +6,7 @@ network access to Google/YouTube — the server fetches on their behalf.
 
 import logging
 import re
+import time
 import uuid
 from pathlib import Path
 
@@ -47,8 +48,32 @@ async def yt_widget_api_proxy(request: Request):
     return PlainTextResponse(state.yt_widget_api_cache, media_type="application/javascript")
 
 
+DEFAULT_THUMB_DIR = "db/thumbs"
+THUMB_MAX_AGE_DAYS = 30
+
+
 def _thumb_dir(request: Request) -> Path:
-    return Path(getattr(request.app.state, "thumb_dir", "db/thumbs"))
+    return Path(getattr(request.app.state, "thumb_dir", DEFAULT_THUMB_DIR))
+
+
+def prune_thumb_cache(cache_dir: str | Path, max_age_days: int = THUMB_MAX_AGE_DAYS) -> int:
+    """Delete cached thumbnails, 404 markers and leftover temp files older than
+    max_age_days (by mtime). A deleted thumbnail is fetched again on next view.
+    Returns the number of files removed."""
+    cutoff = time.time() - max_age_days * 86400
+    removed = 0
+    try:
+        entries = list(Path(cache_dir).iterdir())
+    except FileNotFoundError:
+        return 0
+    for f in entries:
+        try:
+            if f.is_file() and f.stat().st_mtime < cutoff:
+                f.unlink()
+                removed += 1
+        except OSError:
+            continue  # vanished or locked: try again next run
+    return removed
 
 
 @router.get("/thumb/{video_id}")
@@ -58,8 +83,8 @@ async def thumbnail_proxy(request: Request, video_id: str, variant: str = "hqdef
     """Serve YouTube thumbnails from a server-side disk cache.
 
     The tablet requests /thumb/<id>; the server (which has YouTube access)
-    fetches from i.ytimg.com once and caches forever — thumbnails for a
-    given video never change.
+    fetches from i.ytimg.com once and caches it on disk (pruned after
+    THUMB_MAX_AGE_DAYS by prune_thumb_cache) — thumbnails never change.
     """
     if not _VIDEO_ID_RE.match(video_id) or variant not in _THUMB_VARIANTS:
         return Response(status_code=404)

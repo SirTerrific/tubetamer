@@ -136,14 +136,6 @@ class TestVideoStoreProfiles:
     def test_get_profile_nonexistent(self, video_store):
         assert video_store.get_profile("nope") is None
 
-    def test_get_profile_by_pin(self, video_store):
-        video_store.create_profile("pintest", "Pin Test", pin="9999")
-        p = video_store.get_profile_by_pin("9999")
-        assert p["id"] == "pintest"
-
-    def test_get_profile_by_empty_pin(self, video_store):
-        assert video_store.get_profile_by_pin("") is None
-
     def test_update_profile(self, video_store):
         video_store.create_profile("upd", "Original")
         video_store.update_profile("upd", display_name="Updated")

@@ -16,6 +16,7 @@ from data.child_store import ChildStore
 from data.video_store import VideoStore
 from bot.telegram_bot import TubeTamerBot
 from web.app import app as fastapi_app
+from web.routers.ytproxy import DEFAULT_THUMB_DIR, prune_thumb_cache
 from web.cache import init_app_state, invalidate_channel_cache, invalidate_catalog_cache
 from web.middleware import SecurityHeadersMiddleware, PinAuthMiddleware
 from youtube.extractor import configure_metadata_lang, configure_timeout, YouTubeExtractor
@@ -222,6 +223,10 @@ class TubeTamer:
             try:
                 await self._backfill_identifiers()
                 await asyncio.to_thread(self.video_store.prune_old_data)  # long-running: prune daily-ish, not only at start
+                thumbs = getattr(fastapi_app.state, "thumb_dir", DEFAULT_THUMB_DIR)
+                removed = await asyncio.to_thread(prune_thumb_cache, thumbs)
+                if removed:
+                    logger.info(f"Pruned {removed} cached thumbnails")
             except Exception as e:
                 logger.error(f"Backfill error: {e}")
             await asyncio.sleep(_INTERVAL)
