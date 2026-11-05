@@ -43,7 +43,7 @@ jobs:
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write  # edit release notes
       packages: write
 
     steps:
@@ -58,6 +58,22 @@ jobs:
           if [ "$TAG" != "$CODE" ]; then
             echo "::error::Tag v$TAG != version.py ($CODE). Bump version.py before releasing."
             exit 1
+          fi
+
+      - name: Publish changelog as release notes
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          awk -v v="$VERSION" '
+            /^## / { if (found) exit; if (index($0, "## v" v " ") == 1) { found = 1; next } }
+            found { print }
+          ' CHANGELOG.md > notes.md
+          if [ -s notes.md ]; then
+            gh release edit "$GITHUB_REF_NAME" --notes-file notes.md
+          else
+            echo "::warning::No CHANGELOG.md section for v$VERSION; release notes left unchanged."
           fi
 
       - name: Set up QEMU
