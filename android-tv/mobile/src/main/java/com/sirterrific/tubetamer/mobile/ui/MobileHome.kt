@@ -93,6 +93,7 @@ fun HomeScreen(profile: Profile, onSwitchProfile: () -> Unit, onExpired: () -> U
     val home by vm.home.collectAsStateWithLifecycle()
     val channel by vm.channel.collectAsStateWithLifecycle()
     val expired by vm.expired.collectAsStateWithLifecycle()
+    val timeLeft by vm.timeLeft.collectAsStateWithLifecycle()
     LaunchedEffect(expired) { if (expired) onExpired() }
     val searchExpired by search.expired.collectAsStateWithLifecycle()
     LaunchedEffect(searchExpired) { if (searchExpired) onExpired() }
@@ -144,6 +145,14 @@ fun HomeScreen(profile: Profile, onSwitchProfile: () -> Unit, onExpired: () -> U
                     }
                 },
                 actions = {
+                    timeLeft?.let {
+                        Text(
+                            stringResource(CoreR.string.time_left, it),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = if (it <= 5) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                            maxLines = 1,
+                        )
+                    }
                     IconButton(onClick = onSwitchProfile) {
                         Icon(Icons.Filled.SwitchAccount, contentDescription = stringResource(CoreR.string.switch_profile))
                     }

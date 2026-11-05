@@ -46,6 +46,10 @@ class HomeViewModel(private val c: AppContainer) : ViewModel() {
     private val _expired = MutableStateFlow(false)
     val expired: StateFlow<Boolean> = _expired.asStateFlow()
 
+    /** Minutes of watch time left today, or null when unlimited or unknown. */
+    private val _timeLeft = MutableStateFlow<Int?>(null)
+    val timeLeft: StateFlow<Int?> = _timeLeft.asStateFlow()
+
     /**
      * Start from a clean session. The ViewModel outlives a sign-out, so without this
      * its old "expired" flag would send the child straight back out after signing in.
@@ -58,6 +62,7 @@ class HomeViewModel(private val c: AppContainer) : ViewModel() {
     fun refresh() {
         val creds = c.credentials.get() ?: run { _expired.value = true; return }
         if (_home.value !is HomeState.Ready) _home.value = HomeState.Loading
+        refreshTime()
         viewModelScope.launch {
             when (val r = c.api.home(creds.baseUrl, creds.token)) {
                 is ApiResult.Ok -> _home.value = HomeState.Ready(
@@ -66,6 +71,14 @@ class HomeViewModel(private val c: AppContainer) : ViewModel() {
                 )
                 else -> fail(r) { _home.value = HomeState.Failed(it) }
             }
+        }
+    }
+
+    private fun refreshTime() {
+        val creds = c.credentials.get() ?: return
+        viewModelScope.launch {
+            val r = c.api.time(creds.baseUrl, creds.token)
+            if (r is ApiResult.Ok) _timeLeft.value = r.value.minutesLeft()
         }
     }
 
@@ -115,6 +128,7 @@ class HomeViewModel(private val c: AppContainer) : ViewModel() {
 
     /** Keeps progress bars right after watching, without reloading the rows. */
     fun updateProgress(videoId: String, seconds: Int) {
+        refreshTime()
         fun VideoRow.fix() = copy(videos = videos.map { if (it.videoId == videoId) it.copy(progressSeconds = seconds) else it })
         _home.update { s -> if (s is HomeState.Ready) s.copy(rows = s.rows.map { it.fix() }) else s }
         _channel.update { s -> s?.copy(row = s.row?.fix()) }

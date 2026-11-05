@@ -72,6 +72,7 @@ fun HomeScreen(profile: Profile, onSwitchProfile: () -> Unit, onExpired: () -> U
     val home by vm.home.collectAsStateWithLifecycle()
     val channel by vm.channel.collectAsStateWithLifecycle()
     val expired by vm.expired.collectAsStateWithLifecycle()
+    val timeLeft by vm.timeLeft.collectAsStateWithLifecycle()
     LaunchedEffect(expired) { if (expired) onExpired() }
     val baseUrl = container.credentials.get()?.baseUrl.orEmpty()
     val l = LocalTvLayout.current
@@ -118,7 +119,7 @@ fun HomeScreen(profile: Profile, onSwitchProfile: () -> Unit, onExpired: () -> U
     Column(Modifier.fillMaxSize().padding(horizontal = l.padH).padding(top = l.padV)) {
         val header: @Composable () -> Unit = {
             HomeHeader(
-                profile, onSwitchProfile,
+                profile, timeLeft, onSwitchProfile,
                 onSearch = { page = HomePage.SEARCH },
                 onRequests = { page = HomePage.REQUESTS },
             )
@@ -156,7 +157,7 @@ fun HomeScreen(profile: Profile, onSwitchProfile: () -> Unit, onExpired: () -> U
 }
 
 @Composable
-private fun HomeHeader(profile: Profile, onSwitchProfile: () -> Unit, onSearch: () -> Unit, onRequests: () -> Unit) {
+private fun HomeHeader(profile: Profile, timeLeft: Int?, onSwitchProfile: () -> Unit, onSearch: () -> Unit, onRequests: () -> Unit) {
     val compact = LocalTvLayout.current.compact
     Row(
         Modifier.fillMaxWidth().padding(bottom = 8.dp),
@@ -174,6 +175,15 @@ private fun HomeHeader(profile: Profile, onSwitchProfile: () -> Unit, onSearch: 
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),
         )
+        if (timeLeft != null) {
+            Text(
+                stringResource(R.string.time_left, timeLeft),
+                style = MaterialTheme.typography.titleMedium,
+                color = if (timeLeft <= 5) TtColors.Error else TtColors.Accent,
+                maxLines = 1,
+            )
+            Spacer(Modifier.width(16.dp))
+        }
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             TtButton(stringResource(R.string.search), onSearch, icon = TtIcons.Search, primary = true, iconOnly = compact)
             TtButton(stringResource(R.string.my_requests), onRequests, icon = TtIcons.Requests, iconOnly = compact)

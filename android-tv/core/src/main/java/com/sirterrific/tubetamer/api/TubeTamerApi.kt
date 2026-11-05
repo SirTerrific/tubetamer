@@ -39,6 +39,12 @@ class TubeTamerApi(
     suspend fun me(baseUrl: String, token: String): ApiResult<MeResponse> =
         execute(request(baseUrl, "api/v1/me", token).get().build()) { json.decodeFromString(MeResponse.serializer(), it) }
 
+    /** Remaining watch-time budgets for the profile. */
+    suspend fun time(baseUrl: String, token: String): ApiResult<TimeResponse> =
+        execute(request(baseUrl, "api/v1/time", token).get().build()) {
+            json.decodeFromString(TimeResponse.serializer(), it)
+        }
+
     suspend fun home(baseUrl: String, token: String, limit: Int = PAGE_SIZE): ApiResult<HomeResponse> =
         execute(request(baseUrl, "api/v1/home?limit=$limit", token).get().build()) {
             json.decodeFromString(HomeResponse.serializer(), it)

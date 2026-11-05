@@ -169,3 +169,23 @@ data class HeartbeatResponse(
     @SerialName("time_up") val timeUp: Boolean = false,
     val error: String = "",
 )
+
+/** One watch-time budget. [limitMin] is 0 when no limit applies. */
+@Serializable
+data class TimeBudget(
+    @SerialName("limit_min") val limitMin: Double = 0.0,
+    @SerialName("remaining_sec") val remainingSec: Int = 0,
+)
+
+/** `GET /api/v1/time`: per-category budgets, or one daily budget when categories are not used. */
+@Serializable
+data class TimeResponse(
+    val categories: Map<String, TimeBudget>? = null,
+    val daily: TimeBudget? = null,
+) {
+    /** Whole minutes left on the tightest budget, or null when nothing is limited. */
+    fun minutesLeft(): Int? {
+        val budgets = categories?.values?.toList() ?: listOfNotNull(daily)
+        return budgets.filter { it.limitMin > 0 }.minOfOrNull { (it.remainingSec.coerceAtLeast(0) + 59) / 60 }
+    }
+}
