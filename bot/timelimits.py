@@ -44,10 +44,11 @@ class TimeLimitMixin:
         if not self._app:
             return
         today = get_today_str(self._get_tz())
-        key = (profile_id, category)
-        if self._limit_notified_cats.get(key) == today:
+        # Stored in settings so a restart does not send the notice a second time
+        key = f"limit_notified:{profile_id}:{category}"
+        if self.video_store.get_setting(key) == today:
             return
-        self._limit_notified_cats[key] = today
+        self.video_store.set_setting(key, today)
 
         # Include child name if multiple profiles
         profiles = self._get_profiles()

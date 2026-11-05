@@ -73,7 +73,6 @@ class TubeTamerBot(SetupMixin, ApprovalMixin, ChannelMixin, TimeLimitMixin, Comm
         self.locale = get_locale(config)
         self.time_format = get_time_format(config)
         self._app = None
-        self._limit_notified_cats: dict[tuple, str] = {}  # (profile_id, category) -> date
         self._pending_wizard = _PendingWizard()  # chat_id -> wizard state for custom input
         self._pending_cmd: dict[int, dict] = {}  # chat_id -> pending child-scoped command
         self.on_channel_change = None  # callback when channel lists change

@@ -198,3 +198,37 @@ def test_wizard_pin_reply_must_be_digits(tmp_path):
         assert store.get_profile("default")["pin"] == "4321"
     finally:
         store.close()
+
+
+def test_limit_notice_sent_once_even_after_restart(tmp_path):
+    sent = []
+
+    class _FakeBot:
+        async def send_message(self, **kw):
+            sent.append(kw)
+
+    class _FakeApp:
+        bot = _FakeBot()
+
+    bot, store = _make_bot(tmp_path)
+    try:
+        bot._app = _FakeApp()
+        asyncio.run(bot.notify_time_limit_reached(60, 60))
+        asyncio.run(bot.notify_time_limit_reached(61, 60))
+        assert len(sent) == 1
+
+        # A new bot on the same database (server restart) must not send it again
+        bot2, _ = _make_bot_on(store)
+        bot2._app = _FakeApp()
+        asyncio.run(bot2.notify_time_limit_reached(62, 60))
+        assert len(sent) == 1
+    finally:
+        store.close()
+
+
+def _make_bot_on(store):
+    from config import AppConfig, Config
+    from bot.telegram_bot import TubeTamerBot
+    bot = TubeTamerBot(bot_token="token", admin_chat_id="-100123456",
+                       video_store=store, config=Config(app=AppConfig(locale="en")))
+    return bot, store
