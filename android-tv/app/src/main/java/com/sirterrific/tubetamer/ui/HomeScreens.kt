@@ -52,13 +52,12 @@ import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
-import com.sirterrific.tubetamer.R
+import com.sirterrific.tubetamer.core.R
 import com.sirterrific.tubetamer.TubeTamerApp
 import com.sirterrific.tubetamer.api.ChannelInfo
 import com.sirterrific.tubetamer.api.Profile
 import com.sirterrific.tubetamer.api.RowId
 import com.sirterrific.tubetamer.api.VideoCard
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 /** Start loading the next page when focus is this close to the end of a row. */
 private const val PREFETCH_DISTANCE = 4
@@ -465,22 +464,6 @@ private fun rowIcon(id: String): Pair<ImageVector, Color> = when (id) {
     else -> TtIcons.Channel to TtColors.Muted
 }
 
-/** Server paths like /thumb/abc resolve against the base URL (which may carry a sub-path). */
-internal fun resolve(baseUrl: String, path: String): String? {
-    if (path.isEmpty()) return null
-    val base = baseUrl.toHttpUrlOrNull() ?: return null
-    return base.resolve(path.removePrefix("/"))?.toString()
-}
-
-internal fun formatDuration(seconds: Int): String {
-    val h = seconds / 3600
-    val m = (seconds % 3600) / 60
-    val s = seconds % 60
-    return if (h > 0) "%d:%02d:%02d".format(h, m, s) else "%d:%02d".format(m, s)
-}
-
-internal fun progressFraction(progress: Int, duration: Int): Float =
-    if (duration <= 0 || progress <= 0) 0f else (progress.toFloat() / duration).coerceIn(0f, 1f)
 
 /** What the home screen shows besides its rows (the player and channel screens sit on top of any). */
 private enum class HomePage { HOME, SEARCH, REQUESTS }

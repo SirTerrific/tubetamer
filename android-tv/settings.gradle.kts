@@ -15,4 +15,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "TubeTamer"
-include(":app")
+include(":app", ":core", ":mobile")

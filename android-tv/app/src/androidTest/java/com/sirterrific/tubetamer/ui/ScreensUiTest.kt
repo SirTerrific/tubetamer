@@ -8,7 +8,7 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import com.sirterrific.tubetamer.R
+import com.sirterrific.tubetamer.core.R
 import com.sirterrific.tubetamer.api.Profile
 import com.sirterrific.tubetamer.api.VideoCard
 import org.junit.Assert.assertEquals

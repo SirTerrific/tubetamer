@@ -50,7 +50,7 @@ import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
-import com.sirterrific.tubetamer.R
+import com.sirterrific.tubetamer.core.R
 import com.sirterrific.tubetamer.api.VideoCard
 import com.sirterrific.tubetamer.api.VideoStatus
 

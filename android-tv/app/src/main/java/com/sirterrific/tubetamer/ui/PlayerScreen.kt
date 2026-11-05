@@ -57,7 +57,7 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.PlayerView
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import com.sirterrific.tubetamer.R
+import com.sirterrific.tubetamer.core.R
 import com.sirterrific.tubetamer.TubeTamerApp
 import com.sirterrific.tubetamer.api.VideoCard
 import kotlinx.coroutines.delay
@@ -97,8 +97,8 @@ fun PlayerScreen(video: VideoCard, onExit: (positionSec: Int?) -> Unit, onExpire
         when (val s = current) {
             PlayerState.Starting -> Message(stringResource(R.string.loading), video.title, icon = TtIcons.Play)
             is PlayerState.Preparing -> Message(
-                if (s.percent == null) stringResource(R.string.player_preparing)
-                else stringResource(R.string.player_preparing_pct, s.percent),
+                s.percent.let { pct -> if (pct == null) stringResource(R.string.player_preparing)
+                else stringResource(R.string.player_preparing_pct, pct) },
                 video.title,
                 icon = TtIcons.Hourglass,
             ) {

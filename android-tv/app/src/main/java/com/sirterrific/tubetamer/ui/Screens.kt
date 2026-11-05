@@ -44,7 +44,7 @@ import androidx.tv.material3.CardDefaults
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import com.sirterrific.tubetamer.R
+import com.sirterrific.tubetamer.core.R
 import com.sirterrific.tubetamer.api.Profile
 
 @Composable
