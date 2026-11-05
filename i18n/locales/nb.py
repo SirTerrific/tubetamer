@@ -221,6 +221,7 @@ TRANSLATIONS: dict[str, str] = {
     "PIN set for **{name}**.": "PIN satt for **{name}**.",
     "PIN removed for **{name}**.": "PIN fjernet for **{name}**.",
     "Failed to update PIN.": "Kunne ikke oppdatere PIN.",
+    "PIN must be 1 to 8 digits.": "PIN-koden må være 1 til 8 sifre.",
     "Shorts enabled{ctx}": "Shorts aktivert{ctx}",
     "Shorts disabled{ctx}": "Shorts deaktivert{ctx}",
     "Shorts: enabled{ctx}": "Shorts: aktivert{ctx}",

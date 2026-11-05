@@ -6,7 +6,7 @@ import re
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 
-from bot.helpers import _md, _answer_bg, _edit_msg, MD2
+from bot.helpers import _md, _answer_bg, _edit_msg, MD2, valid_pin
 
 logger = logging.getLogger(__name__)
 
@@ -537,6 +537,10 @@ class SetupMixin:
 
         if step == "onboard_child_pin":
             pin = text.strip()
+            if not pin or not valid_pin(pin):
+                # Stay on this step so the parent can reply again.
+                await update.effective_message.reply_text(self.tr("PIN must be 1 to 8 digits."))
+                return True
             pid = state.get("last_profile_id", "default")
             self.video_store.update_profile(pid, pin=pin)
             # Return to children sub-menu

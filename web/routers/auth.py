@@ -72,7 +72,7 @@ async def login_page(request: Request, profile: str = Query("", max_length=50)):
 
 
 @router.post("/login")
-@limiter.limit("5/hour")
+@limiter.limit("5/minute;20/hour")
 async def login_submit(
     request: Request,
     pin: str = Form(""),

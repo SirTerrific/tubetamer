@@ -13,6 +13,16 @@ MD2 = "MarkdownV2"
 _GITHUB_REPO = "SirTerrific/tubetamer"
 _UPDATE_CHECK_INTERVAL = 43200  # 12 hours
 
+# The Android apps accept only ASCII digits, at most 8 (PIN_MAX in Screens.kt
+# and MobileScreens.kt). Any other PIN would lock the child out of them.
+PIN_MAX = 8
+_PIN_RE = re.compile(rf"[0-9]{{1,{PIN_MAX}}}")
+
+
+def valid_pin(pin: str) -> bool:
+    """True for an empty PIN (no PIN) or 1-8 ASCII digits."""
+    return not pin or bool(_PIN_RE.fullmatch(pin))
+
 
 _ESC_RE = re.compile(r"([\\`*_{}\[\]()#+\-.!|>~=])")
 

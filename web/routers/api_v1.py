@@ -118,7 +118,7 @@ class LoginBody(BaseModel):
 
 
 @router.post("/auth/login")
-@limiter.limit("5/hour")
+@limiter.limit("5/minute;20/hour")
 async def api_login(request: Request, body: LoginBody):
     """Check the PIN and issue a bearer token for the profile."""
     vs = request.app.state.video_store

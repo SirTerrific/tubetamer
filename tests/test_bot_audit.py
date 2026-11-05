@@ -151,3 +151,50 @@ def test_time_command_unicode_digit_is_a_usage_error_not_a_crash(tmp_path):
         assert store.get_setting("edu_limit_minutes", "") == ""
     finally:
         store.close()
+
+
+def test_valid_pin_matches_android_keypad():
+    from bot.helpers import valid_pin
+    assert valid_pin("") and valid_pin("0") and valid_pin("12345678")
+    for bad in ("123456789", "soleil", "12 34", "١٢٣٤", "²"):
+        assert not valid_pin(bad), bad
+
+
+def test_child_pin_rejects_pin_android_cannot_type(tmp_path):
+    bot, store = _make_bot(tmp_path, locale="en")
+    try:
+        store.update_profile("default", pin="1234")
+        update = _admin_update("/child pin")
+        asyncio.run(bot._child_pin(update, ["default", "123456789"]))
+        assert "1 to 8 digits" in update.message.replies[0][0]
+        assert store.get_profile("default")["pin"] == "1234"
+    finally:
+        store.close()
+
+
+def test_child_add_rejects_long_pin(tmp_path):
+    bot, store = _make_bot(tmp_path, locale="en")
+    try:
+        update = _admin_update("/child add")
+        asyncio.run(bot._child_add(update, ["Ola", "123456789"]))
+        assert "1 to 8 digits" in update.message.replies[0][0]
+        assert store.get_profile("ola") is None
+    finally:
+        store.close()
+
+
+def test_wizard_pin_reply_must_be_digits(tmp_path):
+    bot, store = _make_bot(tmp_path, locale="en")
+    try:
+        bot._pending_wizard[ADMIN] = {"step": "onboard_child_pin", "last_profile_id": "default"}
+        update = _admin_update("soleil")
+        asyncio.run(bot._handle_wizard_reply(update, None))
+        assert "1 to 8 digits" in update.message.replies[0][0]
+        assert store.get_profile("default")["pin"] == ""
+        assert bot._pending_wizard[ADMIN]["step"] == "onboard_child_pin"
+
+        update = _admin_update("4321")
+        asyncio.run(bot._handle_wizard_reply(update, None))
+        assert store.get_profile("default")["pin"] == "4321"
+    finally:
+        store.close()

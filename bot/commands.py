@@ -8,7 +8,7 @@ from urllib.parse import quote
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 
-from bot.helpers import _md, _esc, _answer_bg, _nav_row, _edit_msg, _channel_md_link, MD2
+from bot.helpers import _md, _esc, _answer_bg, _nav_row, _edit_msg, _channel_md_link, MD2, valid_pin
 from youtube.extractor import format_duration
 
 logger = logging.getLogger(__name__)
@@ -69,6 +69,9 @@ class CommandsMixin:
             await update.effective_message.reply_text(self.tr("Usage: /child add <name> [pin]"))
             return
         name, pin = self._split_name_pin(args)
+        if not valid_pin(pin):
+            await update.effective_message.reply_text(self.tr("PIN must be 1 to 8 digits."))
+            return
         # Generate URL-safe ID from name
         pid = re.sub(r'[^a-z0-9]', '', name.lower())[:20]
         if not pid:
@@ -169,6 +172,9 @@ class CommandsMixin:
             await update.effective_message.reply_text(self.tr("Usage: /child pin <name> [pin]\nOmit pin to remove it."))
             return
         name, new_pin = self._split_name_pin(args)
+        if not valid_pin(new_pin):
+            await update.effective_message.reply_text(self.tr("PIN must be 1 to 8 digits."))
+            return
         target = self._find_profile(name)
         if not target:
             await update.effective_message.reply_text(self.tr("Profile not found: {name}", name=name))
