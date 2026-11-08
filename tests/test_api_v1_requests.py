@@ -90,11 +90,12 @@ class TestRequest:
         assert ChildStore(store, "bob").get_video("dQw4w9WgXcQ") is None
         client.app.state.notify_callback.assert_awaited_once()
 
-    def test_repeat_pending_renotifies(self, client):
+    def test_repeat_pending_does_not_renotify(self, client):
+        # A child tapping the same card again must not spam the parent
         token = _token(client)
         self._post(client, token)
-        self._post(client, token)
-        assert client.app.state.notify_callback.await_count == 2
+        assert self._post(client, token).json()["status"] == "pending"
+        assert client.app.state.notify_callback.await_count == 1
 
     def test_allowlisted_channel_auto_approves(self, client, store):
         ChildStore(store, "default").add_channel("Test Channel", "allowed", channel_id="UCtest123")

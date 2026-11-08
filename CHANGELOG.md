@@ -3,6 +3,8 @@
 ## Unreleased
 
 **Fixed**
+- Every Telegram button press on a video (and `/revoke`) is logged with the action, video, profile and status, so an unexpected deny or file deletion can be traced
+- Tapping a pending video again in the Android apps no longer sends the parent another Telegram request. The web form still re-sends on a repeat request
 - Behind a reverse proxy every client looked like the proxy's address, so all devices shared one login rate-limit bucket and the apps showed "Too many tries". The compose files now pass `FORWARDED_ALLOW_IPS`; set it to the proxy's IP or subnet (for example `172.28.0.0/16`) in `.env`
 
 ## v1.4.0 - 2026-11-04

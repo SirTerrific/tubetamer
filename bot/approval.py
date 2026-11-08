@@ -257,6 +257,8 @@ class ApprovalMixin:
         if not video:
             await query.answer(self.tr("Video not found."))
             return
+        logger.info("Telegram action %s on %s (profile=%s, status=%s)",
+                    action, video_id, profile_id, video["status"])
 
         # Category toggle on approved videos (no status change)
         if action in ("setcat_edu", "setcat_fun") and video["status"] == "approved":

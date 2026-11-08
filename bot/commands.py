@@ -541,6 +541,7 @@ class CommandsMixin:
             await update.effective_message.reply_text(self.tr("Already {status} — no change needed.", status=self.tr(video["status"])))
             return
         cs = self._child_store(found_profile["id"])
+        logger.info("Telegram /revoke on %s (profile=%s)", video_id, found_profile["id"])
         cs.update_status(video_id, "denied")
         if self.on_video_change:
             self.on_video_change()

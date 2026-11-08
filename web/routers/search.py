@@ -120,14 +120,15 @@ def _add_from_metadata(cs, metadata: dict) -> dict:
     )
 
 
-async def submit_request(request: Request, video_id: str) -> tuple[str, str, bool]:
+async def submit_request(request: Request, video_id: str,
+                         renotify: bool = True) -> tuple[str, str, bool]:
     """Request a video for the current profile: (outcome, video_id, existed).
 
     outcome is "approved", "pending", "denied", "invalid" or "fetch_failed";
     existed is True when the profile already had the video. Allowlisted
     channels auto-approve (and trigger the local download), blocked channels
     auto-deny, anything else notifies the parent. A repeat request for a
-    pending video re-sends the notification.
+    pending video re-sends the notification unless `renotify` is False.
     Shared by the web form and the native-client API.
     """
     extracted_id = extract_video_id(video_id)
@@ -143,7 +144,7 @@ async def submit_request(request: Request, video_id: str) -> tuple[str, str, boo
 
     existing = cs.get_video(video_id)
     if existing:
-        if existing["status"] == "pending" and state.notify_callback:
+        if existing["status"] == "pending" and renotify and state.notify_callback:
             await state.notify_callback(existing, profile_id)
         return existing["status"], video_id, True
 

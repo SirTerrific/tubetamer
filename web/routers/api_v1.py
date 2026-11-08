@@ -253,7 +253,7 @@ async def api_request(request: Request, body: RequestBody):
     200 {"status": approved|pending|denied, "video": card}
     400 invalid, 502 fetch_failed (YouTube could not be read).
     """
-    outcome, video_id, _ = await submit_request(request, body.video_id)
+    outcome, video_id, _ = await submit_request(request, body.video_id, renotify=False)
     if outcome == "invalid":
         return JSONResponse({"error": "invalid"}, status_code=400)
     if outcome == "fetch_failed":
