@@ -97,6 +97,14 @@ class TestRequest:
         assert self._post(client, token).json()["status"] == "pending"
         assert client.app.state.notify_callback.await_count == 1
 
+    def test_repeat_pending_renotifies_after_delay(self, client, monkeypatch):
+        # If the first message was lost, a later tap is the retry
+        monkeypatch.setattr("web.routers.search.RENOTIFY_AFTER", -1)
+        token = _token(client)
+        self._post(client, token)
+        self._post(client, token)
+        assert client.app.state.notify_callback.await_count == 2
+
     def test_allowlisted_channel_auto_approves(self, client, store):
         ChildStore(store, "default").add_channel("Test Channel", "allowed", channel_id="UCtest123")
         body = self._post(client, _token(client)).json()

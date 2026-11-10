@@ -1,6 +1,7 @@
 """Tests for Telegram bot localization and onboarding flows."""
 
 import asyncio
+import types
 
 from bot.telegram_bot import TubeTamerBot
 from config import AppConfig, Config
@@ -32,6 +33,7 @@ class _DummyQueryMessage:
 class _DummyQuery:
     def __init__(self, chat_id: int = 1):
         self.message = _DummyQueryMessage(chat_id=chat_id)
+        self.from_user = types.SimpleNamespace(id=chat_id)
         self.cleared = False
         self.edits: list[dict] = []
         self.answers: list[str] = []

@@ -1,5 +1,7 @@
 """Search and video request routes."""
 
+import time
+
 from fastapi import APIRouter, Request, Form, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
 
@@ -20,6 +22,16 @@ router = APIRouter()
 
 # Guard against duplicate notifications from concurrent requests for the same video
 _pending_requests: set[tuple[str, str]] = set()  # (profile_id, video_id)
+
+# A repeat request re-sends the notification only after this delay: it is the retry
+# path if the first message was lost (send errors are swallowed), without spamming.
+RENOTIFY_AFTER = 600  # seconds
+_last_notified: dict[tuple[str, str], float] = {}  # shortcut: per process, lost on restart (then it just re-sends)
+
+
+async def _notify_parent(state, video: dict, profile_id: str) -> None:
+    await state.notify_callback(video, profile_id)
+    _last_notified[(profile_id, video["video_id"])] = time.monotonic()
 
 
 async def run_search(request: Request, q: str) -> tuple[list[dict], bool]:
@@ -120,15 +132,14 @@ def _add_from_metadata(cs, metadata: dict) -> dict:
     )
 
 
-async def submit_request(request: Request, video_id: str,
-                         renotify: bool = True) -> tuple[str, str, bool]:
+async def submit_request(request: Request, video_id: str) -> tuple[str, str, bool]:
     """Request a video for the current profile: (outcome, video_id, existed).
 
     outcome is "approved", "pending", "denied", "invalid" or "fetch_failed";
     existed is True when the profile already had the video. Allowlisted
     channels auto-approve (and trigger the local download), blocked channels
     auto-deny, anything else notifies the parent. A repeat request for a
-    pending video re-sends the notification unless `renotify` is False.
+    pending video re-sends the notification if the last one is older than RENOTIFY_AFTER.
     Shared by the web form and the native-client API.
     """
     extracted_id = extract_video_id(video_id)
@@ -144,8 +155,10 @@ async def submit_request(request: Request, video_id: str,
 
     existing = cs.get_video(video_id)
     if existing:
-        if existing["status"] == "pending" and renotify and state.notify_callback:
-            await state.notify_callback(existing, profile_id)
+        if existing["status"] == "pending" and state.notify_callback:
+            last = _last_notified.get((profile_id, video_id))
+            if last is None or time.monotonic() - last > RENOTIFY_AFTER:
+                await _notify_parent(state, existing, profile_id)
         return existing["status"], video_id, True
 
     # Prevent duplicate notifications from concurrent requests for the same video
@@ -182,7 +195,7 @@ async def submit_request(request: Request, video_id: str,
 
         video = _add_from_metadata(cs, metadata)
         if state.notify_callback:
-            await state.notify_callback(video, profile_id)
+            await _notify_parent(state, video, profile_id)
         return "pending", video_id, False
     finally:
         _pending_requests.discard(req_key)
